@@ -1,0 +1,11 @@
+// Game constants
+
+export const GAME_CONSTANTS = {
+  NUM_SLOTS: 4,
+  INITIAL_HAND_SIZE: 8,
+  SUBSEQUENT_HAND_SIZE: 4,
+  ROUNDS_TO_WIN: 2,
+  MIN_DECK_SIZE: 25,
+  MAX_DECK_SIZE: 30,
+  MAX_COPIES_PER_CARD: 3,
+} as const;
