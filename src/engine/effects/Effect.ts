@@ -23,8 +23,12 @@ export abstract class Effect {
    * However, for performance, we're using a mutable state approach
    * where effects modify state in place. This is acceptable since
    * the GameEngine controls access to the state.
+   *
+   * Effects are now async to support input requests (targeting, modal choices, etc.)
+   * Most effects won't await anything, but effects that trigger card hooks (like
+   * DeployUnitEffect) may await if the card requests player input.
    */
-  abstract execute(state: GameState): EffectResult;
+  abstract execute(state: GameState): Promise<EffectResult>;
 
   /**
    * Optional: Get a description of this effect for debugging/logging

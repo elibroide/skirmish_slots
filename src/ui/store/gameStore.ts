@@ -1,131 +1,118 @@
 import { create } from 'zustand';
-import type { GameState, GameEvent, SlotId } from '../../engine/types';
-import { GameEngine, initializeGame } from '../../engine';
+import type { GameState, PlayerId, GameEvent, InputRequest } from '../../engine/types';
+import { GameEngine } from '../../engine/GameEngine';
+import { createStarterDeck } from '../../utils/deckBuilder';
+import { HumanController } from '../../engine/controllers/HumanController';
+import { AIController } from '../../engine/controllers/AIController';
+
+/**
+ * Game Store - Event-Driven UI State Management
+ *
+ * ARCHITECTURE PRINCIPLE:
+ * - UI never directly accesses engine.state
+ * - UI = f(events)
+ * - Controllers handle player input and submit actions to engine
+ * - Engine emits events
+ * - Store listens to events and updates UI state
+ */
 
 interface GameStore {
-  engine: GameEngine | null;
+  // UI State (built from events only)
   gameState: GameState | null;
-  selectedCardId: string | null;
-  isProcessing: boolean;
-  gameLog: GameEvent[];
+  eventLog: GameEvent[];
 
-  // Actions
-  initGame: () => void;
-  playCard: (cardId: string, slotId?: SlotId) => void;
-  pass: () => void;
-  selectCard: (cardId: string | null) => void;
-  reset: () => void;
+  // Input Request State (for targeting, modal choices, etc.)
+  pendingInputRequest: InputRequest | null;
+  pendingInputPlayerId: PlayerId | null;
+
+  // Controllers (handle player actions)
+  localController: HumanController | AIController | null;
+  opponentController: HumanController | AIController | null;
+  localPlayerId: PlayerId;
+
+  // Engine reference (for controllers to submit actions)
+  engine: GameEngine | null;
+
+  // Initialization
+  initGame: (localPlayerId: PlayerId) => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
-  engine: null,
   gameState: null,
-  selectedCardId: null,
-  isProcessing: false,
-  gameLog: [],
+  eventLog: [],
+  pendingInputRequest: null,
+  pendingInputPlayerId: null,
+  localController: null,
+  opponentController: null,
+  localPlayerId: 0,
+  engine: null,
 
-  initGame: () => {
-    // Create a new game with starter decks
-    const engine = initializeGame();
+  initGame: (localPlayerId: PlayerId) => {
+    // Create controllers - local player is human, opponent is AI
+    const controller0 = localPlayerId === 0 ? new HumanController(0) : new AIController(0, null as any);
+    const controller1 = localPlayerId === 1 ? new HumanController(1) : new AIController(1, null as any);
 
-    // Subscribe to all game events
-    engine.onEvent((event) => {
-      const currentLog = get().gameLog;
+    // Create engine
+    const engine = new GameEngine(controller0, controller1);
 
-      // Add to log (keep last 100 events)
-      const newLog = [...currentLog, event].slice(-100);
+    // Now set the engine reference in AI controllers
+    if (controller0 instanceof AIController) {
+      (controller0 as any).engine = engine;
+    }
+    if (controller1 instanceof AIController) {
+      (controller1 as any).engine = engine;
+    }
 
-      // Update state snapshot when received
-      if (event.type === 'STATE_SNAPSHOT') {
+    // Create starter decks
+    const player0Deck = createStarterDeck(0, engine);
+    const player1Deck = createStarterDeck(1, engine);
+
+    // Initialize game
+    engine.initializeGame(player0Deck, player1Deck);
+
+    // Subscribe to ALL engine events (this is how UI stays in sync)
+    engine.onEvent((event: GameEvent) => {
+      const currentState = get();
+
+      // Add event to log
+      const newEventLog = [...currentState.eventLog, event];
+
+      // Handle INPUT_REQUIRED events
+      if (event.type === 'INPUT_REQUIRED') {
+        console.log('INPUT_REQUIRED received:', event.inputRequest);
         set({
+          eventLog: newEventLog,
+          pendingInputRequest: event.inputRequest,
+          pendingInputPlayerId: event.playerId,
+        });
+        return;
+      }
+
+      // Update game state snapshot when engine emits it
+      if (event.type === 'STATE_SNAPSHOT') {
+        console.log('STATE_SNAPSHOT received, current player:', event.state.currentPlayer);
+        set({
+          eventLog: newEventLog,
           gameState: event.state,
-          gameLog: newLog,
-          isProcessing: false,
+          // Clear input request when state snapshot arrives (input was provided)
+          pendingInputRequest: null,
+          pendingInputPlayerId: null,
         });
       } else {
-        set({ gameLog: newLog });
+        // For other events, just log them with full details
+        console.log('Event:', event.type, JSON.stringify(event, null, 2));
+        set({ eventLog: newEventLog });
       }
     });
 
+    // Set initial state (hands are empty at this point - proper architecture)
     set({
       engine,
+      localController: localPlayerId === 0 ? controller0 : controller1,
+      opponentController: localPlayerId === 0 ? controller1 : controller0,
+      localPlayerId,
       gameState: engine.state,
-      selectedCardId: null,
-      isProcessing: false,
-      gameLog: [],
-    });
-  },
-
-  playCard: (cardId: string, slotId?: SlotId) => {
-    const { engine, gameState, selectedCardId } = get();
-    if (!engine || !gameState) return;
-
-    set({ isProcessing: true });
-
-    try {
-      // Determine which card to play
-      const cardToPlay = cardId || selectedCardId;
-      if (!cardToPlay) {
-        set({ isProcessing: false });
-        return;
-      }
-
-      // Find the card
-      const player = gameState.players[gameState.currentPlayer];
-      const card = player.hand.find((c) => c.id === cardToPlay);
-
-      if (!card) {
-        console.error('Card not found in hand:', cardToPlay);
-        set({ isProcessing: false });
-        return;
-      }
-
-      // Submit the action
-      engine.processAction({
-        type: 'PLAY_CARD',
-        playerId: gameState.currentPlayer,
-        cardId: cardToPlay,
-        slotId,
-      });
-
-      // Clear selection
-      set({ selectedCardId: null });
-    } catch (error) {
-      console.error('Error playing card:', error);
-      set({ isProcessing: false });
-    }
-  },
-
-  pass: () => {
-    const { engine, gameState } = get();
-    if (!engine || !gameState) return;
-
-    set({ isProcessing: true });
-
-    try {
-      engine.processAction({
-        type: 'PASS',
-        playerId: gameState.currentPlayer,
-      });
-
-      set({ selectedCardId: null });
-    } catch (error) {
-      console.error('Error passing:', error);
-      set({ isProcessing: false });
-    }
-  },
-
-  selectCard: (cardId: string | null) => {
-    set({ selectedCardId: cardId });
-  },
-
-  reset: () => {
-    set({
-      engine: null,
-      gameState: null,
-      selectedCardId: null,
-      isProcessing: false,
-      gameLog: [],
+      eventLog: [],
     });
   },
 }));

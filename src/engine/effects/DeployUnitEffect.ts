@@ -1,45 +1,36 @@
 import { Effect } from './Effect';
-import type { EffectResult, GameState, SlotId } from '../types';
+import type { EffectResult, GameState, TerrainId } from '../types';
 import { UnitCard } from '../cards/Card';
 
 /**
- * Deploy a unit to a slot
+ * Deploy a unit to a terrain
  */
 export class DeployUnitEffect extends Effect {
   constructor(
     private unit: UnitCard,
-    private slotId: SlotId
+    private terrainId: TerrainId
   ) {
     super();
   }
 
-  execute(state: GameState): EffectResult {
+  async execute(state: GameState): Promise<EffectResult> {
     const events = [];
-    const slot = state.slots[this.slotId];
+    const terrain = state.terrains[this.terrainId];
 
-    // Place unit
-    slot.units[this.unit.owner] = this.unit;
-    this.unit.slotId = this.slotId;
+    // Place unit in player's slot on this terrain
+    terrain.slots[this.unit.owner].unit = this.unit;
+    this.unit.terrainId = this.terrainId;
 
     events.push({
       type: 'UNIT_DEPLOYED' as const,
       unitId: this.unit.id,
       unitName: this.unit.name,
-      slotId: this.slotId,
+      terrainId: this.terrainId,
       playerId: this.unit.owner,
     });
 
-    // Trigger slot ongoing effects (only for this player's effects)
-    const deployEffects = slot.ongoingEffects.filter(
-      (e) => e.owner === this.unit.owner && e.trigger === 'deploy'
-    );
-
-    for (const effect of deployEffects) {
-      effect.apply(this.unit);
-    }
-
-    // Trigger unit's onDeploy hook
-    this.unit.onDeploy();
+    // Trigger unit's onDeploy hook (await it - may request player input)
+    await this.unit.onDeploy();
 
     return { newState: state, events };
   }

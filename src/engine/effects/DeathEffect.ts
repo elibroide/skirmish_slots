@@ -10,37 +10,37 @@ export class DeathEffect extends Effect {
     super();
   }
 
-  execute(state: GameState): EffectResult {
+  async execute(state: GameState): Promise<EffectResult> {
     const events: GameEvent[] = [];
-    const slotId = this.unit.slotId;
+    const terrainId = this.unit.terrainId;
 
-    if (slotId === null) {
+    if (terrainId === null) {
       // Unit not on board, nothing to do
       return { newState: state, events };
     }
 
-    const slot = state.slots[slotId];
+    const terrain = state.terrains[terrainId];
 
-    // Remove from slot
-    slot.units[this.unit.owner] = null;
+    // Remove from terrain slot
+    terrain.slots[this.unit.owner].unit = null;
 
-    // Add to discard
+    // Add to graveyard
     const player = state.players[this.unit.owner];
-    player.discard.push(this.unit);
+    player.graveyard.push(this.unit);
 
     events.push({
       type: 'UNIT_DIED' as const,
       unitId: this.unit.id,
       unitName: this.unit.name,
-      slotId,
+      terrainId,
       cause: 'death',
     });
 
-    // Trigger death effects
-    this.unit.onDeath();
+    // Trigger death effects (await it - may request player input)
+    await this.unit.onDeath();
 
-    // Clear unit's slot reference
-    this.unit.slotId = null;
+    // Clear unit's terrain reference
+    this.unit.terrainId = null;
 
     return { newState: state, events };
   }

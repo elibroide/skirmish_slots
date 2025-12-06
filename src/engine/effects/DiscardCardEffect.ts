@@ -1,8 +1,8 @@
 import { Effect } from './Effect';
-import type { EffectResult, GameState, PlayerId } from '../types';
+import type { EffectResult, GameState, PlayerId, GameEvent } from '../types';
 
 /**
- * Discard cards from hand
+ * Discard cards from hand to graveyard
  */
 export class DiscardCardEffect extends Effect {
   constructor(
@@ -12,16 +12,16 @@ export class DiscardCardEffect extends Effect {
     super();
   }
 
-  execute(state: GameState): EffectResult {
-    const events = [];
+  async execute(state: GameState): Promise<EffectResult> {
+    const events: GameEvent[] = [];
     const player = state.players[this.playerId];
 
     for (let i = 0; i < this.count; i++) {
       if (player.hand.length === 0) break;
 
-      // Discard from end of hand
+      // Discard from end of hand to graveyard
       const card = player.hand.pop()!;
-      player.discard.push(card);
+      player.graveyard.push(card);
 
       events.push({
         type: 'CARD_DISCARDED' as const,

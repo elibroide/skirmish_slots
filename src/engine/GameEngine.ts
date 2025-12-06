@@ -5,14 +5,17 @@ import type {
   Card,
   UnitCard,
   PlayerId,
-  SlotId,
-  SlotEffect,
+  TerrainId,
+  PlayerSlotId,
 } from './types';
 import { EventEmitter } from './EventEmitter';
 import { EffectQueue } from './EffectQueue';
 import { StateChecker } from './StateChecker';
-import { createInitialGameState, getAdjacentSlots, getOpponent } from './GameState';
+import { createInitialGameState, getAdjacentTerrains, getOpponent, getUnitInFront } from './GameState';
 import type { Effect } from './effects/Effect';
+import { PlayCardEffect } from './effects';
+import { PassEffect } from './effects/PassEffect';
+import type { PlayerController } from './controllers/PlayerController';
 
 /**
  * Core game engine.
@@ -23,12 +26,32 @@ export class GameEngine {
   public effectQueue: EffectQueue;
   private eventEmitter: EventEmitter;
   private stateChecker: StateChecker;
+  private controllers: [PlayerController, PlayerController];
+  public pendingInputResolve: ((input: any) => void) | null = null;
 
-  constructor(deck1: Card[], deck2: Card[]) {
-    this.state = createInitialGameState(deck1, deck2);
+  constructor(controller0: PlayerController, controller1: PlayerController) {
+    this.state = {} as GameState;
     this.effectQueue = new EffectQueue();
     this.eventEmitter = new EventEmitter();
     this.stateChecker = new StateChecker(this);
+    this.controllers = [controller0, controller1];
+
+    // Controllers subscribe to all events
+    this.onEvent((event) => {
+      this.controllers.forEach((controller) => controller.onEvent(event));
+    });
+  }
+
+  async initializeGame(deck1: Card[], deck2: Card[]) {
+    this.state = createInitialGameState(deck1, deck2);
+
+    // Start the first skirmish (draw initial hands)
+    const { StartSkirmishEffect } = await import('./effects/StartSkirmishEffect');
+    this.enqueueEffect(new StartSkirmishEffect());
+    await this.processEffectQueue();
+
+    // Emit ACTION_REQUIRED for the first player
+    this.checkForRequiredActions();
   }
 
   /**
@@ -47,8 +70,9 @@ export class GameEngine {
 
   /**
    * Process a game action
+   * Now async to support input requests during effect execution
    */
-  processAction(action: GameAction): GameState {
+  async processAction(action: GameAction): Promise<GameState> {
     // Validate action
     if (!this.isLegalAction(action)) {
       throw new Error(`Illegal action: ${JSON.stringify(action)}`);
@@ -60,22 +84,53 @@ export class GameEngine {
       this.enqueueEffect(primaryEffect);
     }
 
-    // Process effect queue until empty
-    this.processEffectQueue();
+    // Process effect queue (await it)
+    await this.processEffectQueue();
 
-    // Emit final state snapshot
-    this.emitEvent({
-      type: 'STATE_SNAPSHOT',
-      state: this.state,
-    });
+    // Only emit STATE_SNAPSHOT if not waiting for input
+    if (!this.pendingInputResolve) {
+      this.emitEvent({
+        type: 'STATE_SNAPSHOT',
+        state: this.state,
+      });
+
+      // Check if anyone needs to act
+      this.checkForRequiredActions();
+    }
 
     return this.state;
   }
 
   /**
-   * Process the effect queue until empty
+   * Public alias for processAction (used by controllers)
    */
-  private processEffectQueue(): void {
+  async submitAction(action: GameAction): Promise<GameState> {
+    return await this.processAction(action);
+  }
+
+  /**
+   * Check if current player needs to make a decision and emit ACTION_REQUIRED
+   */
+  private checkForRequiredActions(): void {
+    const currentPlayer = this.state.currentPlayer;
+
+    // Only emit if game is ongoing and player hasn't declared done
+    if (
+      this.state.matchWinner === undefined &&
+      !this.state.isDone[currentPlayer]  // Changed from hasPassed
+    ) {
+      this.emitEvent({
+        type: 'ACTION_REQUIRED',
+        playerId: currentPlayer,
+      });
+    }
+  }
+
+  /**
+   * Process the effect queue until empty
+   * Now async to support input requests during effect execution
+   */
+  private async processEffectQueue(): Promise<void> {
     let iterations = 0;
     const MAX_ITERATIONS = 1000; // Prevent infinite loops
 
@@ -87,8 +142,8 @@ export class GameEngine {
       const effect = this.effectQueue.dequeue();
       if (!effect) break;
 
-      // Execute effect
-      const result = effect.execute(this.state);
+      // Execute effect (now async) - will naturally pause if effect awaits input
+      const result = await effect.execute(this.state);
 
       // Update state
       this.state = result.newState;
@@ -100,6 +155,22 @@ export class GameEngine {
       const stateEffects = this.stateChecker.checkStateConditions(this.state);
       stateEffects.forEach((e) => this.enqueueEffect(e));
     }
+  }
+
+  /**
+   * Submit player input (for targeting, modal choices, etc.)
+   * Resolves the pending input Promise, allowing effect execution to continue
+   */
+  submitInput(input: any): void {
+    if (!this.pendingInputResolve) {
+      throw new Error('No input request in progress');
+    }
+
+    // Resolve the Promise that requestInput() is awaiting
+    this.pendingInputResolve(input);
+    this.pendingInputResolve = null;
+
+    // No need to call processEffectQueue() - it's already running, just paused at the await
   }
 
   /**
@@ -115,14 +186,22 @@ export class GameEngine {
    */
   private actionToEffect(action: GameAction): Effect | null {
     // Import effects here to avoid circular dependencies
-    const { PlayCardEffect } = require('./effects/PlayCardEffect');
-    const { PassEffect } = require('./effects/PassEffect');
-
     switch (action.type) {
       case 'PLAY_CARD':
-        return new PlayCardEffect(action.playerId, action.cardId, action.slotId, action.targetUnitId, action.targetSlotId);
+        return new PlayCardEffect(
+          action.playerId,
+          action.cardId,
+          action.terrainId,  // Changed from slotId
+          action.targetUnitId,
+          action.targetTerrainId  // Changed from targetSlotId
+        );
 
-      case 'PASS':
+      case 'ACTIVATE':
+        // TODO: Implement ActivateAbilityEffect
+        // return new ActivateAbilityEffect(action.unitId);
+        return null;
+
+      case 'DONE':  // Changed from PASS
         return new PassEffect(action.playerId);
 
       default:
@@ -144,8 +223,8 @@ export class GameEngine {
       return false;
     }
 
-    // Check if player has already passed
-    if (this.state.hasPassed[action.playerId]) {
+    // Check if player has already declared done
+    if (this.state.isDone[action.playerId]) {  // Changed from hasPassed
       return false;
     }
 
@@ -156,15 +235,27 @@ export class GameEngine {
         const card = player.hand.find((c) => c.id === action.cardId);
         if (!card) return false;
 
-        // If it's a unit, must have a slotId
-        if ('power' in card && action.slotId === undefined) {
+        // If it's a unit, must have a terrainId
+        if ('power' in card && action.terrainId === undefined) {
           return false;
         }
 
         return true;
       }
 
-      case 'PASS':
+      case 'ACTIVATE': {
+        // Find unit
+        const unit = this.getUnitById(action.unitId);
+        if (!unit) return false;
+
+        // Check if unit belongs to current player
+        if (unit.owner !== action.playerId) return false;
+
+        // Check if unit can activate
+        return unit.canActivate();
+      }
+
+      case 'DONE':  // Changed from PASS
         return true;
 
       default:
@@ -182,15 +273,14 @@ export class GameEngine {
       const card =
         player.hand.find((c) => c.id === cardId) ||
         player.deck.find((c) => c.id === cardId) ||
-        player.discard.find((c) => c.id === cardId);
+        player.graveyard.find((c) => c.id === cardId);  // Changed from discard
       if (card) return card;
     }
 
-    // Check units on board
-    for (const slot of this.state.slots) {
-      for (const unit of slot.units) {
-        if (unit && unit.id === cardId) return unit;
-      }
+    // Check units on terrains
+    for (const terrain of this.state.terrains) {
+      if (terrain.slots[0].unit?.id === cardId) return terrain.slots[0].unit;
+      if (terrain.slots[1].unit?.id === cardId) return terrain.slots[1].unit;
     }
 
     return undefined;
@@ -200,27 +290,42 @@ export class GameEngine {
    * Get a unit by its instance ID
    */
   getUnitById(unitId: string): UnitCard | undefined {
-    for (const slot of this.state.slots) {
-      for (const unit of slot.units) {
-        if (unit && unit.id === unitId) return unit as UnitCard;
-      }
+    for (const terrain of this.state.terrains) {
+      if (terrain.slots[0].unit?.id === unitId) return terrain.slots[0].unit as UnitCard;
+      if (terrain.slots[1].unit?.id === unitId) return terrain.slots[1].unit as UnitCard;
     }
     return undefined;
   }
 
   /**
-   * Get close units to a given slot (adjacent slots)
+   * Get close units to a given terrain
+   * Close = adjacent terrains (left/right) AND unit in front (same terrain, opposite slot)
    */
-  getCloseUnits(slotId: SlotId | null, owner: PlayerId, filter: 'ally' | 'enemy' | 'any'): UnitCard[] {
-    if (slotId === null) return [];
+  getCloseUnits(terrainId: TerrainId | null, owner: PlayerId, filter: 'ally' | 'enemy' | 'any'): UnitCard[] {
+    if (terrainId === null) return [];
 
-    const adjacentSlotIds = getAdjacentSlots(slotId);
     const units: UnitCard[] = [];
 
-    for (const adjSlotId of adjacentSlotIds) {
-      const slot = this.state.slots[adjSlotId as SlotId];
-      for (let i = 0; i < 2; i++) {
-        const unit = slot.units[i] as UnitCard | null;
+    // 1. Get unit in front (same terrain, opposite slot)
+    const unitInFront = this.getUnitInFront(terrainId, owner);
+    if (unitInFront) {
+      if (filter === 'ally' && unitInFront.owner === owner) {
+        units.push(unitInFront);
+      } else if (filter === 'enemy' && unitInFront.owner !== owner) {
+        units.push(unitInFront);
+      } else if (filter === 'any') {
+        units.push(unitInFront);
+      }
+    }
+
+    // 2. Get units on adjacent terrains (left/right)
+    const adjacentTerrainIds = getAdjacentTerrains(terrainId);
+    for (const adjTerrainId of adjacentTerrainIds) {
+      const terrain = this.state.terrains[adjTerrainId as TerrainId];
+      const unit0 = terrain.slots[0].unit;
+      const unit1 = terrain.slots[1].unit;
+
+      for (const unit of [unit0, unit1]) {
         if (!unit) continue;
 
         if (filter === 'ally' && unit.owner === owner) {
@@ -237,32 +342,23 @@ export class GameEngine {
   }
 
   /**
-   * Add an ongoing effect to a slot
+   * Get unit in front (opposite player's unit on same terrain)
    */
-  addSlotEffect(slotId: SlotId, effect: SlotEffect): void {
-    const slot = this.state.slots[slotId];
-    slot.ongoingEffects.push(effect);
-
-    this.emitEvent({
-      type: 'SLOT_EFFECT_ADDED',
-      slotId,
-      effectId: effect.id,
-      description: effect.description,
-      owner: effect.owner,
-    });
+  getUnitInFront(terrainId: TerrainId, playerId: PlayerId): UnitCard | null {
+    return getUnitInFront(this.state, terrainId, playerId);
   }
 
   /**
-   * Remove an ongoing effect from a slot
+   * Add slot modifier (replaces addSlotEffect - simpler system)
    */
-  removeSlotEffect(slotId: SlotId, effectId: string): void {
-    const slot = this.state.slots[slotId];
-    slot.ongoingEffects = slot.ongoingEffects.filter((e) => e.id !== effectId);
+  addSlotModifier(terrainId: TerrainId, playerId: PlayerId, amount: number): void {
+    this.state.terrains[terrainId].slots[playerId].modifier += amount;
 
     this.emitEvent({
-      type: 'SLOT_EFFECT_REMOVED',
-      slotId,
-      effectId,
+      type: 'SLOT_MODIFIER_CHANGED',
+      terrainId,
+      playerId,
+      newModifier: this.state.terrains[terrainId].slots[playerId].modifier,
     });
   }
 
@@ -271,9 +367,9 @@ export class GameEngine {
    */
   getPlayerUnits(playerId: PlayerId): UnitCard[] {
     const units: UnitCard[] = [];
-    for (const slot of this.state.slots) {
-      const unit = slot.units[playerId] as UnitCard | null;
-      if (unit) units.push(unit);
+    for (const terrain of this.state.terrains) {
+      const unit = terrain.slots[playerId as PlayerSlotId].unit;
+      if (unit) units.push(unit as UnitCard);
     }
     return units;
   }

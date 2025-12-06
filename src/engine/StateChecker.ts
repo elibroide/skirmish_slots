@@ -1,11 +1,12 @@
-import type { GameState, PlayerId } from './types';
+import type { GameState, PlayerId, PlayerSlotId } from './types';
 import type { Effect } from './effects/Effect';
 import type { GameEngine } from './GameEngine';
+import { DeathEffect } from './effects';
 
 /**
  * Checks game state for conditions that trigger automatic effects:
  * - Unit deaths (power <= 0)
- * - Round end (both players passed)
+ * - Skirmish end (both players declared done)
  * - Match end (win conditions met)
  */
 export class StateChecker {
@@ -22,8 +23,8 @@ export class StateChecker {
     // Check for unit deaths first
     effects.push(...this.checkDeaths(state));
 
-    // NOTE: Round end and match end are handled by explicit actions (PASS)
-    // and effects (ResolveRoundEffect), not automatic state checks.
+    // NOTE: Skirmish end and match end are handled by explicit actions (DONE)
+    // and effects (ResolveSkirmishEffect), not automatic state checks.
 
     return effects;
   }
@@ -34,12 +35,10 @@ export class StateChecker {
   private checkDeaths(state: GameState): Effect[] {
     const deathEffects: Effect[] = [];
 
-    // Import here to avoid circular dependency
-    const { DeathEffect } = require('./effects/DeathEffect');
-
-    for (const slot of state.slots) {
-      for (let i = 0; i < 2; i++) {
-        const unit = slot.units[i];
+    // Check all terrains for dead units
+    for (const terrain of state.terrains) {
+      for (const playerId of [0, 1] as PlayerSlotId[]) {
+        const unit = terrain.slots[playerId].unit;
         if (unit && unit.power <= 0) {
           deathEffects.push(new DeathEffect(unit));
         }
@@ -50,10 +49,10 @@ export class StateChecker {
   }
 
   /**
-   * Check if the round should end (both players passed)
+   * Check if the skirmish should end (both players declared done)
    */
-  shouldEndRound(state: GameState): boolean {
-    return state.hasPassed[0] && state.hasPassed[1];
+  shouldEndSkirmish(state: GameState): boolean {
+    return state.isDone[0] && state.isDone[1];
   }
 
   /**
@@ -61,16 +60,16 @@ export class StateChecker {
    * @returns PlayerId if there's a winner, null for draw, undefined for ongoing
    */
   shouldEndMatch(state: GameState): PlayerId | null | undefined {
-    // 2 rounds won = victory
-    if (state.players[0].roundsWon >= 2) return 0;
-    if (state.players[1].roundsWon >= 2) return 1;
+    // 2 skirmishes won = victory
+    if (state.players[0].skirmishesWon >= 2) return 0;
+    if (state.players[1].skirmishesWon >= 2) return 1;
 
     // 1 win + 1 tie = victory
-    if (state.players[0].roundsWon === 1 && state.tieRounds >= 1) return 0;
-    if (state.players[1].roundsWon === 1 && state.tieRounds >= 1) return 1;
+    if (state.players[0].skirmishesWon === 1 && state.tieSkirmishes >= 1) return 0;
+    if (state.players[1].skirmishesWon === 1 && state.tieSkirmishes >= 1) return 1;
 
     // 2 ties = draw
-    if (state.tieRounds >= 2) return null;
+    if (state.tieSkirmishes >= 2) return null;
 
     // Continue playing
     return undefined;

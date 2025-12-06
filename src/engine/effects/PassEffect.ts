@@ -1,39 +1,47 @@
 import { Effect } from './Effect';
 import type { EffectResult, GameState, PlayerId } from '../types';
+import { ResolveSkirmishEffect } from './ResolveSkirmishEffect';
 
 /**
- * Handle a player passing their turn
+ * Handle a player declaring done (was "passing")
  */
 export class PassEffect extends Effect {
   constructor(private playerId: PlayerId) {
     super();
   }
 
-  execute(state: GameState): EffectResult {
+  async execute(state: GameState): Promise<EffectResult> {
     const events = [];
 
-    // Mark player as passed
-    state.hasPassed[this.playerId] = true;
+    // Mark player as done
+    state.isDone[this.playerId] = true;
 
     events.push({
-      type: 'PLAYER_PASSED' as const,
+      type: 'PLAYER_DONE' as const,
       playerId: this.playerId,
     });
 
-    // Check if both players have passed
-    if (state.hasPassed[0] && state.hasPassed[1]) {
-      // Enqueue round resolution
-      const { ResolveRoundEffect } = require('./ResolveRoundEffect');
-      this.engine.enqueueEffect(new ResolveRoundEffect());
+    // Check if both players have declared done
+    if (state.isDone[0] && state.isDone[1]) {
+      // Both done - enqueue skirmish resolution (don't switch priority)
+      this.engine.enqueueEffect(new ResolveSkirmishEffect());
     } else {
-      // Switch priority to opponent
+      // Only this player done - check if opponent has also declared done
       const opponent = (1 - this.playerId) as PlayerId;
-      state.currentPlayer = opponent;
 
-      events.push({
-        type: 'PRIORITY_CHANGED' as const,
-        newPriority: opponent,
-      });
+      if (state.isDone[opponent]) {
+        // Opponent already declared done earlier, both are done now
+        // Enqueue skirmish resolution (don't switch priority)
+        this.engine.enqueueEffect(new ResolveSkirmishEffect());
+      } else {
+        // Opponent hasn't declared done yet - switch priority to them
+        state.currentPlayer = opponent;
+
+        events.push({
+          type: 'PRIORITY_CHANGED' as const,
+          newPriority: opponent,
+        });
+      }
     }
 
     return { newState: state, events };

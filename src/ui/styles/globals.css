@@ -1,45 +1,23 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Nunito:wght@300;400;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  font-family: 'Nunito', sans-serif;
+}
 
 body {
-  background-color: rgb(17 24 39);
-  color: rgb(243 244 246);
-}
-
-.card {
-  background-color: rgb(31 41 55);
-  border: 1px solid rgb(55 65 81);
-  border-radius: 0.5rem;
-  padding: 0.75rem;
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-  transition: all 150ms;
-}
-
-.card:hover {
-  border-color: rgb(75 85 99);
-  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
-}
-
-.btn {
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  font-weight: 600;
-  transition: colors 150ms;
-}
-
-.btn-primary {
-  background-color: rgb(37 99 235);
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: rgb(29 78 216);
-}
-
-.btn-secondary {
-  background-color: rgb(55 65 81);
-  color: white;
-}
-
-.btn-secondary:hover {
-  background-color: rgb(75 85 99);
+  background-color: #e7e5e4; /* stone-200 - tabletop surface */
+  color: #292524; /* ink */
 }

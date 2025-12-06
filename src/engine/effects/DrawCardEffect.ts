@@ -1,37 +1,34 @@
 import { Effect } from './Effect';
-import type { EffectResult, GameState, PlayerId } from '../types';
+import type { EffectResult, GameState, PlayerId, GameEvent } from '../types';
 
 /**
- * Draw cards from deck to hand
+ * Draw a single card from deck to hand
  */
 export class DrawCardEffect extends Effect {
   constructor(
-    private playerId: PlayerId,
-    private count: number
+    private playerId: PlayerId
   ) {
     super();
   }
 
-  execute(state: GameState): EffectResult {
-    const events = [];
+  async execute(state: GameState): Promise<EffectResult> {
+    const events: GameEvent[] = [];
     const player = state.players[this.playerId];
 
-    for (let i = 0; i < this.count; i++) {
-      // If deck is empty, skip draw
-      if (player.deck.length === 0) {
-        break;
-      }
-
-      const card = player.deck.pop()!;
-      player.hand.push(card);
-
-      events.push({
-        type: 'CARD_DRAWN' as const,
-        playerId: this.playerId,
-        cardId: card.id,
-        cardName: card.name,
-      });
+    // If deck is empty, skip draw
+    if (player.deck.length === 0) {
+      return { newState: state, events };
     }
+
+    const card = player.deck.pop()!;
+    player.hand.push(card);
+
+    events.push({
+      type: 'CARD_DRAWN' as const,
+      playerId: this.playerId,
+      cardId: card.id,
+      cardName: card.name,
+    });
 
     return { newState: state, events };
   }

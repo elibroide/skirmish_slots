@@ -1,4 +1,4 @@
-import type { PlayerId, SlotId, TargetInfo, GameState, UnitCard as IUnitCard } from '../types';
+import type { PlayerId, TerrainId, TargetInfo, GameState, UnitCard as IUnitCard, InputRequest } from '../types';
 import type { GameEngine } from '../GameEngine';
 import { generateId } from '../../utils/helpers';
 
@@ -9,13 +9,15 @@ export abstract class Card {
   id: string; // Unique instance ID
   cardId: string; // Card type ID (e.g., "scout")
   name: string;
+  description: string; // Card ability description
   owner: PlayerId;
   engine: GameEngine;
 
-  constructor(cardId: string, name: string, owner: PlayerId, engine: GameEngine) {
+  constructor(cardId: string, name: string, description: string, owner: PlayerId, engine: GameEngine) {
     this.id = generateId();
     this.cardId = cardId;
     this.name = name;
+    this.description = description;
     this.owner = owner;
     this.engine = engine;
   }
@@ -42,15 +44,15 @@ export abstract class Card {
   /**
    * Select a default target (for AI)
    */
-  selectDefaultTarget(state: GameState): string | SlotId | null {
+  selectDefaultTarget(state: GameState): string | TerrainId | null {
     const targets = this.getValidTargets(state);
 
     if (targets.type === 'enemy_unit' || targets.type === 'ally_unit' || targets.type === 'unit') {
       return targets.validUnitIds[0] || null;
     }
 
-    if (targets.type === 'slot') {
-      return targets.validSlotIds[0] ?? null;
+    if (targets.type === 'terrain') {
+      return targets.validTerrainIds[0] ?? null;
     }
 
     return null;
@@ -63,10 +65,18 @@ export abstract class Card {
 export abstract class UnitCard extends Card implements IUnitCard {
   power: number;
   originalPower: number;
-  slotId: SlotId | null = null;
+  terrainId: TerrainId | null = null;  // Changed from slotId
 
-  constructor(cardId: string, name: string, power: number, owner: PlayerId, engine: GameEngine) {
-    super(cardId, name, owner, engine);
+  // Activate/Cooldown system
+  activateAbility?: {
+    cooldownMax: number;
+    cooldownRemaining: number;
+    description: string;
+    activate: () => void;
+  };
+
+  constructor(cardId: string, name: string, description: string, power: number, owner: PlayerId, engine: GameEngine) {
+    super(cardId, name, description, owner, engine);
     this.power = power;
     this.originalPower = power;
   }
@@ -75,27 +85,56 @@ export abstract class UnitCard extends Card implements IUnitCard {
     return 'unit';
   }
 
-  // ========== Lifecycle Hooks ==========
-  // These are called automatically by effects
+  // ========== Input Request Helper ==========
 
   /**
-   * Called when this unit is deployed to a slot
+   * Request player input (targeting, modal choices, etc.)
+   * This method suspends effect execution until player provides input
+   *
+   * Example:
+   *   const targetId = await this.requestInput({
+   *     type: 'target',
+   *     targetType: 'enemy_unit',
+   *     validTargetIds: enemies.map(e => e.id),
+   *     context: 'Archer Deploy ability'
+   *   });
    */
-  onDeploy(): void {
+  protected requestInput(request: InputRequest): Promise<any> {
+    return new Promise((resolve) => {
+      // Store the resolve function so submitInput() can call it
+      this.engine.pendingInputResolve = resolve;
+
+      // Emit INPUT_REQUIRED event
+      this.engine.emitEvent({
+        type: 'INPUT_REQUIRED',
+        playerId: this.owner,
+        inputRequest: request,
+      });
+    });
+  }
+
+  // ========== Lifecycle Hooks ==========
+  // These are called automatically by effects
+  // Now async to support requestInput() calls
+
+  /**
+   * Called when this unit is deployed to a terrain
+   */
+  async onDeploy(): Promise<void> {
     // Override in subclasses
   }
 
   /**
    * Called when this unit dies (any reason)
    */
-  onDeath(): void {
+  async onDeath(): Promise<void> {
     // Override in subclasses
   }
 
   /**
-   * Called when this unit conquers its slot
+   * Called when this unit conquers its terrain
    */
-  onConquer(): void {
+  async onConquer(): Promise<void> {
     // Override in subclasses
   }
 
@@ -104,6 +143,60 @@ export abstract class UnitCard extends Card implements IUnitCard {
    */
   onPowerChanged(_oldPower: number, _newPower: number): void {
     // Override in subclasses
+  }
+
+  /**
+   * Called at start of owner's turn (for cooldown reduction and turn-start triggers)
+   */
+  onTurnStart(): void {
+    // Override in subclasses
+  }
+
+  /**
+   * Called when this unit is consumed (by another unit or action)
+   */
+  onConsumed?(_consumingUnit: UnitCard | null): void;
+  // Optional - override in cards with Consumed: abilities
+
+  // ========== Activate/Cooldown Methods ==========
+
+  /**
+   * Check if this unit can activate its ability
+   */
+  canActivate(): boolean {
+    if (!this.activateAbility) return false;
+    return this.activateAbility.cooldownRemaining === 0;
+  }
+
+  /**
+   * Activate this unit's ability
+   */
+  activate(): void {
+    if (!this.canActivate()) return;
+    this.activateAbility!.activate();
+    this.activateAbility!.cooldownRemaining = this.activateAbility!.cooldownMax;
+
+    this.engine.emitEvent({
+      type: 'ABILITY_ACTIVATED',
+      unitId: this.id,
+      abilityName: this.activateAbility!.description,
+    });
+  }
+
+  /**
+   * Reduce cooldown by 1 (called at start of owner's turn)
+   */
+  reduceCooldown(): void {
+    if (!this.activateAbility) return;
+    if (this.activateAbility.cooldownRemaining > 0) {
+      this.activateAbility.cooldownRemaining--;
+
+      this.engine.emitEvent({
+        type: 'COOLDOWN_REDUCED',
+        unitId: this.id,
+        newCooldown: this.activateAbility.cooldownRemaining,
+      });
+    }
   }
 
   // ========== Helper Methods ==========
@@ -118,7 +211,7 @@ export abstract class UnitCard extends Card implements IUnitCard {
     this.engine.emitEvent({
       type: 'UNIT_POWER_CHANGED',
       unitId: this.id,
-      slotId: this.slotId!,
+      terrainId: this.terrainId!,
       oldPower,
       newPower: this.power,
       amount,
@@ -138,7 +231,7 @@ export abstract class UnitCard extends Card implements IUnitCard {
     this.engine.emitEvent({
       type: 'UNIT_DAMAGED',
       unitId: this.id,
-      slotId: this.slotId!,
+      terrainId: this.terrainId!,
       amount,
       newPower: this.power,
     });
@@ -148,6 +241,7 @@ export abstract class UnitCard extends Card implements IUnitCard {
 
   /**
    * Heal this unit (restore power up to original)
+   * Note: Keep for future use, not used by V2 cards
    */
   heal(amount: number): void {
     const oldPower = this.power;
@@ -158,7 +252,7 @@ export abstract class UnitCard extends Card implements IUnitCard {
       this.engine.emitEvent({
         type: 'UNIT_HEALED',
         unitId: this.id,
-        slotId: this.slotId!,
+        terrainId: this.terrainId!,
         amount: actualHealed,
         newPower: this.power,
       });
@@ -168,17 +262,32 @@ export abstract class UnitCard extends Card implements IUnitCard {
   }
 
   /**
-   * Get close ally units (adjacent slots)
+   * Get close ally units (adjacent terrains)
    */
   getCloseAllies(): UnitCard[] {
-    return this.engine.getCloseUnits(this.slotId, this.owner, 'ally');
+    return this.engine.getCloseUnits(this.terrainId, this.owner, 'ally');
   }
 
   /**
-   * Get close enemy units (adjacent slots)
+   * Get close enemy units (adjacent terrains)
    */
   getCloseEnemies(): UnitCard[] {
-    return this.engine.getCloseUnits(this.slotId, this.owner, 'enemy');
+    return this.engine.getCloseUnits(this.terrainId, this.owner, 'enemy');
+  }
+
+  /**
+   * Get unit in front (opposite player's unit on same terrain)
+   */
+  getUnitInFront(): UnitCard | null {
+    if (this.terrainId === null) return null;
+    return this.engine.getUnitInFront(this.terrainId, this.owner);
+  }
+
+  /**
+   * Check if this unit can be consumed
+   */
+  canBeConsumed(): boolean {
+    return true;  // Override in specific cards if needed
   }
 }
 

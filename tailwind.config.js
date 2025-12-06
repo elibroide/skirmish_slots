@@ -22,6 +22,16 @@ export default {
           hover: '#374151',
           active: '#4b5563',
         },
+        paper: '#fdfbf7',
+        ink: '#292524',
+      },
+      fontFamily: {
+        hand: ['"Patrick Hand"', 'cursive'],
+        ui: ['"Nunito"', 'sans-serif'],
+      },
+      boxShadow: {
+        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+        'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
       },
     },
   },
