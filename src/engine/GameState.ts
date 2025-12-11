@@ -1,4 +1,7 @@
-import type { GameState, Player, Terrain, PlayerId, Card, TerrainId, UnitCard } from './types';
+import type { GameState, Terrain, PlayerId, Card, TerrainId, UnitCard } from './types';
+import { Player } from './Player';
+import type { GameEngine } from './GameEngine';
+import type { SeededRNG } from './SeededRNG';
 import { GAME_CONSTANTS } from '../utils/constants';
 
 /**
@@ -6,25 +9,15 @@ import { GAME_CONSTANTS } from '../utils/constants';
  */
 export function createInitialGameState(
   deck1: Card[],
-  deck2: Card[]
+  deck2: Card[],
+  engine: GameEngine,
+  rng: SeededRNG
 ): GameState {
-  const player0: Player = {
-    id: 0,
-    hand: [],
-    deck: [...deck1],
-    graveyard: [],  // Changed from discard
-    sp: 0,  // Changed from vp
-    skirmishesWon: 0,  // Changed from roundsWon
-  };
-
-  const player1: Player = {
-    id: 1,
-    hand: [],
-    deck: [...deck2],
-    graveyard: [],
-    sp: 0,
-    skirmishesWon: 0,
-  };
+  const player0 = new Player(0, engine);
+  player0.deck = [...deck1];
+  
+  const player1 = new Player(1, engine);
+  player1.deck = [...deck2];
 
   const emptyTerrain = (): Terrain => ({
     slots: {
@@ -38,7 +31,7 @@ export function createInitialGameState(
     players: [player0, player1],
     terrains: [emptyTerrain(), emptyTerrain(), emptyTerrain(), emptyTerrain(), emptyTerrain()],
     currentSkirmish: 1,  // Changed from currentRound
-    currentPlayer: Math.random() < 0.5 ? 0 : 1, // Random starting player
+    currentPlayer: rng.next() < 0.5 ? 0 : 1, // Random starting player (deterministic)
     isDone: [false, false],  // Changed from hasPassed
     tieSkirmishes: 0,  // Changed from tieRounds
     matchWinner: undefined,

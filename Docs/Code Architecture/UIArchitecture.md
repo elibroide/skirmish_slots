@@ -150,11 +150,14 @@ interface GameStore {
   pendingInputRequest: InputRequest | null;
   pendingInputPlayerId: PlayerId | null;
 
+  // Game Mode
+  gameMode: 'vs-ai' | 'human-vs-human' | 'god-mode';
+
   // Engine reference (for components to call)
   engine: GameEngine | null;
 
   // Initialization
-  initGame: (localPlayerId: PlayerId) => void;
+  initGame: (localPlayerId: PlayerId, mode?: 'vs-ai' | 'human-vs-human' | 'god-mode') => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -162,9 +165,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
   eventLog: [],
   pendingInputRequest: null,
   pendingInputPlayerId: null,
+  gameMode: 'vs-ai',
   engine: null,
 
-  initGame: (localPlayerId: PlayerId) => {
+  initGame: (localPlayerId: PlayerId, mode = 'vs-ai') => {
+    // Determine controllers based on mode
+    // ...
+
     const engine = new GameEngine(controller0, controller1);
 
     // Subscribe to ALL engine events
@@ -417,6 +424,83 @@ initGame: (localPlayerId: PlayerId) => {
 - ✅ Components don't subscribe to engine directly
 - ✅ Store acts as event aggregator
 - ✅ Clean unsubscribe on unmount
+
+---
+
+## Navigation and Menu System (M3)
+
+### Screen Management
+
+The app now supports multiple screens with navigation:
+
+```typescript
+type Screen = 'menu' | 'deck-builder' | 'game';
+
+function App() {
+  const [currentScreen, setCurrentScreen] = useState<Screen>('menu');
+
+  if (currentScreen === 'menu') {
+    return <MainMenu onStartGame={handleStartGame} onOpenDeckBuilder={handleOpenDeckBuilder} />;
+  }
+
+  if (currentScreen === 'deck-builder') {
+    return <DeckBuilder onBack={handleBackToMenu} />;
+  }
+
+  return <GameBoard gameState={gameState} engine={engine} localPlayerId={localPlayerId} />;
+}
+```
+
+### Main Menu Component
+
+The `MainMenu` component provides:
+- AI opponent selection (Heuristic vs Claude AI)
+- Single player game start
+- Local multiplayer (hot seat)
+- Network game hosting (placeholder)
+- Access to deck builder
+
+**Props:**
+```typescript
+type MainMenuProps = {
+  onStartGame: (mode: GameMode, aiType?: AIType) => void;
+  onOpenDeckBuilder: () => void;
+};
+```
+
+### Deck Builder Store
+
+The `deckStore` manages deck construction state separate from game state:
+
+```typescript
+interface DeckStoreState {
+  deck: CardEntry[];
+  
+  addCard: (cardId: string) => void;
+  removeCard: (cardId: string) => void;
+  getCardCount: (cardId: string) => number;
+  canAddCard: (cardId: string) => boolean;
+  getDeckSize: () => number;
+}
+```
+
+**Key Features:**
+- Enforces 3 copy limit per card
+- Enforces min/max deck size (20-30 cards)
+- Maintains alphabetical ordering
+- Starts with default starter deck
+
+### Deck Builder Component
+
+The `DeckBuilder` component provides a two-panel UI:
+- Left panel: Current deck with card counts (×2, ×3)
+- Right panel: All available cards with copy limits
+
+**User Actions:**
+- Click card in deck → removes one copy
+- Click card in available list → adds one copy
+- Cards at max copies (3) are grayed out
+- Reset button returns to starter deck
 
 ---
 

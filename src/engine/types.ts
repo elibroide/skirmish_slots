@@ -1,144 +1,199 @@
-// Core game types for Skirmish card game
-
-// Player identifiers
+// Basic scalar types
 export type PlayerId = 0 | 1;
-
-// Terrain identifiers (0-4 for 5 terrains)
 export type TerrainId = 0 | 1 | 2 | 3 | 4;
-
-// Player slot identifiers (each terrain has 2 slots, one per player)
 export type PlayerSlotId = 0 | 1;
 
-// Forward declaration - actual classes defined in cards/Card.ts
-// Using 'any' here to avoid circular dependency issues
-export type Card = any;
-export type UnitCard = any;
-
-// Player slot with modifier (clears each skirmish)
-export interface PlayerSlot {
-  unit: UnitCard | null;
-  modifier: number;  // Simple numeric modifier (per-player slot), clears at skirmish end
+export interface SlotCoord {
+  terrainId: TerrainId;
+  playerId: PlayerId;
 }
 
-// Terrain structure (each terrain has 2 slots, one per player)
-export interface Terrain {
+export type InputRequest = 
+  | { type: 'target'; targetType: string; context: string; validTargetIds?: string[]; validSlots?: SlotCoord[] }
+  | { type: 'choose_option'; options: string[]; context: string };
+
+// Card types (minimal)
+// Note: We avoid importing Card/UnitCard classes here to prevent cycles
+// Use string IDs for state references
+
+// Game State Types
+export interface SlotState {
+  unit: any | null; // Avoid circular dependency with UnitCard
+  modifier: number; // e.g. +1 power to this slot
+}
+
+export interface TerrainState {
+  id: TerrainId;
   slots: {
-    0: PlayerSlot;  // Player 0's slot
-    1: PlayerSlot;  // Player 1's slot
+    0: SlotState;
+    1: SlotState;
   };
-  winner: PlayerId | null;
+  winner: PlayerId | null; // null = draw/ongoing
 }
 
-// Player state
-export interface Player {
+export interface PlayerState {
   id: PlayerId;
-  hand: Card[];
-  deck: Card[];
-  graveyard: Card[];  // Face-up graveyard (replaces "discard")
-  sp: number;  // Skirmish Points (replaces "vp")
-  skirmishesWon: number;  // Replaces "roundsWon"
+  hand: any[]; // Card[]
+  deck: any[]; // Card[]
+  graveyard: any[]; // Card[]
+  sp: number; // Skirmish Points
+  skirmishesWon: number;
 }
 
-// Complete game state
 export interface GameState {
-  players: [Player, Player];
-  terrains: [Terrain, Terrain, Terrain, Terrain, Terrain];  // 5 terrains
-  currentSkirmish: number;  // Replaces "currentRound"
+  players: [PlayerState, PlayerState];
+  terrains: [
+    TerrainState,
+    TerrainState,
+    TerrainState,
+    TerrainState,
+    TerrainState
+  ];
+  currentSkirmish: number;
   currentPlayer: PlayerId;
-  isDone: [boolean, boolean];  // Replaces "hasPassed"
-  tieSkirmishes: number;  // Replaces "tieRounds"
-  matchWinner: PlayerId | null | undefined; // null = draw, undefined = ongoing
+  isDone: [boolean, boolean];
+  tieSkirmishes: number;
+  matchWinner?: PlayerId;
 }
 
-// Input request types (for cards that need player input mid-execution)
-export type InputRequest =
-  | {
-      type: 'target';
-      targetType: 'unit' | 'enemy_unit' | 'ally_unit' | 'close_unit' | 'terrain';
-      validTargetIds: string[];  // Unit IDs or terrain IDs (as strings)
-      context: string;  // Description of what needs targeting (e.g., "Archer Deploy ability")
-    }
-  | {
-      type: 'modal_choice';
-      choices: string[];  // Array of choice descriptions
-      context: string;
-    };
-  // Future input types can be added here (number selection, yes/no, etc.)
-
-// Game actions (player inputs)
+// Game Actions (Player -> Engine)
 export type GameAction =
   | {
       type: 'PLAY_CARD';
       playerId: PlayerId;
-      cardId: string; // Instance ID of card
-      terrainId?: TerrainId; // For units (replaces slotId)
-      targetUnitId?: string; // For targeted effects
-      targetTerrainId?: TerrainId; // For terrain-targeted effects
+      cardId: string;
+      targetSlot?: SlotCoord;
+      checksum?: string; // For network sync verification
     }
   | {
       type: 'ACTIVATE';
       playerId: PlayerId;
-      unitId: string;  // Unit with Activate ability
+      unitId: string;
+      checksum?: string;
     }
   | {
-      type: 'DONE';  // Replaces 'PASS'
+      type: 'DONE';
       playerId: PlayerId;
+      checksum?: string;
+    }
+  | {
+      type: 'INPUT';
+      playerId: PlayerId;
+      input: any;
+      checksum?: string;
     };
 
-// Game events (emitted by engine)
+// Game Events (Engine -> UI/Controllers)
 export type GameEvent =
-  // Card events
-  | { type: 'CARD_PLAYED'; playerId: PlayerId; cardId: string; cardName: string; terrainId?: TerrainId }
-  | { type: 'CARD_DRAWN'; playerId: PlayerId; cardId: string; cardName: string }
-  | { type: 'CARD_DISCARDED'; playerId: PlayerId; cardId: string; cardName: string }
-
-  // Unit events
+  | { type: 'CARD_PLAYED'; playerId: PlayerId; cardId: string; cardName: string; cardType: 'unit' | 'action'; targetSlot?: SlotCoord }
   | { type: 'UNIT_DEPLOYED'; unitId: string; unitName: string; terrainId: TerrainId; playerId: PlayerId }
   | { type: 'UNIT_DIED'; unitId: string; unitName: string; terrainId: TerrainId; cause: string }
-  | { type: 'UNIT_CONSUMED'; unitId: string; unitName: string; terrainId: TerrainId }  // Replaces UNIT_SACRIFICED
-  | { type: 'UNIT_BOUNCED'; unitId: string; unitName: string; terrainId: TerrainId; toHand: boolean }  // Keep for future
   | { type: 'UNIT_POWER_CHANGED'; unitId: string; terrainId: TerrainId; oldPower: number; newPower: number; amount: number }
   | { type: 'UNIT_DAMAGED'; unitId: string; terrainId: TerrainId; amount: number; newPower: number }
-  | { type: 'UNIT_HEALED'; unitId: string; terrainId: TerrainId; amount: number; newPower: number }  // Keep for future
-
-  // Terrain/Slot events
+  | { type: 'UNIT_HEALED'; unitId: string; terrainId: TerrainId; amount: number; newPower: number }
+  | { type: 'UNIT_CONSUMED'; unitId: string; unitName: string; terrainId: TerrainId }
+  | { type: 'UNIT_BOUNCED'; unitId: string; unitName: string; terrainId: TerrainId; toHand: boolean }
+  | { type: 'UNIT_MOVED'; unitId: string; fromTerrainId: TerrainId; toTerrainId: TerrainId; playerId: PlayerId }
   | { type: 'SLOT_MODIFIER_CHANGED'; terrainId: TerrainId; playerId: PlayerId; newModifier: number }
-  | { type: 'TERRAIN_RESOLVED'; terrainId: TerrainId; winner: PlayerId | null; unit0Power: number; unit1Power: number }
-
-  // Skirmish events (replaces Round events)
+  | { type: 'CARD_DRAWN'; playerId: PlayerId; count: number; cardId?: string }
+  | { type: 'CARD_DISCARDED'; playerId: PlayerId; cardId: string; cardName?: string }
+  | { type: 'TURN_CHANGED'; playerId: PlayerId }
+  | { type: 'ROUND_STARTED'; roundNumber: number }
   | { type: 'SKIRMISH_STARTED'; skirmishNumber: number }
+  | { type: 'TERRAIN_RESOLVED'; terrainId: TerrainId; winner: PlayerId | null; unit0Power: number; unit1Power: number }
+  | { type: 'CONQUER_TRIGGERED'; unitId: string; terrainId: TerrainId; slotId?: number } // slotId legacy support
   | { type: 'SKIRMISH_ENDED'; skirmishNumber: number; winner: PlayerId | null; sp: [number, number] }
-  | { type: 'PLAYER_DONE'; playerId: PlayerId }  // Replaces PLAYER_PASSED
-  | { type: 'CONQUER_TRIGGERED'; unitId: string; terrainId: TerrainId }
-  | { type: 'PRIORITY_CHANGED'; newPriority: PlayerId }
-
-  // Activate/Cooldown events (new)
-  | { type: 'ABILITY_ACTIVATED'; unitId: string; abilityName: string }
-  | { type: 'COOLDOWN_REDUCED'; unitId: string; newCooldown: number }
-
-  // Match events
-  | { type: 'MATCH_ENDED'; winner: PlayerId | null }
-
-  // Controller events (for automated players)
+  | { type: 'MATCH_ENDED'; winner: PlayerId }
   | { type: 'ACTION_REQUIRED'; playerId: PlayerId }
-  | { type: 'TARGET_REQUIRED'; playerId: PlayerId; context: string; validTargets: string[] }  // Deprecated: use INPUT_REQUIRED
   | { type: 'INPUT_REQUIRED'; playerId: PlayerId; inputRequest: InputRequest }
+  | { type: 'PRIORITY_CHANGED'; newPriority: PlayerId }
+  | { type: 'ABILITY_ACTIVATED'; unitId: string; abilityName: string }
+  | { type: 'ABILITY_TRIGGERED'; playerId: PlayerId; cardId: string; cardName: string; abilityName: string }
+  | { type: 'COOLDOWN_REDUCED'; unitId: string; newCooldown: number }
+  | { type: 'PLAYER_PASSED'; playerId: PlayerId }
+  | { type: 'STATE_SNAPSHOT'; state: GameState }
+  | { type: 'ACTION_EXECUTED'; action: GameAction } // For network sync
+  // Legacy/Migration types (to satisfy old code if needed)
+  | { type: 'ROUND_ENDED'; roundNumber: number; winner: PlayerId | null; vp: [number, number] }
+  | { type: 'SLOT_RESOLVED'; slotId: number; winner: PlayerId | null; unit0Power: number; unit1Power: number }
+  | { type: 'TARGET_REQUIRED'; playerId: PlayerId } // Legacy target request
+  ;
 
-  // State snapshot (sent after every action)
-  | { type: 'STATE_SNAPSHOT'; state: GameState };
-
-// Targeting information for cards that need targets
-export type TargetInfo =
-  | { type: 'none' }
-  | { type: 'unit'; validUnitIds: string[] }
-  | { type: 'terrain'; validTerrainIds: TerrainId[] }  // Replaces 'slot'
-  | { type: 'enemy_unit'; validUnitIds: string[] }
-  | { type: 'ally_unit'; validUnitIds: string[] }
-  | { type: 'close_unit'; validUnitIds: string[] };
-  // Note: 'far_unit' removed - no far targeting in V2
-
-// Result of effect execution
 export interface EffectResult {
   newState: GameState;
   events: GameEvent[];
+}
+
+// Targeting information
+export type TargetInfo =
+  | { type: 'none' }
+  | { type: 'slots'; validSlots: SlotCoord[] };
+
+export interface Card {
+    id: string;
+    cardId: string;
+    name: string;
+    description: string;
+    owner: PlayerId;
+    getType(): 'unit' | 'action';
+    needsTarget(): boolean;
+}
+
+export interface UnitCard extends Card {
+  power: number;
+  originalPower: number;
+  terrainId: TerrainId | null;
+  canActivate(): boolean;
+  requestInput(request: InputRequest): Promise<any>;
+}
+
+// Game Logging Types
+export interface PlayerInfo {
+  id: PlayerId;
+  name: string;
+  type: 'human' | 'ai';
+}
+
+export interface SimplifiedGameState {
+  currentSkirmish: number;
+  currentPlayer: PlayerId;
+  scores: {
+    player0: { sp: number; skirmishesWon: number };
+    player1: { sp: number; skirmishesWon: number };
+  };
+  terrains: Array<{
+    id: TerrainId;
+    winner: PlayerId | null;
+    units: [
+      { name: string; power: number } | null,
+      { name: string; power: number } | null
+    ];
+  }>;
+  handSizes: [number, number];
+  deckSizes: [number, number];
+}
+
+export interface GameLogEntry {
+  turn: number;
+  player: PlayerId;
+  playerType: 'human' | 'ai';
+  actionType: string;
+  details: any;
+  reasoning: string | null;
+  timestamp: string;
+  gameStateSnapshot: SimplifiedGameState;
+}
+
+export interface GameResult {
+  winner: PlayerId | null;
+  finalScore: [number, number];
+  totalTurns: number;
+}
+
+export interface GameLog {
+  gameId: string;
+  timestamp: string;
+  players: [PlayerInfo, PlayerInfo];
+  result: GameResult | null;
+  actions: GameLogEntry[];
 }

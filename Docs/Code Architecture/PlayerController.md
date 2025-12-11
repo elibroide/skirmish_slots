@@ -377,3 +377,46 @@ src/engine/
 
 **Does the plan work with this understanding?**
 ✅ Yes! The controller abstraction supports all these cases. You just swap controllers without changing the engine or UI.
+
+---
+
+## Implementation Status (M3)
+
+### Implemented Controllers
+
+**HumanController** ✅
+- Handles local player input via UI
+- Waits for user interaction
+- Implemented in `src/engine/controllers/HumanController.ts`
+
+**AIController** ✅
+- Handles AI decision-making
+- Supports multiple AI strategies (HeuristicAI, ClaudeAI)
+- Implemented in `src/engine/controllers/AIController.ts`
+
+**NetworkController** 🚧 (Placeholder)
+- Stub implementation created in `src/engine/controllers/NetworkController.ts`
+- Interface compliant but no actual network functionality
+- All methods are no-ops
+- Ready for future implementation
+
+### Future Network Implementation
+
+The `NetworkController` placeholder is ready for expansion:
+
+```typescript
+// Current (placeholder):
+export class NetworkController implements PlayerController {
+  onEvent(event: GameEvent): void { }
+  submitAction(action: Action): void { }
+  connect(): Promise<void> { return Promise.resolve(); }
+  disconnect(): void { }
+}
+
+// Future implementation will:
+// - Establish WebSocket/WebRTC connection
+// - Transmit actions to remote player
+// - Receive actions from remote player
+// - Handle reconnection and sync
+// - Emit network state events (connected, disconnected, lag)
+```

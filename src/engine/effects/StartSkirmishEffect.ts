@@ -1,6 +1,6 @@
 import { Effect } from './Effect';
 import type { EffectResult, GameState, PlayerId } from '../types';
-import { DrawCardEffect } from './DrawCardEffect';
+import { TurnStartEffect } from './TurnStartEffect';
 import { GAME_CONSTANTS } from '../../utils/constants';
 
 /**
@@ -11,17 +11,15 @@ export class StartSkirmishEffect extends Effect {
     const events = [];
 
     // Determine draw count
-    // First skirmish: draw 8 cards
-    // Subsequent skirmishes: draw 3 additional cards
     const drawCount = state.currentSkirmish === 1
       ? GAME_CONSTANTS.INITIAL_HAND_SIZE  // 8 cards
       : GAME_CONSTANTS.CARDS_DRAWN_PER_SKIRMISH;  // 3 cards
 
     // Draw cards for both players
+    // Order: Player 0 draws, then Player 1 draws
     for (const playerId of [0, 1] as PlayerId[]) {
-      for (let i = 0; i < drawCount; i++) {
-        this.engine.enqueueEffect(new DrawCardEffect(playerId));
-      }
+      const player = this.engine.getPlayer(playerId);
+      await player.draw(drawCount);
     }
 
     // Reset "done" flags
@@ -38,6 +36,12 @@ export class StartSkirmishEffect extends Effect {
       type: 'SKIRMISH_STARTED' as const,
       skirmishNumber: state.currentSkirmish,
     });
+
+    // Enqueue TurnStartEffect for the starting player
+    // This happens AFTER all draws
+    const sequence: Effect[] = [];
+    sequence.push(new TurnStartEffect());
+    this.engine.addSequence(sequence);
 
     return { newState: state, events };
   }

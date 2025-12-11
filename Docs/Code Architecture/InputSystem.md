@@ -416,26 +416,42 @@ The engine needs a way to route `submitInput()` to the correct Promise. Storing 
 
 ### AI Auto-Selection
 
-For AI players, cards should auto-select:
+AI players automatically select targets via the AIController:
 
 ```typescript
-async onDeploy(): Promise<void> {
-  const closeEnemies = this.getCloseEnemies();
-
-  if (closeEnemies.length === 0) return;
-
-  // AI: Auto-select first target
-  if (this.owner === aiPlayerId) {
-    const target = closeEnemies[0];
-    target.dealDamage(2);
-    return;
+// AIController.ts
+onEvent(event: GameEvent): void {
+  // Handle INPUT_REQUIRED for target selection
+  if (event.type === 'INPUT_REQUIRED' && event.playerId === this.playerId) {
+    setTimeout(() => {
+      const input = this.selectInput(event.inputRequest);
+      if (input !== null) {
+        this.engine.submitInput(input);
+      }
+    }, 500); // Short delay for visibility
   }
+}
 
-  // Human: Request input
-  const targetId = await this.requestInput({ ... });
-  // ...
+private selectInput(request: InputRequest): any {
+  if (request.type === 'target') {
+    // Simple strategy: pick first valid target/slot
+    if (request.validSlots && request.validSlots.length > 0) {
+      return request.validSlots[0];
+    }
+    if (request.validTargetIds && request.validTargetIds.length > 0) {
+      return request.validTargetIds[0];
+    }
+  }
+  
+  if (request.type === 'choose_option' && request.options.length > 0) {
+    return request.options[0];
+  }
+  
+  return null;
 }
 ```
+
+This keeps card implementations clean - cards don't need to check player type.
 
 ---
 

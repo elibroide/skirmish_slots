@@ -1,17 +1,15 @@
-import type { GameEvent } from './types';
-
 /**
  * Event emitter for game events.
  * Allows UI and other systems to subscribe to game state changes.
  */
-export class EventEmitter {
-  private listeners: Array<(event: GameEvent) => void> = [];
+export class EventEmitter<T> {
+  private listeners: Array<(event: T) => Promise<void> | void> = [];
 
   /**
    * Subscribe to game events.
    * Returns an unsubscribe function.
    */
-  subscribe(callback: (event: GameEvent) => void): () => void {
+  subscribe(callback: (event: T) => Promise<void> | void): () => void {
     this.listeners.push(callback);
 
     // Return unsubscribe function
@@ -22,18 +20,20 @@ export class EventEmitter {
 
   /**
    * Emit an event to all subscribers.
-   * Catches and logs errors in individual listeners to prevent one
-   * bad listener from breaking others.
+   * Now async to support awaiting listeners.
    */
-  emit(event: GameEvent): void {
-    this.listeners.forEach((listener) => {
+  async emit(event: T): Promise<void> {
+    // Execute all listeners in parallel
+    const promises = this.listeners.map(async (listener) => {
       try {
-        listener(event);
+        await listener(event);
       } catch (error) {
         console.error('Error in event listener:', error);
         console.error('Event:', event);
       }
     });
+
+    await Promise.all(promises);
   }
 
   /**

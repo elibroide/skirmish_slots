@@ -46,6 +46,22 @@ Visual design, interaction patterns, and component specifications.
 - **[InteractionDesign.md](./UI%20Design/InteractionDesign.md)** - Animations & feedback
 - **[ComponentSpecs.md](./UI%20Design/ComponentSpecs.md)** - Card, Slot, UI components
 
+### 4. AI Integration
+AI opponent system, API integrations, and game logging.
+
+**→ See [AI Integration/Index.md](./AI%20Integration/Index.md)**
+
+**Key Documents:**
+- **[AIArchitecture.md](./AI%20Integration/AIArchitecture.md)** - Plugin system & interfaces
+- **[ClaudeIntegration.md](./AI%20Integration/ClaudeIntegration.md)** - Claude API integration
+- **[GameLogging.md](./AI%20Integration/GameLogging.md)** - Action logging with AI reasoning
+- **[PromptEngineering.md](./AI%20Integration/PromptEngineering.md)** - Effective prompt design
+- **[Testing.md](./AI%20Integration/Testing.md)** - AI testing strategies
+
+### 5. Development milestones
+
+**→ See [Milestones.md](./Milestones.md) For milestones.**
+
 ---
 
 ## Quick Start
@@ -62,6 +78,12 @@ Check the relevant architecture doc:
 
 **Designing UI?**
 Start with [VisualSystem.md](./UI%20Design/VisualSystem.md) for colors and typography.
+
+**Implementing AI?**
+Check the AI integration docs:
+- AI opponent → [AIArchitecture.md](./AI%20Integration/AIArchitecture.md)
+- Logging → [GameLogging.md](./AI%20Integration/GameLogging.md)
+- Prompts → [PromptEngineering.md](./AI%20Integration/PromptEngineering.md)
 
 ---
 

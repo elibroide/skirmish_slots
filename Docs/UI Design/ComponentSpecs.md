@@ -57,7 +57,9 @@
 
 ### Display Rules
 
-**Location:** Right side panel "Slot bonus" area
+**Location:** Badge positioned on the slot itself (closer to player's side)
+- **Player (Bottom):** Badge at bottom of slot
+- **Opponent (Top):** Badge at top of slot
 
 **Content:**
 - Numeric bonuses (e.g., "+3", "-2")

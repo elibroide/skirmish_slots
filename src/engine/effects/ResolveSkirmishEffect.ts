@@ -16,35 +16,19 @@ export class ResolveSkirmishEffect extends Effect {
       const unit0 = terrain.slots[0].unit;
       const unit1 = terrain.slots[1].unit;
 
-      // Calculate power + slot modifiers
-      const power0 = unit0 ? unit0.power + terrain.slots[0].modifier : 0;
-      const power1 = unit1 ? unit1.power + terrain.slots[1].modifier : 0;
+      // Use engine's centralized winner calculation (which respects RuleManager and Rogue)
+      terrain.winner = this.engine.calculateTerrainWinner(terrainId as TerrainId);
 
-      // Determine winner
-      if (unit0 && unit1) {
-        // Both players have units - compare power (including modifiers)
-        if (power0 > power1) {
-          state.players[0].sp += 1;
-          terrain.winner = 0;
-        } else if (power1 > power0) {
-          state.players[1].sp += 1;
-          terrain.winner = 1;
-        } else {
-          // Tie - no SP awarded
-          terrain.winner = null;
-        }
-      } else if (unit0) {
-        // Only player 0 has unit
+      // Award SP
+      if (terrain.winner === 0) {
         state.players[0].sp += 1;
-        terrain.winner = 0;
-      } else if (unit1) {
-        // Only player 1 has unit
+      } else if (terrain.winner === 1) {
         state.players[1].sp += 1;
-        terrain.winner = 1;
-      } else {
-        // Empty terrain - no SP
-        terrain.winner = null;
       }
+
+      // Calculate power for event reporting
+      const power0 = unit0 ? unit0.power : 0;
+      const power1 = unit1 ? unit1.power : 0;
 
       events.push({
         type: 'TERRAIN_RESOLVED' as const,
@@ -102,6 +86,10 @@ export class ResolveSkirmishEffect extends Effect {
 
     if (matchWinner !== undefined) {
       state.matchWinner = matchWinner;
+      
+      // Cleanup all units when match ends (call onLeave)
+      this.cleanupMatchEnd(state);
+      
       events.push({
         type: 'MATCH_ENDED' as const,
         winner: matchWinner,
@@ -140,8 +128,12 @@ export class ResolveSkirmishEffect extends Effect {
       for (const playerId of [0, 1]) {
         const slot = terrain.slots[playerId as PlayerSlotId];
         if (slot.unit) {
-          state.players[playerId].graveyard.push(slot.unit);
+          const unit = slot.unit as UnitCard;
+          state.players[playerId].graveyard.push(unit);
           slot.unit = null;
+          
+          // Call onLeave to cleanup rules and subscriptions
+          unit.onLeave();
         }
 
         // CRITICAL: Clear slot modifiers (V2 key change - modifiers don't persist)
@@ -154,5 +146,19 @@ export class ResolveSkirmishEffect extends Effect {
 
     // Reset "done" flags
     state.isDone = [false, false];
+  }
+
+  private cleanupMatchEnd(state: GameState): void {
+    // Similar to cleanupSkirmish, but for match end
+    // Call onLeave for all units still on the board
+    for (const terrain of state.terrains) {
+      for (const playerId of [0, 1]) {
+        const slot = terrain.slots[playerId as PlayerSlotId];
+        if (slot.unit) {
+          const unit = slot.unit as UnitCard;
+          unit.onLeave();
+        }
+      }
+    }
   }
 }

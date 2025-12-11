@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import type { Card as CardType } from '../../engine/types';
-import { Card } from './Card';
+import { DraggableCard } from './DraggableCard';
 
 interface HandProps {
   cards: CardType[];
   isLocalPlayer: boolean;
-  onCardDragStart?: (cardId: string) => void;
-  onCardDragEnd?: () => void;
+  isOpen?: boolean;
+  isTop?: boolean;
 }
 
 /**
@@ -19,8 +19,8 @@ interface HandProps {
 export const Hand: React.FC<HandProps> = ({
   cards,
   isLocalPlayer,
-  onCardDragStart,
-  onCardDragEnd,
+  isOpen = false,
+  isTop = false,
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -45,7 +45,9 @@ export const Hand: React.FC<HandProps> = ({
     return { rotation, x, yOffset: yArc };
   };
 
-  if (!isLocalPlayer) {
+  const showFaces = isLocalPlayer || isOpen;
+
+  if (!showFaces) {
     // Show fanned card backs for opponent
     return (
       <div className="relative h-64 flex items-start justify-center">
@@ -78,8 +80,9 @@ export const Hand: React.FC<HandProps> = ({
     );
   }
 
+
   return (
-    <div className="relative h-64 flex items-end justify-center">
+    <div className={`relative h-64 flex ${isTop ? 'items-start' : 'items-end'} justify-center`}>
       <div className="relative" style={{ width: `${cardCount * cardSpacing + 150}px` }}>
         {cards.map((card, index) => {
           const { rotation, x, yOffset } = getCardTransform(index);
@@ -88,7 +91,7 @@ export const Hand: React.FC<HandProps> = ({
           return (
             <div
               key={card.id}
-              className="absolute left-1/2 bottom-0"
+              className={`absolute left-1/2 ${isTop ? 'top-0' : 'bottom-0'}`}
               style={{
                 transform: `translateX(calc(-50% + ${x}px))`,
                 zIndex: isHovered ? 50 : index,
@@ -96,13 +99,12 @@ export const Hand: React.FC<HandProps> = ({
               onMouseEnter={() => setHoveredIndex(index)}
               onMouseLeave={() => setHoveredIndex(null)}
             >
-              <Card
+              <DraggableCard
                 card={card}
-                isInHand={true}
-                rotation={isHovered ? 0 : rotation}
-                yOffset={isHovered ? -40 : yOffset}
-                onDragStart={onCardDragStart}
-                onDragEnd={onCardDragEnd}
+                rotation={rotation}
+                yOffset={yOffset}
+                isHovered={isHovered}
+                isTop={isTop}
               />
             </div>
           );

@@ -9,10 +9,11 @@ interface SlotProps {
   terrainId: number;
   isPlayerSlot: boolean; // true = player's slot, false = opponent's slot
   isHighlighted?: boolean; // For targeting/deployment
-  onDrop?: (terrainId: number) => void;
+  onDrop?: (terrainId: number, slotPlayerId: PlayerId) => void;
   winner?: PlayerId | null; // Who won this terrain
   isTargetable?: boolean; // For targeting mode - unit can be targeted
   onUnitClick?: (unitId: string) => void; // For clicking units (targeting)
+  onSlotClick?: (terrainId: number, playerId: PlayerId) => void; // For clicking slots (targeting)
 }
 
 /**
@@ -35,11 +36,13 @@ export const Slot: React.FC<SlotProps> = ({
   winner,
   isTargetable = false,
   onUnitClick,
+  onSlotClick,
 }) => {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    if (onDrop && isPlayerSlot) {
-      onDrop(terrainId);
+    // Allow drop if it's player's slot OR if it's highlighted/targetable (for actions targeting enemies/terrain)
+    if (onDrop && (isPlayerSlot || isHighlighted || isTargetable)) {
+      onDrop(terrainId, playerId);
     }
   };
 
@@ -47,9 +50,19 @@ export const Slot: React.FC<SlotProps> = ({
     e.preventDefault();
   };
 
-  const handleUnitClick = () => {
-    if (isTargetable && unit && onUnitClick) {
-      onUnitClick(unit.id);
+  const handleClick = () => {
+    // If targetable, handle clicks
+    if (isTargetable) {
+      // Prioritize slot click if handler exists (generic slot targeting)
+      if (onSlotClick) {
+        onSlotClick(terrainId, playerId);
+        return;
+      }
+      
+      // Fallback to unit click if unit exists (legacy/specific unit targeting)
+      if (unit && onUnitClick) {
+        onUnitClick(unit.id);
+      }
     }
   };
 
@@ -57,13 +70,14 @@ export const Slot: React.FC<SlotProps> = ({
   const getSlotClasses = () => {
     const base = 'w-36 h-52 rounded-xl border-2 flex flex-col items-center justify-center relative';
 
-    if (isTargetable && unit) {
-      // Unit can be targeted - show as valid target
-      return `${base} border-green-500 bg-green-50/50 border-solid shadow-lg cursor-pointer`;
+    if (isTargetable) {
+      // Slot/Unit can be targeted - show as valid target
+      // Use green for targetable to indicate "Click me"
+      return `${base} border-green-500 bg-green-50/50 border-solid shadow-lg cursor-pointer animate-pulse`;
     }
 
     if (isHighlighted && !unit) {
-      // Valid target for deployment
+      // Valid target for deployment (drag & drop hint)
       return `${base} border-blue-500 bg-blue-50/50 border-dashed`;
     }
 
@@ -81,7 +95,7 @@ export const Slot: React.FC<SlotProps> = ({
       className={getSlotClasses()}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
-      onClick={handleUnitClick}
+      onClick={handleClick}
     >
       {/* Card or empty state */}
       {unit ? (
@@ -97,11 +111,12 @@ export const Slot: React.FC<SlotProps> = ({
         </span>
       )}
 
-      {/* Slot Modifier Badge (bottom) */}
+      {/* Slot Modifier Badge */}
       {slotModifier !== 0 && (
         <div
           className={`
-            absolute -bottom-2 left-1/2 -translate-x-1/2
+            absolute left-1/2 -translate-x-1/2
+            ${isPlayerSlot ? '-bottom-2' : '-top-2'}
             px-3 py-1 rounded-full text-xs font-bold
             ${slotModifier > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}
             border border-stone-800 shadow-sm

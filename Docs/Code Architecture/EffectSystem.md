@@ -8,34 +8,26 @@ The Effect System handles sequences of effects that may trigger other effects. T
 
 ---
 
-## Effect Queue Structure (FIFO)
+## Effect Stack Structure (LIFO)
 
-### Why Queue, Not Stack?
+### Why Stack (LIFO)?
 
-**Queue (FIFO - First In, First Out):**
+**Stack (LIFO - Last In, First Out):**
 ```
-Effect Queue:
+Effect Stack:
 ┌─────────────────────────────┐
-│ Effect 1: Deploy Scout      │ ← Process first
+│ Effect 3: Death Trigger     │ ← Pops first (Highest Priority)
 ├─────────────────────────────┤
-│ Effect 2: Draw 1 card       │ ← Process second
+│ Effect 2: Unit Deployed     │ ← Pops second
 ├─────────────────────────────┤
-│ Effect 3: Unit deployed     │ ← Process third
+│ Effect 1: End Turn          │ ← Pops last (Lowest Priority)
 └─────────────────────────────┘
 ```
 
-**Benefits of FIFO:**
-- ✅ More intuitive: effects resolve in play order
-- ✅ Easier to understand for players
-- ✅ Simpler to implement
-- ✅ Matches Hearthstone's PowerTask system
-
-**Alternative (Stack/LIFO):**
-- Would be more Magic-like
-- More complex mental model
-- Effects resolve in reverse order
-
-**Decision:** Queue (FIFO) for simplicity and player intuition
+**Benefits of Stack:**
+- ✅ **Correct Interrupts:** Death triggers happen *immediately* inside the action that caused them.
+- ✅ **Nested Logic:** Triggers resolve before the original action "finishes" completely.
+- ✅ **Standard Model:** Matches Magic: The Gathering's stack interaction.
 
 ---
 
@@ -44,19 +36,24 @@ Effect Queue:
 ### Core Loop
 
 ```typescript
-class EffectQueue {
-  private queue: Effect[] = [];
+class EffectStack {
+  private stack: Effect[] = [];
 
-  enqueue(effect: Effect): void {
-    this.queue.push(effect);
+  // Add high-priority interrupt (runs next)
+  push(effect: Effect): void {
+    this.stack.push(effect);
   }
 
-  dequeue(): Effect | null {
-    return this.queue.shift() || null;
+  // Add sequence [A, B, C] -> Runs A, then B, then C
+  pushSequence(effects: Effect[]): void {
+    // Pushes in reverse so first element is on top
+    for (let i = effects.length - 1; i >= 0; i--) {
+      this.stack.push(effects[i]);
+    }
   }
 
-  isEmpty(): boolean {
-    return this.queue.length === 0;
+  pop(): Effect | undefined {
+    return this.stack.pop();
   }
 }
 ```
@@ -65,38 +62,29 @@ class EffectQueue {
 
 ```typescript
 processAction(action: GameAction) {
-  // Validate
-  if (!this.isLegalAction(action)) {
-    throw new Error('Illegal action');
-  }
-  
-  // Create primary effect
+  // Convert action to effect
   const primaryEffect = this.actionToEffect(action);
-  this.effectQueue.enqueue(primaryEffect);
+  this.addInterrupt(primaryEffect); // Push to stack
   
-  // Process queue until empty
-  while (!this.effectQueue.isEmpty()) {
-    const effect = this.effectQueue.dequeue();
+  // Process stack until empty
+  while (!this.effectStack.isEmpty()) {
+    const effect = this.effectStack.pop();
     
     // Execute effect
-    const result = effect.execute(this.state);
+    const result = await effect.execute(this.state);
     
-    // Update state
+    // Update state & Emit events
     this.state = result.newState;
-    
-    // Emit events for UI
     result.events.forEach(e => this.emitEvent(e));
     
-    // Check for triggered effects
-    const triggered = this.checkTriggers(result.events);
-    triggered.forEach(e => this.effectQueue.enqueue(e));
+    // Check state-based conditions (Deaths)
+    const stateEffects = this.stateChecker.checkStateConditions(this.state);
     
-    // Check state-based conditions
-    const stateEffects = this.checkStateConditions();
-    stateEffects.forEach(e => this.effectQueue.enqueue(e));
+    // Push deaths as a sequence (Interrupts current flow)
+    if (stateEffects.length > 0) {
+      this.addSequence(stateEffects);
+    }
   }
-  
-  return this.state;
 }
 ```
 
@@ -104,250 +92,74 @@ processAction(action: GameAction) {
 
 ## Effect Chaining Example
 
-### Simple Chain: Scout Deploy
+### Play Card with Interrupts
 
-**User Action:** Play Scout to slot 1
+**User Action:** Play Fireball (Damage 2)
 
-**Queue Processing:**
+**Stack Processing:**
 
-```
-Initial Queue:
-[PlayCardEffect(Scout, slot 1)]
-
-Step 1: Process PlayCardEffect
-- Remove Scout from hand
-- Enqueue: DeployUnitEffect(Scout, slot 1)
-
-Queue: [DeployUnitEffect(Scout, slot 1)]
-
-Step 2: Process DeployUnitEffect
-- Place Scout in slot 1
-- Trigger Scout.onDeploy() → enqueues DrawCardEffect
-- Emit: UNIT_DEPLOYED
-
-Queue: [DrawCardEffect(player, 1)]
-
-Step 3: Process DrawCardEffect
-- Draw 1 card from deck to hand
-- Emit: CARD_DRAWN
-
-Queue: []
-
-Step 4: Check state conditions
-- No deaths, no round end
-Queue: []
-
-Done! ✓
-```
+1.  **Initial Stack:** `[PlayCardEffect]`
+2.  **Pop PlayCardEffect:**
+    *   Deals 2 Damage to Unit A (HP 2 -> 0).
+    *   Adds `TurnStartEffect` to stack (Sequence: [TurnStart]).
+    *   *Stack:* `[TurnStartEffect]`
+3.  **State Check:**
+    *   Finds Unit A is dead.
+    *   Adds `DeathEffect(Unit A)` as interrupt.
+    *   *Stack:* `[DeathEffect, TurnStartEffect]`
+4.  **Pop DeathEffect:**
+    *   Unit A dies.
+    *   Triggers "On Death: Deal 1 Damage".
+    *   Adds `TriggerEffect` to stack.
+    *   *Stack:* `[TriggerEffect, TurnStartEffect]`
+5.  **Pop TriggerEffect:**
+    *   Deals 1 damage.
+    *   *Stack:* `[TurnStartEffect]`
+6.  **Pop TurnStartEffect:**
+    *   Starts turn.
+    *   *Stack:* `[]`
+7.  **Done.**
 
 ---
 
-## Complex Chain: Martyr Replacement
+## Inline Logic with `TriggerEffect`
 
-### Martyr Death Chain Walkthrough
-
-**Scenario:**
-- Martyr (2 power) at slot 1
-- Scout (2 power) at slot 2
-- Player plays Champion (5 power) to slot 1
-
-**User Action:** Play Champion to slot 1 (where Martyr is)
-
-**Queue Processing:**
-
-```
-Initial Queue:
-[PlayCardEffect(Champion, slot 1)]
-
-────────────────────────────────────
-Step 1: Process PlayCardEffect(Champion, slot 1)
-────────────────────────────────────
-Actions:
-- Remove Champion from hand
-- Check slot 1: occupied by Martyr
-- Enqueue: SacrificeUnitEffect(Martyr)
-- Enqueue: DeployUnitEffect(Champion, slot 1)
-- Emit: CARD_PLAYED
-
-Queue:
-[SacrificeUnitEffect(Martyr), DeployUnitEffect(Champion, slot 1)]
-
-────────────────────────────────────
-Step 2: Process SacrificeUnitEffect(Martyr)
-────────────────────────────────────
-Actions:
-- Remove Martyr from slot 1
-- Add Martyr to discard
-- Emit: UNIT_SACRIFICED
-- Emit: UNIT_DIED
-- Trigger Martyr.onDeath():
-  - Find close allies (Scout at slot 2)
-  - For each: enqueue ModifyPowerEffect(Scout, +2)
-
-Queue:
-[DeployUnitEffect(Champion, slot 1), ModifyPowerEffect(Scout, +2)]
-
-────────────────────────────────────
-Step 3: Process DeployUnitEffect(Champion, slot 1)
-────────────────────────────────────
-Actions:
-- Place Champion in slot 1
-- Trigger Champion.onDeploy() (none)
-- Emit: UNIT_DEPLOYED
-
-Queue:
-[ModifyPowerEffect(Scout, +2)]
-
-────────────────────────────────────
-Step 4: Process ModifyPowerEffect(Scout, +2)
-────────────────────────────────────
-Actions:
-- Scout.power: 2 → 4
-- Emit: UNIT_POWER_CHANGED (Scout, +2)
-
-Queue: []
-
-────────────────────────────────────
-Step 5: Check State Conditions
-────────────────────────────────────
-- Check deaths: No units at 0 power
-- Check round end: Not both passed
-- Check win: No winner yet
-
-Queue: []
-
-Done! ✓
-
-Final State:
-- Slot 1: Champion (5 power)
-- Slot 2: Scout (4 power) ← buffed by Martyr
-- Martyr in discard
-```
-
----
-
-## Multiple Deaths Chain
-
-### Ghoul + Multiple Deaths
-
-**Scenario:**
-- Ghoul (1 power) at slot 0
-- Martyr (2 power) at slot 1
-- Scout (2 power) at slot 2
-- Archer (3 power) at slot 3
-- Player plays Fireball targeting slot 1
-
-**Fireball Effect:** "Deal 2 damage to unit on slot and close units"
-
-**Queue Processing:**
-
-```
-Initial Queue:
-[FireballEffect(slot 1)]
-
-────────────────────────────────────
-Step 1: Process FireballEffect(slot 1)
-────────────────────────────────────
-Actions:
-- Damage unit at slot 1 (Martyr): 2 → 0
-- Damage close units:
-  - Ghoul at slot 0: 1 → -1 (becomes 0)
-  - Scout at slot 2: 2 → 0
-  - Archer at slot 3: 3 → 1
-- Emit: UNIT_DAMAGED (Martyr, Ghoul, Scout, Archer)
-
-Note: Ghoul's "when close unit dies" doesn't trigger yet!
-
-Queue: []
-
-────────────────────────────────────
-Step 2: Check State Conditions → Deaths
-────────────────────────────────────
-Found units at 0 power:
-- Martyr (slot 1)
-- Ghoul (slot 0)
-- Scout (slot 2)
-
-Enqueue death effects:
-[DeathEffect(Martyr), DeathEffect(Ghoul), DeathEffect(Scout)]
-
-────────────────────────────────────
-Step 3-5: Process Deaths
-────────────────────────────────────
-Each DeathEffect:
-- Remove unit from board
-- Trigger onDeath() if any
-- Martyr: buff close allies (+2 to Archer)
-
-Final State:
-- Slot 0: Empty (Ghoul died)
-- Slot 1: Empty (Martyr died)
-- Slot 2: Empty (Scout died)
-- Slot 3: Archer (3 power) ← survives
-
-Note: Ghoul didn't trigger because it died simultaneously!
-```
-
----
-
-## Effect Queue Best Practices
-
-### DO: Enqueue Effects
+To make abilities visible to the UI without creating separate classes for every card, use `TriggerEffect`.
 
 ```typescript
-// ✅ GOOD: Enqueue effects
-class Scout extends UnitCard {
-  onDeploy(): void {
-    this.engine.effectQueue.enqueue(
-      new DrawCardEffect(this.owner, 1)
-    );
-  }
-}
-```
+// Inside Card Class
+async onDeath() {
+  // Logic defined inline
+  const logic = async (state) => {
+    await this.engine.addSlotModifier(this.slotId, 1);
+  };
 
-### DON'T: Modify State Directly
-
-```typescript
-// ❌ BAD: Modify state directly
-class Scout extends UnitCard {
-  onDeploy(): void {
-    const card = this.engine.state.players[this.owner].deck.pop();
-    this.engine.state.players[this.owner].hand.push(card);
-    // No events emitted! UI won't update!
-  }
+  // Wrapped in TriggerEffect for UI visibility
+  this.engine.addInterrupt(
+    new TriggerEffect(this, "Death Trigger", logic)
+  );
 }
 ```
 
 ---
 
-## Debugging Effect Chains
+## Best Practices
 
-### Add Logging
+### DO: Use `addSequence` for Flows
+When an effect causes multiple things to happen in order (e.g., "Draw 2 cards"), use `addSequence`.
 
 ```typescript
-processAction(action: GameAction) {
-  console.log('=== Processing Action ===');
-  console.log('Action:', action);
-  
-  const primaryEffect = this.actionToEffect(action);
-  this.effectQueue.enqueue(primaryEffect);
-  
-  let step = 0;
-  while (!this.effectQueue.isEmpty()) {
-    step++;
-    console.log(`\n--- Step ${step} ---`);
-    
-    const effect = this.effectQueue.dequeue();
-    console.log('Effect:', effect.constructor.name);
-    
-    const result = effect.execute(this.state);
-    console.log('Events:', result.events.map(e => e.type));
-    
-    // ... rest of processing
-  }
-  
-  console.log('\n=== Action Complete ===\n');
-}
+// Draw 2 cards
+const effects = [new DrawCardEffect(), new DrawCardEffect()];
+this.engine.addSequence(effects);
+```
+
+### DO: Use `addInterrupt` for Reactions
+When an ability triggers off something else, use `addInterrupt` so it happens immediately.
+
+```typescript
+// Counterspell logic
+this.engine.addInterrupt(new CounterEffect());
 ```
 
 ---

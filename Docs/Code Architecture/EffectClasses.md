@@ -55,28 +55,31 @@ class PlayCardEffect extends Effect {
       slotId: this.slotId
     });
     
+    // SEQUENCE: Define what happens in order
+    const sequence: Effect[] = [];
+
     if (this.card instanceof UnitCard && this.slotId !== undefined) {
       // Check if slot occupied
       const slot = state.slots[this.slotId];
       const existingUnit = slot.units[this.playerId];
       
       if (existingUnit) {
-        // Enqueue sacrifice of existing unit
-        this.card.engine.effectQueue.enqueue(
-          new SacrificeUnitEffect(existingUnit)
-        );
+        // Enqueue sacrifice of existing unit (Happens first)
+        sequence.push(new SacrificeUnitEffect(existingUnit));
       }
       
-      // Enqueue deploy
-      this.card.engine.effectQueue.enqueue(
-        new DeployUnitEffect(this.card, this.slotId)
-      );
+      // Enqueue deploy (Happens second)
+      sequence.push(new DeployUnitEffect(this.card, this.slotId));
+
     } else if (this.card instanceof ActionCard) {
       // Actions play immediately
       this.card.play(this.slotId);
       player.discard.push(this.card);
     }
     
+    // Add sequence to stack
+    this.card.engine.addSequence(sequence);
+
     return { newState: state, events };
   }
 }
@@ -89,12 +92,11 @@ class PlayCardEffect extends Effect {
 ### Purpose
 Place a unit on the battlefield and trigger Deploy effects.
 
+### Implementation
+
 ```typescript
 class DeployUnitEffect extends Effect {
-  constructor(
-    private unit: UnitCard,
-    private slotId: SlotId
-  ) {
+  constructor(private unit: UnitCard, private slotId: SlotId) {
     super();
   }
   
@@ -109,227 +111,11 @@ class DeployUnitEffect extends Effect {
     events.push({
       type: 'UNIT_DEPLOYED',
       unitId: this.unit.id,
-      slotId: this.slotId,
-      playerId: this.unit.owner
+      slotId: this.slotId
     });
     
-    // Trigger slot ongoing effects
-    slot.ongoingEffects
-      .filter(e => e.owner === this.unit.owner && e.trigger === 'deploy')
-      .forEach(e => e.effect(this.unit));
-    
-    // Trigger unit's onDeploy
+    // Trigger onDeploy (might add triggers to stack)
     this.unit.onDeploy();
-    
-    return { newState: state, events };
-  }
-}
-```
-
----
-
-## SacrificeUnitEffect
-
-### Purpose
-Remove a unit from play (replacement, consume, etc.) and trigger Death.
-
-```typescript
-class SacrificeUnitEffect extends Effect {
-  constructor(private unit: UnitCard) {
-    super();
-  }
-  
-  execute(state: GameState): EffectResult {
-    const events: GameEvent[] = [];
-    const slot = state.slots[this.unit.slotId!];
-    
-    // Remove from slot
-    slot.units[this.unit.owner] = null;
-    
-    // Add to discard
-    const player = state.players[this.unit.owner];
-    player.discard.push(this.unit);
-    
-    events.push({
-      type: 'UNIT_SACRIFICED',
-      unitId: this.unit.id,
-      slotId: this.unit.slotId!
-    });
-    
-    events.push({
-      type: 'UNIT_DIED',
-      unitId: this.unit.id,
-      slotId: this.unit.slotId!,
-      cause: 'sacrifice'
-    });
-    
-    // Trigger death effects
-    this.unit.onDeath();
-    
-    return { newState: state, events };
-  }
-}
-```
-
----
-
-## ModifyPowerEffect
-
-### Purpose
-Change a unit's power (damage or buff).
-
-```typescript
-class ModifyPowerEffect extends Effect {
-  constructor(
-    private unit: UnitCard,
-    private amount: number
-  ) {
-    super();
-  }
-  
-  execute(state: GameState): EffectResult {
-    // Unit.addPower() handles event emission
-    this.unit.addPower(this.amount);
-    
-    return { newState: state, events: [] };
-  }
-}
-```
-
-**Note:** Unit.addPower() emits events internally, so no events returned here.
-
----
-
-## DrawCardEffect
-
-### Purpose
-Draw cards from deck to hand.
-
-```typescript
-class DrawCardEffect extends Effect {
-  constructor(
-    private playerId: PlayerId,
-    private count: number
-  ) {
-    super();
-  }
-  
-  execute(state: GameState): EffectResult {
-    const events: GameEvent[] = [];
-    const player = state.players[this.playerId];
-    
-    for (let i = 0; i < this.count; i++) {
-      if (player.deck.length === 0) break;
-      
-      const card = player.deck.pop()!;
-      player.hand.push(card);
-      
-      events.push({
-        type: 'CARD_DRAWN',
-        playerId: this.playerId,
-        cardId: card.cardId
-      });
-    }
-    
-    return { newState: state, events };
-  }
-}
-```
-
----
-
-## DealDamageEffect
-
-### Purpose
-Deal damage to a unit (reduces power, may cause death).
-
-```typescript
-class DealDamageEffect extends Effect {
-  constructor(
-    private unit: UnitCard,
-    private amount: number
-  ) {
-    super();
-  }
-  
-  execute(state: GameState): EffectResult {
-    // Damage reduces power
-    this.unit.dealDamage(this.amount);
-    
-    // State checker will handle death if power <= 0
-    return { newState: state, events: [] };
-  }
-}
-```
-
----
-
-## BounceUnitEffect
-
-### Purpose
-Return a unit to owner's hand.
-
-```typescript
-class BounceUnitEffect extends Effect {
-  constructor(private unit: UnitCard) {
-    super();
-  }
-  
-  execute(state: GameState): EffectResult {
-    const events: GameEvent[] = [];
-    const slot = state.slots[this.unit.slotId!];
-    
-    // Remove from slot
-    slot.units[this.unit.owner] = null;
-    
-    // Add to hand
-    const player = state.players[this.unit.owner];
-    player.hand.push(this.unit);
-    
-    events.push({
-      type: 'UNIT_BOUNCED',
-      unitId: this.unit.id,
-      slotId: this.unit.slotId!,
-      toHand: true
-    });
-    
-    return { newState: state, events };
-  }
-}
-```
-
----
-
-## DiscardCardEffect
-
-### Purpose
-Discard cards from hand to discard pile.
-
-```typescript
-class DiscardCardEffect extends Effect {
-  constructor(
-    private playerId: PlayerId,
-    private count: number
-  ) {
-    super();
-  }
-  
-  execute(state: GameState): EffectResult {
-    const events: GameEvent[] = [];
-    const player = state.players[this.playerId];
-    
-    for (let i = 0; i < this.count; i++) {
-      if (player.hand.length === 0) break;
-      
-      const card = player.hand.pop()!;
-      player.discard.push(card);
-      
-      events.push({
-        type: 'CARD_DISCARDED',
-        playerId: this.playerId,
-        cardId: card.cardId
-      });
-    }
     
     return { newState: state, events };
   }
@@ -399,7 +185,7 @@ class MyEffect extends Effect {
 }
 ```
 
-### Pattern 2: Enqueue Follow-up Effects
+### Pattern 2: Enqueue Follow-up Effects (Sequences)
 
 ```typescript
 class MyEffect extends Effect {
@@ -407,25 +193,26 @@ class MyEffect extends Effect {
     // Do something
     state.someValue = newValue;
     
-    // Enqueue follow-up effect
-    this.engine.effectQueue.enqueue(
+    // Enqueue follow-up effect (will happen AFTER this one finishes)
+    this.engine.addSequence([
       new AnotherEffect(params)
-    );
+    ]);
     
     return { newState: state, events: [] };
   }
 }
 ```
 
-### Pattern 3: Conditional Effects
+### Pattern 3: Conditional Effects (Interrupts)
 
 ```typescript
 class MyEffect extends Effect {
   execute(state: GameState): EffectResult {
     if (condition) {
-      this.engine.effectQueue.enqueue(new EffectA());
+      // Happens IMMEDIATELY next
+      this.engine.addInterrupt(new EffectA());
     } else {
-      this.engine.effectQueue.enqueue(new EffectB());
+      this.engine.addInterrupt(new EffectB());
     }
     
     return { newState: state, events: [] };
@@ -436,5 +223,5 @@ class MyEffect extends Effect {
 ---
 
 **See Also:**
-- [EffectSystem.md](./EffectSystem.md) - Queue processing
+- [EffectSystem.md](./EffectSystem.md) - Stack processing
 - [CardSystem.md](./CardSystem.md) - Card-initiated effects

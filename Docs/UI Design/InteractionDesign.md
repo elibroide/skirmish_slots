@@ -17,10 +17,12 @@
 - **Transition:** `type: "spring", stiffness: 300, damping: 20` (Snappy feel)
 
 **Drag State:**
-- **Scale:** `1.05`
-- **Rotation:** Loose physics (follow velocity slightly)
-- **Cursor:** `grabbing`
-- **Ghosting:** The original position in hand maintains a placeholder gap
+- **Implementation:** Uses `@dnd-kit/core` library for reliable drag-and-drop
+- **Drag Overlay:** Visible card follows cursor during drag (provided by DragOverlay component)
+- **Opacity:** `0.5` on original card in hand during drag
+- **Cursor:** `grab` (grabbing handled by library)
+- **Drop Zones:** Slots become droppable targets with hover feedback
+- **Spring Back:** Handled automatically by dnd-kit if dropped in invalid location
 
 ---
 
@@ -123,9 +125,18 @@ isTargetable={isAwaitingInput &&
 ## Hand Management
 
 ### Drag-and-Drop
-- Players can drag cards from hand to own slot
+- **Library:** `@dnd-kit/core` provides reliable cross-browser drag-and-drop
+- Players can drag cards from hand to slots
 - ALL cards use drag-and-drop (no click-to-play)
-- Cards can be rearranged within hand (optional future feature)
+- **DraggableCard:** Wraps Card component with `useDraggable` hook
+- **DroppableSlot:** Wraps Slot component with `useDroppable` hook
+- **DragOverlay:** Shows dragged card following cursor
+- **Visual Feedback:** Slots highlight on hover during drag (`isOver` state)
+
+### God Mode (Testing)
+- **Opponent Hand:** Becomes visible (face up) and interactive.
+- **Drag-and-Drop:** Can drag cards from opponent's hand to opponent's slots.
+- **Visuals:** Opponent cards hang from top edge but are face up.
 
 ### Visual Feedback
 - During drag, valid slots highlight (blue border)

@@ -1,7 +1,8 @@
 import type { GameState, PlayerId, PlayerSlotId } from './types';
 import type { Effect } from './effects/Effect';
 import type { GameEngine } from './GameEngine';
-import { DeathEffect } from './effects';
+import { UnitCard } from './cards/Card';
+import { ResolveDeathsEffect } from './effects/ResolveDeathsEffect';
 
 /**
  * Checks game state for conditions that trigger automatic effects:
@@ -21,10 +22,13 @@ export class StateChecker {
     const effects: Effect[] = [];
 
     // Check for unit deaths first
-    effects.push(...this.checkDeaths(state));
-
-    // NOTE: Skirmish end and match end are handled by explicit actions (DONE)
-    // and effects (ResolveSkirmishEffect), not automatic state checks.
+    const dyingUnits = this.checkDeaths(state);
+    if (dyingUnits.length > 0) {
+      // Return a single effect to handle all deaths
+      dyingUnits.forEach(unit => {
+        unit.die();
+      });
+    }
 
     return effects;
   }
@@ -32,20 +36,24 @@ export class StateChecker {
   /**
    * Check if any units have power <= 0 and should die
    */
-  private checkDeaths(state: GameState): Effect[] {
-    const deathEffects: Effect[] = [];
+  private checkDeaths(state: GameState): UnitCard[] {
+    const units: UnitCard[] = [];
 
     // Check all terrains for dead units
     for (const terrain of state.terrains) {
       for (const playerId of [0, 1] as PlayerSlotId[]) {
         const unit = terrain.slots[playerId].unit;
-        if (unit && unit.power <= 0) {
-          deathEffects.push(new DeathEffect(unit));
+        // Cast to UnitCard to access power property
+        if (unit) {
+           const unitCard = unit as unknown as UnitCard;
+           if (unitCard.power <= 0) {
+             units.push(unitCard);
+           }
         }
       }
     }
 
-    return deathEffects;
+    return units;
   }
 
   /**

@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
-import type { GameState, PlayerId, TerrainId } from '../../engine/types';
-import { Slot } from './Slot';
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core';
+import { TerrainId, PlayerId, GameState, SlotCoord } from '../../engine/types';
+import { DroppableSlot } from './DroppableSlot';
 import { Hand } from './Hand';
+import { Card } from './Card';
+import { GameOverModal } from './GameOverModal';
 import { useGameStore } from '../store/gameStore';
+import { GameEngine } from '../../engine/GameEngine';
 
 interface GameBoardProps {
   gameState: GameState;
+  engine: GameEngine;
   localPlayerId: PlayerId;
+  onPlayAgain: () => void;
+  onMainMenu: () => void;
 }
 
 /**
@@ -20,54 +27,111 @@ interface GameBoardProps {
  * - Hand display at bottom (fanned)
  * - Hand display at top (card backs)
  */
-export const GameBoard: React.FC<GameBoardProps> = ({ gameState, localPlayerId }) => {
-  const [draggedCardId, setDraggedCardId] = useState<string | null>(null);
-  const { pendingInputRequest, pendingInputPlayerId } = useGameStore();
+export const GameBoard: React.FC<GameBoardProps> = ({ 
+  gameState, 
+  engine, 
+  localPlayerId,
+  onPlayAgain,
+  onMainMenu 
+}) => {
+  const [activeCard, setActiveCard] = useState<any>(null);
+  const [validTargets, setValidTargets] = useState<{
+    type: string;
+    validSlots?: SlotCoord[];
+    validUnitIds?: string[];
+    validTerrainIds?: TerrainId[];
+  } | null>(null);
+  const { pendingInputRequest, pendingInputPlayerId, gameMode, downloadGameLog, isAIThinking, aiThinkingPlayerId } = useGameStore();
 
+  const isGodMode = gameMode === 'god-mode';
+  const isNetworkMode = gameMode === 'network';
   const opponentId = localPlayerId === 0 ? 1 : 0;
   const localPlayer = gameState.players[localPlayerId];
   const opponentPlayer = gameState.players[opponentId];
   const isLocalPlayerTurn = gameState.currentPlayer === localPlayerId;
 
-  // Check if we're waiting for input from the local player
-  const isAwaitingInput = pendingInputRequest !== null && pendingInputPlayerId === localPlayerId;
+  // Debug logging for network perspective
+  if (isNetworkMode) {
+    console.log(`[Perspective] You are Player ${localPlayerId}, Opponent is Player ${opponentId}`);
+  }
 
-  const handleCardDragStart = (cardId: string) => {
-    const { engine } = useGameStore.getState();
-    if (!engine) return;
+  // Check if we're waiting for input from the local player (or any player in god mode)
+  const isAwaitingInput = pendingInputRequest !== null && (pendingInputPlayerId === localPlayerId || isGodMode);
 
-    // Check if card needs a target before deployment
-    const card = localPlayer.hand.find(c => c.id === cardId);
+  const handleDragStart = (event: DragStartEvent) => {
+    const card = engine.getCardById(event.active.id as string);
     if (!card) return;
-
-    // If unit card needs target for Deploy ability, we handle it after deployment
-    // For now, just allow dragging
-    setDraggedCardId(cardId);
+    
+    setActiveCard(card);
+    const targets = card.getValidTargets(gameState);
+    setValidTargets(targets as any);
   };
 
-  const handleCardDragEnd = () => {
-    setDraggedCardId(null);
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || !activeCard) {
+      setActiveCard(null);
+      setValidTargets(null);
+      return;
+    }
+
+    const dropData = over.data.current;
+    if (dropData && dropData.slotCoord) {
+      const { terrainId, playerId } = dropData.slotCoord;
+      handleSlotDrop(terrainId, playerId, active.id as string);
+    }
+
+    setActiveCard(null);
+    setValidTargets(null);
   };
 
-  const handleSlotDrop = (terrainId: number) => {
-    if (!draggedCardId) return;
-
-    const { engine } = useGameStore.getState();
-    if (!engine) return;
-
-    const card = localPlayer.hand.find(c => c.id === draggedCardId);
+  const handleSlotDrop = (terrainId: number, slotPlayerId: PlayerId, cardId: string) => {
+    let card = engine.getCardById(cardId);
+    let ownerId = card?.owner ?? localPlayerId;
+    
     if (!card) return;
 
-    // Submit action to engine
-    // If the card needs targeting (e.g., Archer Deploy ability),
-    // the engine will emit INPUT_REQUIRED event after deployment
-    engine.submitAction({
-      type: 'PLAY_CARD',
-      playerId: localPlayerId,
-      cardId: draggedCardId,
-      terrainId: terrainId as TerrainId,
-    });
-    setDraggedCardId(null);
+    const tId = terrainId as TerrainId;
+
+    if (card.getType() === 'unit') {
+        if (validTargets && validTargets.type === 'slots' && validTargets.validSlots) {
+             const isValid = validTargets.validSlots.some(
+                s => s.terrainId === tId && s.playerId === slotPlayerId
+             );
+
+             if (isValid) {
+                 const action = {
+                    type: 'PLAY_CARD' as const,
+                    playerId: ownerId,
+                    cardId: cardId,
+                    targetSlot: { terrainId: tId, playerId: slotPlayerId },
+                 };
+                 console.log(`[Action] ${ownerId === localPlayerId ? 'YOU' : 'OPPONENT'} playing card to terrain ${tId}, slot player ${slotPlayerId}`);
+                 engine.submitAction(action);
+             }
+        }
+    } else {
+        if (!validTargets || validTargets.type === 'none') {
+             engine.submitAction({
+                type: 'PLAY_CARD',
+                playerId: ownerId,
+                cardId: cardId,
+            });
+        } else if (validTargets.type === 'slots' && validTargets.validSlots) {
+            const isValid = validTargets.validSlots.some(
+                s => s.terrainId === tId && s.playerId === slotPlayerId
+            );
+            if (isValid) {
+                engine.submitAction({
+                    type: 'PLAY_CARD',
+                    playerId: ownerId,
+                    cardId: cardId,
+                    targetSlot: { terrainId: tId, playerId: slotPlayerId }
+                });
+            }
+        }
+    }
   };
 
   const handleUnitClick = (unitId: string) => {
@@ -75,45 +139,80 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, localPlayerId }
     if (!isAwaitingInput) return;
     if (!pendingInputRequest || pendingInputRequest.type !== 'target') return;
 
-    // Check if this unit is a valid target
-    if (!pendingInputRequest.validTargetIds.includes(unitId)) return;
+    // Find the unit's slot
+    let targetSlot: { terrainId: TerrainId; playerId: PlayerId } | null = null;
+    
+    // Search for unit in terrains
+    for (let i = 0; i < gameState.terrains.length; i++) {
+        const terrain = gameState.terrains[i];
+        if (terrain.slots[0].unit?.id === unitId) {
+            targetSlot = { terrainId: i as TerrainId, playerId: 0 };
+            break;
+        }
+        if (terrain.slots[1].unit?.id === unitId) {
+            targetSlot = { terrainId: i as TerrainId, playerId: 1 };
+            break;
+        }
+    }
 
-    // Submit the target directly to the engine
-    const { engine } = useGameStore.getState();
-    if (!engine) return;
+    if (!targetSlot) return;
 
-    engine.submitInput(unitId);
+    // Check if this slot is a valid target
+    if (pendingInputRequest.validSlots) {
+        const isValid = pendingInputRequest.validSlots.some(
+            s => s.terrainId === targetSlot!.terrainId && s.playerId === targetSlot!.playerId
+        );
+        if (!isValid) return;
+    }
+
+    // Submit the target slot directly to the engine
+    engine.submitInput(targetSlot);
   };
 
-  const handlePass = () => {
-    if (!isLocalPlayerTurn) return;
+  const handleSlotClick = (terrainId: number, slotPlayerId: PlayerId) => {
+    // Only handle clicks if we're awaiting input
+    if (!isAwaitingInput) return;
+    
+    // Check if we have a request
+    if (!pendingInputRequest) return;
 
-    const { engine } = useGameStore.getState();
-    if (!engine) return;
+    // Check if this slot is valid
+    if (pendingInputRequest.validSlots) {
+        const isValid = pendingInputRequest.validSlots.some(
+            s => s.terrainId === terrainId && s.playerId === slotPlayerId
+        );
+        if (!isValid) return;
+    }
 
+    // Submit input
+    engine.submitInput({ terrainId: terrainId as TerrainId, playerId: slotPlayerId });
+  };
+
+  const handlePass = (playerId: PlayerId) => {
+    // Validate turn
+    if (gameState.currentPlayer !== playerId) return;
+
+    console.log(`[Action] ${playerId === localPlayerId ? 'YOU' : 'OPPONENT'} passing turn (Player ${playerId})`);
     engine.submitAction({
       type: 'DONE',
-      playerId: localPlayerId,
+      playerId,
     });
   };
 
-  // Calculate projected SP (how many terrains each player would win if the game ended now)
+  // Calculate projected SP using Engine logic
   const calculateProjectedSP = () => {
     let player0SP = 0;
     let player1SP = 0;
 
-    gameState.terrains.forEach((terrain) => {
-      const unit0 = terrain.slots[0].unit;
-      const unit1 = terrain.slots[1].unit;
-      const power0 = unit0 ? unit0.power + terrain.slots[0].modifier : 0;
-      const power1 = unit1 ? unit1.power + terrain.slots[1].modifier : 0;
+    gameState.terrains.forEach((_, index) => {
+      // Use the new engine method to get the correct winner (including Rogue logic)
+      const winner = engine.calculateTerrainWinner(index as TerrainId);
 
-      if (power0 > power1) {
+      if (winner === 0) {
         player0SP += 1;
-      } else if (power1 > power0) {
+      } else if (winner === 1) {
         player1SP += 1;
       }
-      // Ties award no SP
     });
 
     return { player0SP, player1SP };
@@ -123,35 +222,77 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, localPlayerId }
   const localProjectedSP = localPlayerId === 0 ? projectedSP.player0SP : projectedSP.player1SP;
   const opponentProjectedSP = opponentId === 0 ? projectedSP.player0SP : projectedSP.player1SP;
 
+  // Helper to determine if a specific slot/unit is a valid target for the current drag
+  const isSlotValidTarget = (terrainId: number, slotPlayerId: PlayerId, unitId?: string) => {
+    if (!validTargets || validTargets.type !== 'slots' || !validTargets.validSlots) return false;
+
+    return validTargets.validSlots.some(
+      (slot) => slot.terrainId === terrainId && slot.playerId === slotPlayerId
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-stone-200 p-4 flex gap-4">
+    <>
+      <GameOverModal
+        gameState={gameState}
+        localPlayerId={localPlayerId}
+        onPlayAgain={onPlayAgain}
+        onMainMenu={onMainMenu}
+      />
+      
+      <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <div className="min-h-screen bg-stone-200 p-4 flex gap-4">
       {/* LEFT PANEL - Opponent, Skirmish Tracker, Player */}
       <div className="flex flex-col w-48 h-screen py-4">
+        {/* ... (Left Panel Content same as before) ... */}
         {/* Opponent Character - TOP LEFT CORNER */}
         <div className={`bg-blue-200 border-2 rounded-lg p-4 h-48 flex flex-col ${!isLocalPlayerTurn ? 'border-amber-500 shadow-lg' : 'border-stone-800'}`}>
           <div className="font-hand text-lg text-center mb-2 flex items-center justify-center gap-2">
             <span>Opponent</span>
             {!isLocalPlayerTurn && <span className="text-amber-600">●</span>}
           </div>
-          <div className="flex-grow bg-blue-100 rounded border border-stone-600 flex items-center justify-center">
-            <span className="font-ui text-xs text-stone-600">Character art</span>
+          <div className="flex-grow bg-blue-100 rounded border border-stone-600 flex items-center justify-center relative">
+            {isAIThinking && aiThinkingPlayerId === opponentId ? (
+              <div className="flex flex-col items-center gap-2">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-stone-800"></div>
+                <span className="font-ui text-xs text-stone-600">Thinking...</span>
+              </div>
+            ) : (
+              <span className="font-ui text-xs text-stone-600">Character art</span>
+            )}
           </div>
           <div className="mt-2 space-y-1">
+            {isGodMode ? (
+              <button
+                onClick={() => handlePass(opponentId)}
+                disabled={gameState.currentPlayer !== opponentId || gameState.isDone[opponentId]}
+                className="w-full bg-amber-400 hover:bg-amber-500 disabled:bg-stone-400 border-2 border-stone-800 rounded px-2 py-1 font-hand text-sm"
+              >
+                Pass
+              </button>
+            ) : (
+                <div className="bg-white px-2 py-1 rounded text-xs font-ui flex justify-between">
+                    <span>Passed:</span>
+                    <span>{gameState.isDone[opponentId] ? 'Yes' : 'No'}</span>
+                </div>
+            )}
             <div className="bg-white px-2 py-1 rounded text-xs font-ui flex justify-between">
               <span>Discard:</span>
               <span>{opponentPlayer.graveyard.length}</span>
             </div>
-            <div className="bg-white px-2 py-1 rounded text-xs font-ui flex justify-between">
-              <span>Passed:</span>
-              <span>{gameState.isDone[opponentId] ? 'Yes' : 'No'}</span>
-            </div>
+            {!isGodMode && (
+                <div className="bg-white px-2 py-1 rounded text-xs font-ui flex justify-between">
+                <span>Hand:</span>
+                <span>{opponentPlayer.hand.length}</span>
+                </div>
+            )}
           </div>
         </div>
 
         {/* Spacer to push skirmishes to middle */}
         <div className="flex-grow"></div>
 
-        {/* Skirmish tracking - dual blocks - MIDDLE OF PANEL */}
+        {/* Skirmish tracking */}
         <div className="flex gap-2 justify-center">
           {/* Skirmish 1 */}
           <div className="flex flex-col gap-1">
@@ -249,11 +390,18 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, localPlayerId }
           </div>
           <div className="mt-2 space-y-1">
             <button
-              onClick={handlePass}
+              onClick={() => handlePass(localPlayerId)}
               disabled={!isLocalPlayerTurn || gameState.isDone[localPlayerId]}
               className="w-full bg-amber-400 hover:bg-amber-500 disabled:bg-stone-400 border-2 border-stone-800 rounded px-2 py-1 font-hand text-sm"
             >
               Pass
+            </button>
+            <button
+              onClick={downloadGameLog}
+              className="w-full bg-green-400 hover:bg-green-500 border-2 border-stone-800 rounded px-2 py-1 font-hand text-xs"
+              title="Download game log as JSON"
+            >
+              📥 Log
             </button>
             <div className="bg-white px-2 py-1 rounded text-xs font-ui flex justify-between">
               <span>Discard:</span>
@@ -266,33 +414,59 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, localPlayerId }
       {/* CENTER - Game Board */}
       <div className="flex-grow flex flex-col h-screen relative">
         {/* Opponent Hand (card backs) - positioned at top, slightly occluded */}
-        <div className="absolute top-0 left-0 right-0 -translate-y-20">
-          <Hand cards={opponentPlayer.hand} isLocalPlayer={false} />
+        <div className={`absolute top-0 left-0 right-0 ${isGodMode ? '' : '-translate-y-20'}`}>
+          {isNetworkMode && (
+            <div className="text-center mb-2">
+              <span className="bg-blue-600 text-white px-4 py-1 rounded-full font-ui text-sm">
+                Opponent (Player {opponentId})
+              </span>
+            </div>
+          )}
+          <Hand 
+            cards={opponentPlayer.hand} 
+            isLocalPlayer={false}
+            isOpen={isGodMode}
+            isTop={isGodMode}
+          />
         </div>
 
         {/* 5 Terrains (horizontal layout) - centered exactly */}
         <div className="flex gap-6 justify-center items-center absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-          {gameState.terrains.map((terrain, terrainId) => {
+          {gameState.terrains.map((terrain, index) => {
+            const terrainId = index as TerrainId;
             const opponentSlot = terrain.slots[opponentId];
             const playerSlot = terrain.slots[localPlayerId];
 
-            // Calculate current control (who would win if game ended now)
-            const opponentPower = opponentSlot.unit ? opponentSlot.unit.power + opponentSlot.modifier : 0;
-            const playerPower = playerSlot.unit ? playerSlot.unit.power + playerSlot.modifier : 0;
-            const controllingPlayer = opponentPower > playerPower ? 'opponent' : playerPower > opponentPower ? 'player' : 'tie';
+            // Use engine to calculate current projected winner (respects Rogue and other rules)
+            const projectedWinner = engine.calculateTerrainWinner(terrainId);
+            const controllingPlayer = projectedWinner === opponentId ? 'opponent' : projectedWinner === localPlayerId ? 'player' : 'tie';
+
+            // Highlighting Logic using generic isSlotValidTarget
+            const isOpponentSlotValid = isSlotValidTarget(terrainId, opponentId, opponentSlot.unit?.id);
+            const isPlayerSlotValid = isSlotValidTarget(terrainId, localPlayerId, playerSlot.unit?.id);
+
+            // Input Request Targeting (e.g. Archer deploy ability)
+            const isOpponentSlotTargetable = isAwaitingInput && pendingInputRequest?.type === 'target' && 
+                pendingInputRequest.validSlots?.some(s => s.terrainId === terrainId && s.playerId === opponentId);
+                
+            const isPlayerSlotTargetable = isAwaitingInput && pendingInputRequest?.type === 'target' && 
+                pendingInputRequest.validSlots?.some(s => s.terrainId === terrainId && s.playerId === localPlayerId);
 
             return (
               <div key={terrainId} className="flex flex-col gap-4 relative">
                 {/* Opponent's slot */}
-                <Slot
+                <DroppableSlot
                   unit={opponentSlot.unit}
                   slotModifier={opponentSlot.modifier}
                   playerId={opponentId}
                   terrainId={terrainId}
                   isPlayerSlot={false}
                   winner={terrain.winner}
-                  isTargetable={isAwaitingInput && pendingInputRequest?.type === 'target' && opponentSlot.unit !== null && pendingInputRequest.validTargetIds.includes(opponentSlot.unit.id)}
+                  isTargetable={isOpponentSlotTargetable || isOpponentSlotValid}
                   onUnitClick={handleUnitClick}
+                  onSlotClick={handleSlotClick}
+                  onDrop={(tId, pId) => handleSlotDrop(tId, pId)}
+                  isHighlighted={isOpponentSlotValid}
                 />
 
                 {/* Divider with control indicator */}
@@ -316,17 +490,18 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, localPlayerId }
                 </div>
 
                 {/* Player's slot */}
-                <Slot
+                <DroppableSlot
                   unit={playerSlot.unit}
                   slotModifier={playerSlot.modifier}
                   playerId={localPlayerId}
                   terrainId={terrainId}
                   isPlayerSlot={true}
-                  isHighlighted={isLocalPlayerTurn && !!draggedCardId}
-                  onDrop={handleSlotDrop}
+                  isHighlighted={isPlayerSlotValid}
+                  onDrop={(tId, pId) => handleSlotDrop(tId, pId)}
                   winner={terrain.winner}
-                  isTargetable={isAwaitingInput && pendingInputRequest?.type === 'target' && playerSlot.unit !== null && pendingInputRequest.validTargetIds.includes(playerSlot.unit.id)}
+                  isTargetable={isPlayerSlotTargetable || isPlayerSlotValid}
                   onUnitClick={handleUnitClick}
+                  onSlotClick={handleSlotClick}
                 />
               </div>
             );
@@ -335,14 +510,27 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, localPlayerId }
 
         {/* Player Hand (fanned) - positioned at bottom, slightly occluded */}
         <div className="absolute bottom-0 left-0 right-0 translate-y-10">
+          {isNetworkMode && (
+            <div className="text-center mb-2">
+              <span className="bg-pink-600 text-white px-4 py-1 rounded-full font-ui text-sm">
+                You (Player {localPlayerId})
+              </span>
+            </div>
+          )}
           <Hand
             cards={localPlayer.hand}
             isLocalPlayer={true}
-            onCardDragStart={handleCardDragStart}
-            onCardDragEnd={handleCardDragEnd}
           />
         </div>
       </div>
     </div>
+    
+        <DragOverlay>
+          {activeCard ? (
+            <Card card={activeCard} isInHand={false} />
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+    </>
   );
 };

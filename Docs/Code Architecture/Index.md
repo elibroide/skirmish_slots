@@ -91,14 +91,28 @@ The UI never directly accesses engine state—it only listens to events and send
 ### [CardSystem.md](./CardSystem.md) (~300 lines)
 **Card classes, lifecycle hooks, and registry**
 
-- Why hardcoded approach
 - Base Card, UnitCard, ActionCard classes
 - Lifecycle hooks (onDeploy, onDeath, onConquer, etc.)
 - Helper methods (addPower, dealDamage, getCloseAllies)
-- Example implementations (Scout, Martyr, Champion, Bouncer, Fortify)
 - CardRegistry and factory pattern
 
-**When to read:** Implementing new cards, understanding card structure.
+**When to read:** Understanding card base classes, implementing action cards.
+
+**See Also:** [TraitSystem.md](./TraitSystem.md) for ECS unit card implementation.
+
+---
+
+### [TraitSystem.md](./TraitSystem.md) (~400 lines)
+**ECS trait-based unit card architecture**
+
+- Entity-Component-System pattern overview
+- 6 trait types (Reaction, OngoingReaction, RuleModifier, Shield, Activate, Special)
+- Trait lifecycle and attachment flow
+- Card definitions (data-driven approach)
+- Dynamic trait application ("give shield to allies")
+- Migration from class-based to ECS
+
+**When to read:** Implementing new unit cards, understanding trait composition, giving abilities dynamically.
 
 **See Also:** [CardMechanics.md](../Game%20Design/CardMechanics.md) for game design rules.
 
@@ -147,6 +161,18 @@ The UI never directly accesses engine state—it only listens to events and send
 - Integration with effect queue
 
 **When to read:** Understanding automated rule enforcement, debugging state transitions.
+
+---
+
+### [RulesSystem.md](./RulesSystem.md) (~100 lines)
+**Rule Modification System (Validators)**
+
+- Rule Manager & Modifiers
+- Rule Types (CAN_DEPLOY, CAN_TARGET, CAN_CONSUME)
+- Registration & Lifecycle (onLeave)
+- Integration with Engine & Cards
+
+**When to read:** Understanding targeting logic, implementing cards with restrictions (e.g. Sentinel, Stealth).
 
 ---
 

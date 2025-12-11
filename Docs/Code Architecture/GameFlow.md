@@ -57,29 +57,28 @@ class ResolveRoundEffect extends Effect {
       const unit0 = slot.units[0];
       const unit1 = slot.units[1];
 
+      // Calculate base winner logic
+      let winner: PlayerId | null = null;
       if (unit0 && unit1) {
-        // Both players have units - compare power
-        if (unit0.power > unit1.power) {
-          state.players[0].vp += 1;
-          slot.winner = 0;
-        } else if (unit1.power > unit0.power) {
-          state.players[1].vp += 1;
-          slot.winner = 1;
-        } else {
-          // Tie - no VP awarded
-          slot.winner = null;
-        }
+        if (unit0.power > unit1.power) winner = 0;
+        else if (unit1.power > unit0.power) winner = 1;
       } else if (unit0) {
-        // Only player 0 has unit
-        state.players[0].vp += 1;
-        slot.winner = 0;
+        winner = 0;
       } else if (unit1) {
-        // Only player 1 has unit
-        state.players[1].vp += 1;
-        slot.winner = 1;
-      } else {
-        // Empty slot - no VP
-        slot.winner = null;
+        winner = 1;
+      }
+
+      // Check for Rule Overrides (e.g., Rogue: "Lowest power wins")
+      // The RuleManager can alter the terrain winner based on special effects
+      slot.winner = this.engine.ruleManager.evaluate(
+        RuleType.DETERMINE_TERRAIN_WINNER,
+        { terrainId: slotId, power0: unit0?.power || 0, power1: unit1?.power || 0 },
+        winner
+      );
+
+      // Award VP
+      if (slot.winner !== null) {
+        state.players[slot.winner].vp += 1;
       }
 
       events.push({
@@ -154,39 +153,7 @@ class ResolveRoundEffect extends Effect {
     return { newState: state, events };
   }
 
-  private checkMatchEnd(state: GameState): PlayerId | null | undefined {
-    // 2 rounds won = victory
-    if (state.roundsWon[0] >= 2) return 0;
-    if (state.roundsWon[1] >= 2) return 1;
-
-    // 1 win + 1 tie = victory
-    if (state.roundsWon[0] === 1 && state.tieRounds >= 1) return 0;
-    if (state.roundsWon[1] === 1 && state.tieRounds >= 1) return 1;
-
-    // 2 ties = draw
-    if (state.tieRounds >= 2) return null;
-
-    // Continue playing
-    return undefined;
-  }
-
-  private cleanupRound(state: GameState): void {
-    // Move all units to discard (they don't "die", just cleanup)
-    for (const slot of state.slots) {
-      for (let playerId = 0; playerId < 2; playerId++) {
-        const unit = slot.units[playerId];
-        if (unit) {
-          state.players[playerId].discard.push(unit);
-          slot.units[playerId] = null;
-        }
-      }
-      // Clear slot modifiers
-      slot.modifiers = [0, 0];
-    }
-
-    // Reset pass flags
-    state.hasPassed = [false, false];
-  }
+  // ... rest of class
 }
 ```
 
@@ -239,23 +206,29 @@ class GameEngine {
 
 ### Power Is Permanent
 
-**No separate damage tracking:**
+**No separate damage tracking (Deprecated approach - Now uses Calculated Power):**
+
+**Calculated Power System:**
+- Unit power is calculated dynamically: `power = originalPower + buffs - damage + slotModifier`
+- **Buffs:** Permanent increments from effects (e.g., "Give +1").
+- **Damage:** Permanent decrements from attacks/effects.
+- **Slot Modifiers:** Applied dynamically based on current slot. Moving a unit automatically updates this factor.
 
 ```typescript
 class UnitCard extends Card {
-  power: number;          // Current power
-  originalPower: number;  // Base power (for healing)
+  originalPower: number;
+  buffs: number = 0;
+  damage: number = 0;
+
+  get power(): number {
+    let p = this.originalPower + this.buffs - this.damage;
+    // ... apply slot modifiers ...
+    return Math.max(0, p);
+  }
 
   dealDamage(amount: number): void {
-    this.power -= amount;
-    if (this.power < 0) this.power = 0;
-
-    this.engine.emitEvent({
-      type: 'UNIT_DAMAGED',
-      unitId: this.id,
-      amount,
-      newPower: this.power
-    });
+    this.damage += amount;
+    // ...
   }
 
   addPower(amount: number): void {
@@ -366,7 +339,7 @@ class TurnStartEffect extends Effect {
 5. Repeat 3-4 until both pass
    ↓
 6. Round Resolution
-   ├─ Calculate slot winners
+   ├─ Calculate slot winners (Rule Manager overrides allowed)
    ├─ Count VP
    ├─ Trigger Conquer
    ├─ Determine round winner

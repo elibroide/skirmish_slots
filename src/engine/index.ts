@@ -1,7 +1,7 @@
 // Main export file for the game engine
 export { GameEngine } from './GameEngine';
 export { EventEmitter } from './EventEmitter';
-export { EffectQueue } from './EffectQueue';
+export { EffectStack } from './EffectStack';
 export { StateChecker } from './StateChecker';
 export { createInitialGameState, getOpponent, getAdjacentTerrains, getUnitInFront } from './GameState';
 
@@ -70,7 +70,7 @@ export function initializeGame(
 
   // Start the first skirmish
   engine.enqueueEffect(new StartSkirmishEffect());
-  engine['processEffectQueue']();
+  engine['processEffectStack']();
 
   // Emit initial ACTION_REQUIRED
   engine['checkForRequiredActions']();

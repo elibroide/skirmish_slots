@@ -313,6 +313,35 @@ class Roots extends UnitCard {
 
 ---
 
+### Ghoul
+
+```typescript
+class Ghoul extends UnitCard {
+  constructor(owner: PlayerId, engine: GameEngine) {
+    super();
+    this.cardId = 'ghoul';
+    this.name = 'Ghoul';
+    this.power = 1;
+    this.originalPower = 1;
+    this.owner = owner;
+    this.engine = engine;
+  }
+
+  async onDeploy(): Promise<void> {
+    // Subscribe to unit death events
+    this.subscribe((event) => {
+      if (event.type === 'UNIT_DIED') {
+        // Trigger only if close and not self
+        // ... (check proximity) ...
+        this.addPower(2);
+      }
+    });
+  }
+}
+```
+
+---
+
 ### Noble
 
 ```typescript
@@ -521,6 +550,12 @@ function createCard(cardId: string, owner: PlayerId, engine: GameEngine): Card {
 **Use For:** React to buffs/damage
 **Async:** No - synchronous only
 **Example:** Vampire gains power when damaged nearby
+
+### Event Subscriptions
+**When:** Custom trigger logic (e.g. "Whenever X happens")
+**Use For:** Dynamic effects like "When another unit dies..."
+**Pattern:** Use `this.subscribe()` in `onDeploy`. Automatic cleanup on leave.
+**Example:** Ghoul gains +2 power when close unit dies
 
 ---
 

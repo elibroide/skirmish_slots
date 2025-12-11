@@ -1,14 +1,20 @@
-import type { GameAction, GameState, PlayerId, TerrainId } from '../types';
+import type { GameAction, GameState, PlayerId } from '../types';
 import type { AIPlayer } from './AIPlayer';
+import type { Card } from '../cards/Card';
+import type { SeededRNG } from '../SeededRNG';
 
 /**
  * Simple random AI that:
  * - Declares done if it has no cards in hand
  * - Plays random cards
- * - Prefers empty terrains to avoid consuming units
+ * - Uses card.selectDefaultTarget() to find valid moves
  */
 export class RandomAI implements AIPlayer {
-  constructor(public playerId: PlayerId) {}
+  private rng?: SeededRNG;
+  
+  constructor(public playerId: PlayerId, rng?: SeededRNG) {
+    this.rng = rng;
+  }
 
   decideAction(state: GameState): GameAction | null {
     const player = state.players[this.playerId];
@@ -21,46 +27,47 @@ export class RandomAI implements AIPlayer {
       };
     }
 
-    // Pick a random card from hand
-    const randomCard = player.hand[Math.floor(Math.random() * player.hand.length)];
-
-    // If it's a unit card, pick a terrain intelligently
-    if ('power' in randomCard) {
-      // Find empty terrains first (to avoid consuming)
-      const emptyTerrains: TerrainId[] = [];
-      const occupiedTerrains: TerrainId[] = [];
-
-      for (let i = 0; i < 5; i++) {
-        const terrain = state.terrains[i as TerrainId];
-        if (terrain.slots[this.playerId].unit === null) {
-          emptyTerrains.push(i as TerrainId);
-        } else {
-          occupiedTerrains.push(i as TerrainId);
-        }
-      }
-
-      // Prefer empty terrains, only use occupied if all are full
-      let targetTerrain: TerrainId;
-      if (emptyTerrains.length > 0) {
-        targetTerrain = emptyTerrains[Math.floor(Math.random() * emptyTerrains.length)];
-      } else {
-        targetTerrain = occupiedTerrains[Math.floor(Math.random() * occupiedTerrains.length)];
-      }
-
-      return {
-        type: 'PLAY_CARD',
-        playerId: this.playerId,
-        cardId: randomCard.id,
-        terrainId: targetTerrain,
-      };
+    // Shuffle hand to pick random card (use seeded RNG if available)
+    const shuffledHand = [...player.hand];
+    if (this.rng) {
+      this.rng.shuffle(shuffledHand);
+    } else {
+      shuffledHand.sort(() => Math.random() - 0.5);
     }
 
-    // It's an action card - play without target for now
-    // (V2 action cards will define their own targeting logic)
+    for (const card of shuffledHand) {
+        // Try to find a valid target for this card
+        // We need to cast to Card class to access methods (since state.hand is raw data usually, 
+        // but in this engine implementation, hand contains class instances? 
+        // Let's assume they are instances based on GameEngine.ts usage)
+        const cardInstance = card as Card;
+        
+        // Use the card's built-in target selection logic
+        const targetSlot = cardInstance.selectDefaultTarget(state);
+
+        // If card needs a target but none found, skip it
+        if (cardInstance.needsTarget() && !targetSlot) {
+            continue;
+        }
+
+        // If card is a unit, it must have a deployment target (which selectDefaultTarget provides)
+        if (cardInstance.getType() === 'unit' && !targetSlot) {
+            continue;
+        }
+
+        // Construct action
+        return {
+            type: 'PLAY_CARD',
+            playerId: this.playerId,
+            cardId: card.id,
+            targetSlot: targetSlot || undefined, // undefined for non-targeting actions
+        };
+    }
+
+    // If no valid moves found (e.g. board full and no consume allowed), pass
     return {
-      type: 'PLAY_CARD',
-      playerId: this.playerId,
-      cardId: randomCard.id,
+        type: 'DONE',
+        playerId: this.playerId,
     };
   }
 }

@@ -4,39 +4,41 @@ import { createDeck } from '../engine/cards';
 import { shuffle } from './helpers';
 
 /**
- * Create a V2 starter deck for testing
+ * Create a balanced 25-card starter deck
+ * Spread across different card types for variety
  */
 export function createStarterDeck(owner: PlayerId, engine: GameEngine): Card[] {
   const deckList = [
-    // Basic units
-    'warrior', 'warrior', // 2x Warrior (2 power)
-    'soldier', 'soldier', // 2x Soldier (4 power)
-
-    // Deploy effect units
-    'scout', 'scout', // 2x Scout (2 power, draw 1)
-    'champion', 'champion', // 2x Champion (5 power, +2 on turn start)
-    'vanguard', 'vanguard', // 2x Vanguard (2 power, close allies +1)
-    'bulwark', // 1x Bulwark (4 power, enemy in front -2)
-    'roots', // 1x Roots (2 power, slot bonus on death)
-    'archer', 'archer', // 2x Archer (3 power, deal 2 to close enemy)
-    'turret', // 1x Turret (3 power, 1 damage to front each turn)
-    'hunter', // 1x Hunter (4 power, kill wounded close unit)
-
-    // Consume mechanic
-    'acolyte', 'acolyte', // 2x Acolyte (1 power, consumer +3)
-    'transmuter', // 1x Transmuter (3 power, close allies +1 when consumed)
-
-    // Actions
-    'fireball', // 1x Fireball (6 damage to unit)
-    'inspiration', // 1x Inspiration (ally +4)
-    'study_the_battlefield', 'study_the_battlefield', // 2x Study (draw 2)
-    'precision_strike', // 1x Precision Strike (kill <=3 power)
+    // Low Power Utility (5 cards)
+    'scout', 'scout',               // 2x Scout (Draw)
+    'engineer',                     // 1x Engineer (Slot buff)
+    'warlock',                      // 1x Acolyte (Consume fodder)
+    'mimic',                        // 1x Mimic (Copy power)
+    
+    // Mid Power Units (10 cards)
+    'priest',                       // 1x Priest (Cleanse)
+    'bard',                         // 1x Bard (Ongoing buff)
+    'rookie',                        // 1x Roots (Death buff)
+    'wizard',                       // 1x Wizard (Action synergy)
+    'archer', 'archer',             // 2x Archer (Deploy damage)
+    'turret',                       // 1x Turret (Ping damage)
+    'rookie',                       // 1x Rookie (Activate buff)
+    'sentinel',                     // 1x Sentinel (Block enemy)
+    
+    // High Power Units (5 cards)
+    'champion', 'champion',         // 2x Champion (Pure stats)
+    'hunter',                       // 1x Hunter (Kill wounded)
+    'noble',                        // 1x Noble (Conquer draw)
+    'ranger',                       // 1x Ranger (Reposition)
+    
+    // Actions (5 cards)
+    'strike', 'strike',             // 2x Strike (Direct damage)
+    'unsummon',                     // 1x Unsummon (Bounce)
+    'seed',                         // 1x Seed (Slot buff)
+    'energize',                     // 1x Energize (Unit buff)
   ];
 
-  // Total: 25 cards
   const cards = createDeck(deckList, owner, engine);
-
-  // Shuffle the deck
   return shuffle(cards);
 }
 
@@ -45,11 +47,13 @@ export function createStarterDeck(owner: PlayerId, engine: GameEngine): Card[] {
  */
 export function createTestDeck(owner: PlayerId, engine: GameEngine): Card[] {
   const deckList = [
-    'warrior', 'warrior',
-    'scout', 'scout', 'scout',
-    'champion', 'champion',
-    'archer', 'archer',
-    'study_the_battlefield',
+    'turret', 'turret',
+    'turret', 'turret',
+    'rogue', 'rogue',
+    'ninja', 'ninja',
+    'vampire', 'vampire',
+    'turret', 'turret',
+    'turret', 'turret',
   ];
 
   const cards = createDeck(deckList, owner, engine);
