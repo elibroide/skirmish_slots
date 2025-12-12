@@ -13,39 +13,24 @@ Skirmish is a 2-player tactical card game where players deploy units and play ac
 
 ## Documentation Structure
 
-### [CoreRules.md](./CoreRules.md) (~150 lines)
-**Victory conditions, setup, and match structure**
+### [CoreRules.md](./CoreRules.md)
+**Victory conditions, setup, battlefield, and match structure**
 
 Everything about how to win and start playing:
+- Battlefield layout (5 terrains, slots)
 - Match format (best of 3)
 - Victory conditions & edge cases
-- Skirmish victory rules
 - Skirmish Points (SP)
-- Deck construction
-- Starting hands & draws
+- Deck construction & rarity
+- Turn structure & passing
+- Playing cards (units, actions, graveyard)
+- Leader system
 
-**When to read:** Understanding how to win, setting up a match, deck building rules.
-
----
-
-### [Gameplay.md](./Gameplay.md) (~200 lines)
-**Turn structure, battlefield, and card playing**
-
-The core game loop and how turns work:
-- Battlefield layout (5 terrains)
-- Turn structure (play/activate/done)
-- Done mechanics & lockout
-- Turn order rules
-- Playing unit cards (replacement rules)
-- Playing action cards
-- Graveyard rules
-- Skirmish resolution sequence
-
-**When to read:** Learning how to play, understanding turn mechanics, implementing game flow.
+**When to read:** Understanding core rules, setting up a match, deck building rules.
 
 ---
 
-### [CardMechanics.md](./CardMechanics.md) (~200 lines)
+### [CardMechanics.md](./CardMechanics.md)
 **Keywords, effects, and targeting rules**
 
 How card abilities work:
@@ -98,7 +83,7 @@ How to play well and why the game works this way:
 ### Looking for specific information?
 
 - **How do I win?** → [CoreRules.md](./CoreRules.md)
-- **How do turns work?** → [Gameplay.md](./Gameplay.md)
+- **How do turns work?** → [CoreRules.md](./CoreRules.md)
 - **What does "Conquer" mean?** → [CardMechanics.md](./CardMechanics.md)
 - **What's Archer's ability?** → [CardCatalog.md](./CardCatalog.md)
 - **Should I pass early or late?** → [StrategyGuide.md](./StrategyGuide.md)
@@ -106,10 +91,28 @@ How to play well and why the game works this way:
 ### Common Questions
 
 - **Setup:** CoreRules.md - Deck construction & starting hands
-- **Battlefield:** Gameplay.md - 5 terrains, slots, positioning
+- **Battlefield:** CoreRules.md - 5 terrains, slots, positioning
 - **Keywords:** CardMechanics.md - Deploy, Activate, Conquer, etc.
 - **Power:** CardMechanics.md - Damage, buffs, wounded
 - **Timing:** StrategyGuide.md - FAQ section
+
+---
+
+## Design Philosophy
+
+### Core Pillars
+1. **Spatial tactics** - Positioning matters (close, in front)
+2. **Resource tension** - Cards are precious, passing is strategic
+3. **Meaningful sacrifice** - Consume creates tough choices
+4. **Clean resolution** - Everything clears, fresh start each skirmish
+5. **Comeback potential** - Conquer and card advantage enable recovery
+
+### What Makes This Unique
+- Gwent-style passing with spatial positioning
+- Consume mechanic creates sacrifice decisions
+- Conquer rewards winning individual battles
+- 5 terrains means majority is 3 (clear goal)
+- Slot modifiers add tactical depth without persistence
 
 ---
 

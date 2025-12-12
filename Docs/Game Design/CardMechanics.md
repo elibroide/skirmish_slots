@@ -43,7 +43,7 @@
 - At start of each of your turns, reduce cooldown by 1
 - When cooldown reaches 0, you may activate (once ever)
 - Can activate multiple units' abilities in one turn
-- Activating abilities counts as your turn action
+- **Activating abilities are Quick Actions** (do not pass priority automatically)
 
 **Example:** "Activate (Cooldown 1): Deploy a dead ally with power 3 or less"
 
@@ -54,43 +54,61 @@
 
 ---
 
-### Conquer
+### Conquer (M2 Rework)
 
-**Trigger:** When unit's terrain is won (you have higher power)
-**Timing:** Happens during skirmish resolution AFTER winners determined
+**Type:** Passive keyword (no trigger effect)
+**Function:** SP bonus when winning a lane
 
-**Example:** "Conquer: Draw 2 cards"
+**Mechanics:**
+- Base lane win = 1 SP
+- Lane win with Conquer unit = 2 SP (base + bonus)
+- Only the winning unit matters (if multiple units had Conquer via replacement, only final winner counts)
 
-**Important Details:**
-- Triggers even if you lost the skirmish overall
-- Only cares if THIS unit's terrain was won
-- Triggers in order: terrain 0 → 4, P1 first then P2
+**Strategic Value:**
+- Units with Conquer are high-value targets
+- Worth protecting if you control the lane
+- Worth targeting if enemy controls the lane
+- Adds 1 extra SP per won lane with Conquer
 
 **Example:**
-- You lose skirmish 2-3
-- But your Noble won terrain 2
-- Noble's Conquer still triggers (draw 2 cards)
+- You win terrain 2 with a unit that has Conquer
+- Base SP for terrain 2: 1 SP
+- Conquer bonus: +1 SP
+- Total for that lane: 2 SP
 
 ---
 
 ### Consume
 
-**Trigger:** Remove one of YOUR units from play to get benefit
+**Definition:** Deploying a unit on top of one of your existing units
 
 **Mechanics:**
-- You choose to consume your own unit
-- Consumed unit goes to graveyard
-- Some units have benefits when consumed (Consumed keyword)
-- Some cards require consuming to play (Dragon)
+- Consume is the **exception** to the "empty slots only" deploy rule
+- Units with Consume CAN deploy to slots you already occupy
+- The existing unit is sacrificed (removed to graveyard)
+- The new unit takes its place
+- Death effects trigger on the consumed unit
+- Consumed effects trigger if the sacrificed unit has them
+
+**Consume Flow:**
+1. Select a unit with Consume ability
+2. Target one of YOUR occupied slots
+3. Existing unit is removed to graveyard (Death triggers)
+4. If consumed unit has "Consumed:" effect, it triggers
+5. New unit deploys to that slot (Deploy triggers)
 
 **Example Uses:**
-- "Can only be deployed by consuming another unit" (Dragon)
-- "Consume: Draw a card" (Apprentice)
-- "Consumed: Consuming unit gets +3" (Acolyte)
+- "Can only be deployed by consuming another unit" (Dragon - requires consume)
+- "Consume: Draw a card" (Apprentice - optional consume for benefit)
+- "Consumed: Consuming unit gets +3" (Acolyte - benefit when sacrificed)
+
+**Types of Consume:**
+- **Required Consume:** Unit MUST consume to deploy (e.g., Dragon)
+- **Optional Consume:** Unit CAN consume for a benefit (e.g., Apprentice)
 
 **Consume vs Death:**
-- Consume is voluntary (you choose)
-- Death triggers when consumed
+- Consuming IS a form of death (Death triggers)
+- "Consumed:" is an additional trigger only when consumed (not other deaths)
 
 ---
 
@@ -100,9 +118,8 @@
 
 **Causes of Death:**
 - Power reduced to 0 (damage)
-- Replaced by new unit
-- Consumed
-- Removed by effects
+- Consumed (another unit deployed on top)
+- Removed by effects (kill, destroy, etc.)
 
 **Example:** "Death: My slot gets +X modifier equal to my power" (Roots)
 
@@ -134,13 +151,20 @@
 **Rules:**
 - Power cannot go below 0
 - If reduced to 0, unit dies (Death triggers)
-- Damage is permanent for the skirmish
+- Damage persists while unit is on the battlefield
+- **Damage does NOT persist if unit leaves the battlefield**
+  - Bounced units return to hand at full base power
+  - Redeployed units (e.g., from graveyard) enter at base power
 
 **Example:** "Deal 2 damage to a close enemy"
 
 **Result:**
 - Enemy with 4 power → now has 2 power
 - Enemy with 2 power → now has 0 power (dies)
+
+**Leaving Battlefield:**
+- Unit with 3/5 power gets bounced → returns to hand as 5 power card
+- Unit with 3/5 power gets redeployed from graveyard → enters as 5 power
 
 ---
 
@@ -152,6 +176,7 @@
 - Lasts for remainder of skirmish (not permanent)
 - Stacks with other buffs
 - Clears at end of skirmish
+- Buffs do not carry over if unit is moved out of the battlefield
 
 **Example:** "Close allies get +1"
 
@@ -187,6 +212,7 @@
 - Each player's slot can have power modifiers
 - Modifier belongs to the player, not the terrain
 - "My slot" = your side of that terrain
+- Modifiers can be negative
 
 ---
 
@@ -225,7 +251,7 @@
 
 ### Close
 
-**Definition:** Adjacent terrains (directly left OR right)
+**Definition:** Adjacent terrains (directly left OR right) and the one in front
 
 **Examples:**
 - Terrain 2's close terrains = 1 and 3
@@ -234,9 +260,13 @@
 
 **Usage:** "Deal 1 damage to close enemies"
 
+Exmple of close to Me
+[No][Ye][Ye][Ye][No]
+[No][Ye][Me][Ye][No]
+
 ---
 
-### In Front
+### In Front (or Opposing)
 
 **Definition:** The opposite player's unit on same terrain number
 
@@ -244,7 +274,7 @@
 - Your unit at terrain 2 is "in front of" opponent's unit at terrain 2
 
 **Usage:**
-- "My power = enemy in front of me" (Mimic)
+- "My power = to opposing enemy" (Mimic)
 - "Deal 1 damage to enemy in front of me" (Turret)
 
 ---
@@ -349,9 +379,137 @@
 
 ---
 
-## Reserved Mechanics
+## Quick Actions & Turn Flow
 
-**Note:** These mechanics exist in the codebase but are not currently used by any V2 cards. They are reserved for future card designs.
+### Action Types
+
+| Action Type | Limit | Examples |
+|-------------|-------|----------|
+| **Normal Action** | Once per turn | Play a card from hand |
+| **Quick Action** | Any number | Activate unit abilities, use Leader abilities, play cards marked as "Quick" |
+| **Pass** | Ends your turn | See below |
+
+### How Passing Works
+
+When you click **Pass**:
+- **If you performed any action this turn** → Priority moves to opponent, you may act again later
+- **If you performed NO actions this turn** → You are **Done** for the skirmish (locked out)
+
+---
+
+## M2 New Keywords
+
+### Shield
+
+**Type:** Defensive stat (similar to Power)
+**Function:** Damage reduction layer that protects Power
+
+**Mechanics:**
+- Units have Power/Shield format: "5/2" = 5 power, 2 shield
+- Shield absorbs damage before Power is affected
+- When damage is dealt to a unit with Shield:
+  1. If Shield ≥ Damage → Shield reduced by Damage, Power unaffected
+  2. If Damage > Shield → Shield reduced to 0, overflow damage hits Power
+
+**Damage Calculation:**
+```
+if (shield >= damage) {
+  shield -= damage;
+  // Power stays the same
+} else {
+  overflow = damage - shield;
+  shield = 0;
+  power -= overflow;
+}
+```
+
+**Example:**
+- Unit has 5 Power, 2 Shield (displayed as 5/2)
+- Takes 3 damage
+- Shield absorbs 2 (Shield → 0)
+- Overflow of 1 hits Power (Power → 4)
+- Result: 4 Power, 0 Shield (4/0)
+
+**Shield Granting:**
+- Cards can grant Shield: "Deploy: Shield 2" (gives self 2 Shield)
+- "Give close allies Shield 1" (grants Shield to nearby units)
+- Shield stacks (if you have 2 Shield and gain 2 more, you have 4)
+
+**Visual:**
+- Shield displayed separately from Power on card
+- Shield icon with value
+- Shield bar/indicator on board frame
+
+---
+
+### Dominant
+
+**Type:** Conditional passive ability
+**Trigger:** Active only when unit is LEADING its lane
+
+**Definition:**
+- A unit is **Dominant** when its Power > opposing enemy's Power in the same lane
+- "Dominant: [Effect]" abilities only work while the unit is leading
+
+**Mechanics:**
+- Dominant status checked after every power change in lane
+- Updates dynamically as power changes
+- Only active when strictly greater (ties don't count)
+- If no enemy in lane, unit is Dominant (leading by default)
+
+**Example Effects:**
+- "Dominant: Actions you play deal +2 damage"
+- "Dominant: Close allies get +1 Power"
+- "Dominant: This unit has Shield 2"
+- "Dominant: At end of turn, deal 1 damage to a far enemy"
+
+**Visual:**
+- Crown or glow icon above unit when Dominant
+- Dominant keyword icon is highlighted/glowing when active
+- Icon grayed out when not leading
+
+**Strategic Implications:**
+- Creates lane control objectives
+- Encourages fighting for specific terrains
+- Power swings can turn Dominant on/off mid-skirmish
+
+---
+
+### Move
+
+**Type:** Action/Ability keyword
+**Function:** Repositioning units on the battlefield
+
+**Definition:**
+- Move changes a unit's slot position
+- Typically to adjacent (close) empty slots
+- Does NOT trigger Deploy effects (unless specified)
+
+**Move Rules:**
+- Can only move to **empty** slots (respects deploy restrictions)
+- Typically limited to **close** slots (adjacent terrains)
+- Moving is an action that can be granted by:
+  - Unit activated abilities: "Activate: Move to a close empty slot"
+  - Card effects: "Deploy: Move a close ally to an empty slot"
+  - Leader abilities: "Move a unit to a close empty slot"
+
+**Move vs Deploy:**
+- Moving does NOT trigger Deploy effects (pure repositioning)
+- Exception: Some cards may specify "Move, triggering Deploy"
+- Moving does NOT cost cards (repositioning only)
+
+**Example Abilities:**
+- "Activate: Move this unit to a close empty slot"
+- "Deploy: Move a close ally to an empty slot"
+- "Activated (1 charge): Move a unit to a close empty slot" (Leader)
+
+**Strategic Uses:**
+- Dodge bad matchups (move away from counter unit)
+- Set up positional synergies (move into range of "close ally" buffs)
+- Fill empty slots strategically
+- React to opponent's deployment
+
+---
 
 ### Bounce
 
