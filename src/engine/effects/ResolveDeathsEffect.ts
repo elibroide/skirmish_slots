@@ -1,5 +1,5 @@
 import { Effect } from './Effect';
-import type { EffectResult, GameState } from '../types';
+import type { EffectResult, GameState, GameEvent } from '../types';
 import type { UnitCard } from '../cards/Card';
 
 /**
@@ -12,13 +12,13 @@ export class ResolveDeathsEffect extends Effect {
   }
 
   async execute(state: GameState): Promise<EffectResult> {
-    const events = [];
+    const events: GameEvent[] = [];
 
     // Process deaths sequentially
     for (const unit of this.dyingUnits) {
       // Double check if unit is still on board and dead (state might have changed)
       if (unit.terrainId !== null && unit.power <= 0) {
-        await unit.die('death'); 
+        await unit.die('death');
       }
     }
 

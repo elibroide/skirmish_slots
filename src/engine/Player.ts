@@ -1,7 +1,6 @@
 import type { PlayerId, PlayerState, SlotCoord } from './types';
 import type { GameEngine } from './GameEngine';
 import { UnitCard, ActionCard, type Card } from './cards/Card';
-import { TurnEndEffect } from './effects/TurnEndEffect';
 
 export class Player implements PlayerState {
   id: PlayerId;

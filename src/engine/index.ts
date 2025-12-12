@@ -25,7 +25,7 @@ import { createStarterDeck } from '../utils/deckBuilder';
 import { StartSkirmishEffect } from './effects/StartSkirmishEffect';
 import { HumanController } from './controllers/HumanController';
 import { AIController } from './controllers/AIController';
-import type { Card } from './types';
+import type { Card } from './cards/Card';
 import type { PlayerController } from './controllers/PlayerController';
 
 /**

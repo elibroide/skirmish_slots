@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
+import type { FirebaseGameDoc } from '../../network/types';
 
 export type WaitingRoomProps = {
   gameCode: string;
@@ -22,7 +23,7 @@ export const WaitingRoom: React.FC<WaitingRoomProps> = ({ gameCode, onCancel }) 
 
     // Subscribe to game ready state
     const firebase = networkSync.getFirebase();
-    const unsubscribe = firebase.subscribeToReadyState(networkGameId, (gameData) => {
+    const unsubscribe = firebase.subscribeToReadyState(networkGameId, (gameData: FirebaseGameDoc) => {
       if (gameData.gameStarted) {
         setStatus('starting');
       } else if (gameData.player0Ready && gameData.player1Ready) {

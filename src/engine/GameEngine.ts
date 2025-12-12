@@ -134,15 +134,17 @@ export class GameEngine {
 
     switch (action.type) {
       case 'PLAY_CARD': {
-        // Player plays the card
+        // Player plays the card - mark as acted
+        // Note: Does NOT end turn - player can play multiple cards before passing
+        this.state.hasActedThisTurn[action.playerId] = true;
         const player = this.getPlayer(action.playerId);
-        this.addInterrupt(new TurnEndEffect());
         await player.playCard(action.cardId, action.targetSlot);
         break;
       }
 
       case 'ACTIVATE': {
-        // Unit activates ability
+        // Unit activates ability - mark as acted
+        this.state.hasActedThisTurn[action.playerId] = true;
         const unit = this.getUnitById(action.unitId);
         if (unit) {
           await unit.activate();
@@ -150,14 +152,21 @@ export class GameEngine {
         break;
       }
 
-      case 'DONE': {
-        // Player passes
-        const player = this.getPlayer(action.playerId);
-        await player.pass();
+      case 'PASS': {
+        // Player passes - check if they become "done" (locked out)
+        const becomesDone = !this.state.hasActedThisTurn[action.playerId];
+
+        if (becomesDone) {
+          // No action taken this turn - player is locked out for the skirmish
+          this.state.isDone[action.playerId] = true;
+        }
+
         await this.emitEvent({
           type: 'PLAYER_PASSED',
-          playerId: player.id,
+          playerId: action.playerId,
+          isDone: becomesDone,
         });
+
         this.addInterrupt(new TurnEndEffect());
         break;
       }
@@ -368,7 +377,7 @@ export class GameEngine {
         return unit.canActivate();
       }
 
-      case 'DONE':  // Changed from PASS
+      case 'PASS':
         return true;
 
       default:
@@ -437,8 +446,8 @@ export class GameEngine {
       return actions;
     }
     
-    // Can always pass
-    actions.push({ type: 'DONE', playerId });
+    // Can always pass (behavior changes based on hasActedThisTurn)
+    actions.push({ type: 'PASS', playerId });
     
     const player = this.state.players[playerId];
     

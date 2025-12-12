@@ -34,7 +34,7 @@ export interface TerrainState {
 export interface PlayerState {
   id: PlayerId;
   hand: any[]; // Card[]
-  deck: any[]; // Card[]
+  deck: any[]; // Card[]`
   graveyard: any[]; // Card[]
   sp: number; // Skirmish Points
   skirmishesWon: number;
@@ -51,7 +51,8 @@ export interface GameState {
   ];
   currentSkirmish: number;
   currentPlayer: PlayerId;
-  isDone: [boolean, boolean];
+  isDone: [boolean, boolean];           // Player locked out for skirmish
+  hasActedThisTurn: [boolean, boolean]; // Did player take action this turn?
   tieSkirmishes: number;
   matchWinner?: PlayerId;
 }
@@ -72,7 +73,7 @@ export type GameAction =
       checksum?: string;
     }
   | {
-      type: 'DONE';
+      type: 'PASS';
       playerId: PlayerId;
       checksum?: string;
     }
@@ -110,7 +111,7 @@ export type GameEvent =
   | { type: 'ABILITY_ACTIVATED'; unitId: string; abilityName: string }
   | { type: 'ABILITY_TRIGGERED'; playerId: PlayerId; cardId: string; cardName: string; abilityName: string }
   | { type: 'COOLDOWN_REDUCED'; unitId: string; newCooldown: number }
-  | { type: 'PLAYER_PASSED'; playerId: PlayerId }
+  | { type: 'PLAYER_PASSED'; playerId: PlayerId; isDone: boolean }
   | { type: 'STATE_SNAPSHOT'; state: GameState }
   | { type: 'ACTION_EXECUTED'; action: GameAction } // For network sync
   // Legacy/Migration types (to satisfy old code if needed)

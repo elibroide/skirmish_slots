@@ -1,5 +1,6 @@
-import type { Card, PlayerId } from '../engine/types';
+import type { PlayerId } from '../engine/types';
 import type { GameEngine } from '../engine/GameEngine';
+import type { Card } from '../engine/cards/Card';
 import { createDeck } from '../engine/cards';
 import { shuffle } from './helpers';
 

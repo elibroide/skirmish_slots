@@ -54,9 +54,9 @@ export interface FirebaseGameDoc {
  * Firebase action document structure
  * This is a GameAction with timestamp added
  */
-export interface FirebaseActionDoc extends GameAction {
+export type FirebaseActionDoc = GameAction & {
   timestamp: number;
-}
+};
 
 /**
  * Desync error event

@@ -15,6 +15,7 @@ export class TurnEndEffect extends Effect {
     
     if (!state.isDone[opponent]) {
       state.currentPlayer = opponent;
+      state.hasActedThisTurn[opponent] = false; // Reset for their new turn
 
       events.push({
         type: 'PRIORITY_CHANGED',

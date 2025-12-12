@@ -349,8 +349,8 @@ ${cardDescriptions}`;
 
     // Convert actions to JSON strings for the AI to pick from
     const actionStrings = legalActions.map(action => {
-      if (action.type === 'DONE') {
-        return `PASS (End Skirmish Participation): { "type": "DONE", "playerId": ${this.playerId} }`;
+      if (action.type === 'PASS') {
+        return `PASS (End Turn/Skirmish): { "type": "PASS", "playerId": ${this.playerId} }`;
       }
       // ... (Reusing existing serialization logic for brevity, but strictly valid JSON)
       return JSON.stringify(action); 
@@ -363,7 +363,7 @@ ${cardDescriptions}`;
 
   private serializeLegalActionsDetailed(state: GameState, actions: GameAction[]): string {
     return `=== LEGAL ACTIONS ===\n` + actions.map(action => {
-      if (action.type === 'DONE') return `PASS: { "type": "DONE", "playerId": ${this.playerId} }`;
+      if (action.type === 'PASS') return `PASS: { "type": "PASS", "playerId": ${this.playerId} }`;
       
       if (action.type === 'PLAY_CARD') {
         const card = state.players[this.playerId].hand.find(c => c.id === action.cardId);
@@ -385,7 +385,7 @@ ${cardDescriptions}`;
 
   private serializeLegalActionsFallback(state: GameState): string {
     // Minimal fallback if engine is missing
-    return `PASS: { "type": "DONE", "playerId": ${this.playerId} }`;
+    return `PASS: { "type": "PASS", "playerId": ${this.playerId} }`;
   }
 
   private serializeHistory(history: GameLogEntry[]): string {
@@ -419,7 +419,7 @@ ${cardDescriptions}`;
   }
 
   private getFallbackAction(state: GameState): GameAction {
-    return { type: 'DONE', playerId: this.playerId };
+    return { type: 'PASS', playerId: this.playerId };
   }
 
   /**

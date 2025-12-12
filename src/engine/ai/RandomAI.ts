@@ -22,7 +22,7 @@ export class RandomAI implements AIPlayer {
     // Declare done if we have no cards in hand
     if (player.hand.length === 0) {
       return {
-        type: 'DONE',
+        type: 'PASS',
         playerId: this.playerId,
       };
     }
@@ -66,7 +66,7 @@ export class RandomAI implements AIPlayer {
 
     // If no valid moves found (e.g. board full and no consume allowed), pass
     return {
-        type: 'DONE',
+        type: 'PASS',
         playerId: this.playerId,
     };
   }

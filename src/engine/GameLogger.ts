@@ -178,7 +178,7 @@ export class GameLogger {
         };
       }
 
-      case 'DONE': {
+      case 'PASS': {
         return {
           action: 'pass'
         };

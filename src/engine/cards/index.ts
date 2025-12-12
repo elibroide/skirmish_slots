@@ -1,5 +1,6 @@
-import type { Card, PlayerId } from '../types';
+import type { PlayerId } from '../types';
 import type { GameEngine } from '../GameEngine';
+import type { Card } from './Card';
 import { createUnitCard } from './CardFactory';
 import { UNIT_CARD_DEFINITIONS } from './cardDefinitions';
 

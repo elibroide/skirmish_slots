@@ -1,6 +1,6 @@
 import { ActionCard } from '../Card';
-import type { PlayerId, GameEngine } from '../../GameEngine';
-import type { GameState, SlotCoord, TargetInfo, TerrainId } from '../../types';
+import type { PlayerId, GameState, SlotCoord, TargetInfo, TerrainId } from '../../types';
+import type { GameEngine } from '../../GameEngine';
 import { getAdjacentTerrains } from '../../GameState';
 
 export class Seed extends ActionCard {

@@ -159,44 +159,58 @@ class ResolveRoundEffect extends Effect {
 
 ---
 
-## Priority & Turn System
+## Priority & Turn System (Manual Pass)
+
+### Turn State Tracking
+
+The game uses two key state fields to track player activity:
+- **`isDone: [boolean, boolean]`** - Player is locked out for the skirmish
+- **`hasActedThisTurn: [boolean, boolean]`** - Player took an action this turn
+
+### How Pass Works
+
+When a player clicks **Pass**:
+1. **If `hasActedThisTurn` is `true`**: Player ends their turn but can act again later
+2. **If `hasActedThisTurn` is `false`**: Player becomes "Done" (locked out for skirmish)
 
 ```typescript
-class GameEngine {
-  processAction(action: GameAction): GameState {
-    if (action.type === 'PLAY_CARD') {
-      // ... process card play ...
+case 'PASS': {
+  // Check if player performed any action this turn
+  const becomesDone = !this.state.hasActedThisTurn[action.playerId];
 
-      // Switch priority to opponent
-      this.state.currentPlayer = (1 - this.state.currentPlayer) as PlayerId;
-
-      this.emitEvent({
-        type: 'PRIORITY_CHANGED',
-        newPriority: this.state.currentPlayer
-      });
-    }
-
-    if (action.type === 'PASS') {
-      // Lock player out
-      this.state.hasPassed[action.playerId] = true;
-
-      this.emitEvent({
-        type: 'PLAYER_PASSED',
-        playerId: action.playerId
-      });
-
-      // Check if both passed
-      if (this.state.hasPassed[0] && this.state.hasPassed[1]) {
-        // Enqueue round resolution
-        this.effectQueue.enqueue(new ResolveRoundEffect());
-      } else {
-        // Switch priority to opponent (who can keep playing)
-        this.state.currentPlayer = (1 - this.state.currentPlayer) as PlayerId;
-      }
-    }
-
-    return this.state;
+  if (becomesDone) {
+    // No action taken - player is locked out for the skirmish
+    this.state.isDone[action.playerId] = true;
   }
+
+  await this.emitEvent({
+    type: 'PLAYER_PASSED',
+    playerId: action.playerId,
+    isDone: becomesDone,  // UI can show "Pass" or "Done" based on this
+  });
+
+  this.addInterrupt(new TurnEndEffect());
+  break;
+}
+```
+
+### Turn End Effect
+
+At turn end, if switching to opponent:
+```typescript
+if (!state.isDone[opponent]) {
+  state.currentPlayer = opponent;
+  state.hasActedThisTurn[opponent] = false; // Reset for their new turn
+  // ... emit PRIORITY_CHANGED, queue TurnStartEffect
+}
+```
+
+### Skirmish End Condition
+
+Skirmish ends when **both players are Done**:
+```typescript
+if (state.isDone.every(done => done)) {
+  this.engine.addInterrupt(new ResolveSkirmishEffect());
 }
 ```
 

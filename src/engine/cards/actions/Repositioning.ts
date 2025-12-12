@@ -1,5 +1,6 @@
 import { ActionCard } from '../Card';
-import type { PlayerId, GameEngine } from '../../GameEngine';
+import type { PlayerId } from '../../types';
+import type { GameEngine } from '../../GameEngine';
 
 export class Repositioning extends ActionCard {
   constructor(owner: PlayerId, engine: GameEngine) {

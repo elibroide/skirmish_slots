@@ -1,5 +1,5 @@
 import { Effect } from './Effect';
-import type { EffectResult, GameState, PlayerId, TerrainId, PlayerSlotId } from '../types';
+import type { EffectResult, GameState, GameEvent, PlayerId, TerrainId, PlayerSlotId } from '../types';
 import { UnitCard } from '../cards/Card';
 import { StartSkirmishEffect } from './StartSkirmishEffect';
 
@@ -8,7 +8,7 @@ import { StartSkirmishEffect } from './StartSkirmishEffect';
  */
 export class ResolveSkirmishEffect extends Effect {
   async execute(state: GameState): Promise<EffectResult> {
-    const events = [];
+    const events: GameEvent[] = [];
 
     // STEP 1: Calculate terrain winners (5 terrains)
     for (let terrainId = 0; terrainId < 5; terrainId++) {
@@ -85,15 +85,18 @@ export class ResolveSkirmishEffect extends Effect {
     const matchWinner = this.checkMatchEnd(state);
 
     if (matchWinner !== undefined) {
-      state.matchWinner = matchWinner;
-      
+      state.matchWinner = matchWinner ?? undefined;
+
       // Cleanup all units when match ends (call onLeave)
       this.cleanupMatchEnd(state);
-      
-      events.push({
-        type: 'MATCH_ENDED' as const,
-        winner: matchWinner,
-      });
+
+      // Only emit MATCH_ENDED if there's an actual winner (not a draw with null)
+      if (matchWinner !== null) {
+        events.push({
+          type: 'MATCH_ENDED' as const,
+          winner: matchWinner,
+        });
+      }
     } else {
       // STEP 5: Cleanup for next skirmish
       this.cleanupSkirmish(state);

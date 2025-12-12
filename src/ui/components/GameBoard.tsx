@@ -177,9 +177,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     if (!pendingInputRequest) return;
 
     // Check if this slot is valid
-    if (pendingInputRequest.validSlots) {
+    if (pendingInputRequest.type === 'target' && pendingInputRequest.validSlots) {
         const isValid = pendingInputRequest.validSlots.some(
-            s => s.terrainId === terrainId && s.playerId === slotPlayerId
+            (s: { terrainId: number; playerId: PlayerId }) => s.terrainId === terrainId && s.playerId === slotPlayerId
         );
         if (!isValid) return;
     }
@@ -194,7 +194,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
     console.log(`[Action] ${playerId === localPlayerId ? 'YOU' : 'OPPONENT'} passing turn (Player ${playerId})`);
     engine.submitAction({
-      type: 'DONE',
+      type: 'PASS',
       playerId,
     });
   };
@@ -465,7 +465,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   isTargetable={isOpponentSlotTargetable || isOpponentSlotValid}
                   onUnitClick={handleUnitClick}
                   onSlotClick={handleSlotClick}
-                  onDrop={(tId, pId) => handleSlotDrop(tId, pId)}
                   isHighlighted={isOpponentSlotValid}
                 />
 
@@ -497,7 +496,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   terrainId={terrainId}
                   isPlayerSlot={true}
                   isHighlighted={isPlayerSlotValid}
-                  onDrop={(tId, pId) => handleSlotDrop(tId, pId)}
                   winner={terrain.winner}
                   isTargetable={isPlayerSlotTargetable || isPlayerSlotValid}
                   onUnitClick={handleUnitClick}

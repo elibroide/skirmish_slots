@@ -122,6 +122,39 @@ isTargetable={isAwaitingInput &&
 
 ---
 
+## Pass Button Behavior
+
+### Pass vs Done States
+
+The Pass button has **two semantic states** based on whether the player acted this turn:
+
+| State | Condition | Button Label | Effect |
+|-------|-----------|--------------|--------|
+| **Pass** | Player has played a card or activated an ability this turn | "Pass" | Ends turn, player can act again next turn |
+| **Done** | Player has NOT taken any action this turn | "Done" | Locks player out for the rest of the skirmish |
+
+### Visual Feedback
+
+**Checking Action State:**
+```typescript
+// UI can check gameState.hasActedThisTurn[playerId]
+const buttonLabel = gameState.hasActedThisTurn[localPlayerId] ? "Pass" : "Done";
+```
+
+**PLAYER_PASSED Event:**
+```typescript
+{ type: 'PLAYER_PASSED'; playerId: PlayerId; isDone: boolean }
+// isDone = true means player became locked out (no action was taken)
+```
+
+### UX Considerations
+- Button always visible during player's turn
+- Label can dynamically change to hint the consequence
+- Disabled when not player's turn or already done
+- Consider adding confirmation dialog when clicking "Done" (locks out for skirmish)
+
+---
+
 ## Hand Management
 
 ### Drag-and-Drop

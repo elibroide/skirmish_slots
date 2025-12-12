@@ -66,7 +66,7 @@ export class AIController implements PlayerController {
           
           // Fallback to pass
           this.engine.submitAction({
-            type: 'DONE',
+            type: 'PASS',
             playerId: this.playerId
           }, 'Fallback pass due to error');
         } finally {

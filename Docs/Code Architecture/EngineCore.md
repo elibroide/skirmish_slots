@@ -21,14 +21,27 @@ The Game Engine is the central brain of the application. It manages the game sta
 
 ```typescript
 interface GameState {
-  players: { [id: number]: PlayerState };
+  players: [PlayerState, PlayerState];
   terrains: TerrainState[];
   currentSkirmish: number;
   currentPlayer: PlayerId;
   matchWinner: PlayerId | undefined;
-  isDone: { [id: number]: boolean };
+  isDone: [boolean, boolean];           // Player locked out for skirmish
+  hasActedThisTurn: [boolean, boolean]; // Did player take action this turn?
+  tieSkirmishes: number;
 }
 ```
+
+### Turn State Fields
+
+| Field | Purpose |
+|-------|---------|
+| `isDone` | When `true`, player cannot take any more actions this skirmish |
+| `hasActedThisTurn` | Tracks if player performed PLAY_CARD or ACTIVATE this turn |
+
+**Pass Logic:**
+- If `hasActedThisTurn[playerId] === true` → Player ends turn, can act again later
+- If `hasActedThisTurn[playerId] === false` → Player becomes Done (locked out)
 
 ---
 

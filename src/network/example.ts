@@ -122,7 +122,7 @@ async function examplePlayerAction(engine: any) {
   if (hand.length === 0) {
     // No cards left, pass
     await engine.submitAction({
-      type: 'DONE',
+      type: 'PASS',
       playerId: currentPlayer
     });
     return;
