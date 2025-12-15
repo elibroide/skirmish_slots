@@ -25,6 +25,7 @@ export class StartSkirmishEffect extends Effect {
     // Reset "done" flags and turn action tracking
     state.isDone = [false, false];
     state.hasActedThisTurn = [false, false];
+    state.hasPlayedCardThisTurn = [false, false];
 
     // Reset SP for this skirmish
     state.players[0].sp = 0;
