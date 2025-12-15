@@ -1,5 +1,6 @@
 // Main export file for the game engine
 export { GameEngine } from './GameEngine';
+export { GameEntity } from './GameEntity';
 export { EventEmitter } from './EventEmitter';
 export { EffectStack } from './EffectStack';
 export { StateChecker } from './StateChecker';
@@ -18,6 +19,9 @@ export * from './effects';
 // Export controllers and AI
 export * from './controllers';
 export * from './ai';
+
+// Export leaders
+export * from './leaders';
 
 // Utility to initialize a game
 import { GameEngine } from './GameEngine';

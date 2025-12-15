@@ -6,15 +6,25 @@ import { TriggerEffect } from '../effects/TriggerEffect';
 export type TriggerType = 'ON_DEPLOY' | 'ON_DEATH' | 'ON_CONQUER' | 'ON_CONSUME' | 'ON_CONSUMED';
 export type TargetType = 'SELF' | 'CLOSE_ALLY' | 'CLOSE_ENEMY' | 'CLOSE_ANY' | 'IN_FRONT' | 'ALL_ENEMIES' | 'SLOT' | 'CLOSE_ALLY_SLOT' | 'CONSUMING_UNIT' | 'CONSUMED_UNIT';
 export type TargetDecision = 'PLAYER' | 'RANDOM' | 'ALL' | 'FIRST';
-export type EffectType = 'DEAL_DAMAGE' | 'ADD_POWER' | 'SET_POWER' | 'DRAW_CARDS' | 'ADD_SLOT_MODIFIER' | 'KILL' | 'CLEANSE' | 'DEPLOY_UNIT';
+export type EffectType = 'DEAL_DAMAGE' | 'ADD_POWER' | 'SET_POWER' | 'DRAW_CARDS' | 'ADD_SLOT_MODIFIER' | 'KILL' | 'CLEANSE' | 'DEPLOY_UNIT' | 'REMOVE_SLOT_MODIFIER';
 
-export interface ReactionConfig {
-  trigger: TriggerType;
+export interface ReactionEffectConfig {
   target?: TargetType;
   targetDecision?: TargetDecision;
   effect: EffectType;
   value: number | string | ((context: any) => number | string);
   condition?: (target: any) => boolean;
+}
+
+export interface ReactionConfig {
+  trigger: TriggerType;
+  target?: TargetType;
+  targetDecision?: TargetDecision;
+  effect?: EffectType;
+  value?: number | string | ((context: any) => number | string);
+  condition?: (target: any) => boolean;
+  // Support multiple effects that can reference each other's results via context.effectResults[]
+  effects?: ReactionEffectConfig[];
 }
 
 /**
@@ -83,6 +93,13 @@ export class ReactionTrait extends Trait {
   }
 
   private async executeReactionWithContext(context?: any): Promise<void> {
+    // Support multiple effects - if effects array is defined, use that
+    if (this.config.effects && this.config.effects.length > 0) {
+      await this.executeMultipleEffects(context);
+      return;
+    }
+
+    // Legacy single-effect path
     // Get targets as SlotCoords
     const targetSlots = this.getTargets(context);
 
@@ -134,6 +151,205 @@ export class ReactionTrait extends Trait {
     for (const slot of selectedSlots) {
       await this.applyEffect(slot, context);
     }
+  }
+
+  private async executeMultipleEffects(context?: any): Promise<void> {
+    // Initialize effectResults array in context for effects to reference
+    const effectContext = { ...context, effectResults: [] as any[], selectedSlot: null as SlotCoord | null };
+
+    for (const effectConfig of this.config.effects!) {
+      // Get targets for this specific effect
+      const targetSlots = this.getTargetsForEffect(effectConfig, effectContext);
+
+      if (targetSlots.length === 0 && effectConfig.target) {
+        continue; // No valid targets for this effect
+      }
+
+      // Apply condition filter if provided
+      const filteredSlots = effectConfig.condition
+        ? targetSlots.filter(slot => {
+            const unit = this.engine.getUnitAt(slot);
+            return unit && effectConfig.condition!(unit);
+          })
+        : targetSlots;
+
+      if (filteredSlots.length === 0 && effectConfig.target) {
+        continue;
+      }
+
+      // Determine which targets to affect
+      let selectedSlots: SlotCoord[] = [];
+
+      if (!effectConfig.target || effectConfig.target === 'SELF') {
+        selectedSlots = filteredSlots;
+      } else if (effectConfig.targetDecision === 'ALL') {
+        selectedSlots = filteredSlots;
+      } else if (effectConfig.targetDecision === 'PLAYER') {
+        if (filteredSlots.length === 0) continue;
+
+        const targetSlot = await this.owner.requestInput({
+          type: 'target',
+          targetType: this.getTargetTypeForEffectInput(effectConfig),
+          validSlots: filteredSlots,
+          context: `${this.owner.name}: ${this.name}`,
+        });
+
+        if (targetSlot) {
+          selectedSlots = [targetSlot];
+          // Store selected slot for subsequent effects to reference
+          effectContext.selectedSlot = targetSlot;
+        }
+      } else if (effectConfig.targetDecision === 'RANDOM') {
+        const randomIndex = Math.floor(this.engine.rng.next() * filteredSlots.length);
+        selectedSlots = [filteredSlots[randomIndex]];
+      } else {
+        selectedSlots = [filteredSlots[0]];
+      }
+
+      // Apply effect to selected targets and collect results
+      for (const slot of selectedSlots) {
+        const result = await this.applyEffectFromConfig(slot, effectContext, effectConfig);
+        effectContext.effectResults.push(result);
+      }
+    }
+  }
+
+  private getTargetsForEffect(effectConfig: ReactionEffectConfig, context: any): SlotCoord[] {
+    // Use the same targeting logic but with effect-specific config
+    if (!effectConfig.target || effectConfig.target === 'SELF') {
+      if (this.owner.terrainId === null) return [];
+      return [{
+        terrainId: this.owner.terrainId,
+        playerId: this.owner.owner
+      }];
+    }
+
+    // Reuse the existing getTargets logic by temporarily setting config
+    const originalTarget = this.config.target;
+    this.config.target = effectConfig.target;
+    const targets = this.getTargets(context);
+    this.config.target = originalTarget;
+    return targets;
+  }
+
+  private getTargetTypeForEffectInput(effectConfig: ReactionEffectConfig): string {
+    if (effectConfig.target === 'CLOSE_ENEMY' || effectConfig.target === 'ALL_ENEMIES') {
+      return 'enemy_unit';
+    }
+    if (effectConfig.target === 'CLOSE_ALLY' || effectConfig.target === 'CLOSE_ALLY_SLOT') {
+      return 'ally_unit';
+    }
+    if (effectConfig.target === 'SLOT') {
+      return 'slot';
+    }
+    return 'unit';
+  }
+
+  private async applyEffectFromConfig(slot: SlotCoord, context: any, effectConfig: ReactionEffectConfig): Promise<any> {
+    const value = typeof effectConfig.value === 'function'
+      ? effectConfig.value(context)
+      : effectConfig.value;
+
+    const targetUnit = this.engine.getUnitAt(slot);
+
+    switch (effectConfig.effect) {
+      case 'DEAL_DAMAGE':
+        if (targetUnit) {
+          await targetUnit.dealDamage(value as number);
+        }
+        return { type: 'damage', amount: value };
+
+      case 'ADD_POWER':
+        if (targetUnit) {
+          await targetUnit.addPower(value as number);
+        }
+        return { type: 'power', amount: value };
+
+      case 'SET_POWER':
+        if (targetUnit) {
+          const targetPower = value as number;
+          const currentPower = targetUnit.power;
+          const diff = targetPower - currentPower;
+          if (diff !== 0) {
+            await targetUnit.addPower(diff);
+          }
+        }
+        return { type: 'setPower', amount: value };
+
+      case 'DRAW_CARDS':
+        const player = this.engine.getPlayer(this.owner.owner);
+        await player.draw(value as number);
+        return { type: 'draw', amount: value };
+
+      case 'ADD_SLOT_MODIFIER':
+        const slotState = this.engine.state.terrains[slot.terrainId].slots[slot.playerId];
+        slotState.modifier += value as number;
+        await this.engine.emitEvent({
+          type: 'SLOT_MODIFIER_CHANGED',
+          terrainId: slot.terrainId,
+          playerId: slot.playerId,
+          newModifier: slotState.modifier
+        });
+        return { type: 'slotModifier', amount: value };
+
+      case 'REMOVE_SLOT_MODIFIER':
+        const slotToRemove = this.engine.state.terrains[slot.terrainId].slots[slot.playerId];
+        const removedAmount = slotToRemove.modifier;
+        if (removedAmount !== 0) {
+          slotToRemove.modifier = 0;
+          await this.engine.emitEvent({
+            type: 'SLOT_MODIFIER_CHANGED',
+            terrainId: slot.terrainId,
+            playerId: slot.playerId,
+            newModifier: 0
+          });
+        }
+        return { type: 'removedSlotModifier', amount: removedAmount, slot };
+
+      case 'KILL':
+        if (targetUnit) {
+          await targetUnit.die(`killed by ${this.owner.name}'s ${this.name}`);
+        }
+        return { type: 'kill' };
+
+      case 'CLEANSE':
+        const slotToCleanse = this.engine.state.terrains[slot.terrainId].slots[slot.playerId];
+        if (slotToCleanse.modifier !== 0) {
+          slotToCleanse.modifier = 0;
+          await this.engine.emitEvent({
+            type: 'SLOT_MODIFIER_CHANGED',
+            terrainId: slot.terrainId,
+            playerId: slot.playerId,
+            newModifier: 0
+          });
+        }
+        if (targetUnit) {
+          const oldPower = targetUnit.power;
+          targetUnit.buffs = 0;
+          const newPower = targetUnit.power;
+          if (newPower !== oldPower) {
+            await this.engine.emitEvent({
+              type: 'UNIT_POWER_CHANGED',
+              unitId: targetUnit.id,
+              terrainId: slot.terrainId,
+              oldPower,
+              newPower,
+              amount: newPower - oldPower
+            });
+            targetUnit.onPowerChanged(oldPower, newPower);
+          }
+        }
+        return { type: 'cleanse' };
+
+      case 'DEPLOY_UNIT':
+        const { createUnitCard } = await import('../cards/CardFactory');
+        const tokenId = typeof effectConfig.value === 'string' ? effectConfig.value : String(value);
+        const token = createUnitCard(tokenId as any, this.owner.owner, this.engine);
+        await token.deploy(slot.terrainId);
+        return { type: 'deploy', unitId: token.id };
+    }
+
+    return { type: 'unknown' };
   }
 
   private getTargets(context?: any): SlotCoord[] {

@@ -216,6 +216,55 @@ if (state.isDone.every(done => done)) {
 
 ---
 
+## Quick Actions (Leader Abilities)
+
+### What is a Quick Action?
+
+A **Quick Action** is an action that does NOT:
+- End the turn
+- Pass priority to opponent
+- Set `hasActedThisTurn`
+
+Currently, only **Leader Abilities** are Quick Actions.
+
+### Quick Action Flow
+
+```typescript
+case 'ACTIVATE_LEADER': {
+  const leaderState = this.state.leaders[action.playerId];
+
+  // 1. Consume charge
+  leaderState.currentCharges--;
+
+  // 2. Execute ability
+  const leader = getLeader(leaderState.leaderId);
+  if (leader.ability) {
+    await leader.ability.execute(this, action.playerId);
+  }
+
+  // 3. Emit events
+  await this.emitEvent({
+    type: 'LEADER_ABILITY_ACTIVATED',
+    playerId: action.playerId,
+    leaderId: leaderState.leaderId,
+    abilityName: leader.definition.name,
+    chargesRemaining: leaderState.currentCharges,
+  });
+
+  // NOTE: NO TurnEndEffect - this is a "Quick Action"
+  // hasActedThisTurn is NOT set
+  break;
+}
+```
+
+### Implications
+
+1. Player can activate leader ability, then play cards, then pass
+2. Leader ability usage does NOT prevent becoming "Done"
+3. Multiple quick actions can be chained if available
+
+---
+
 ## Power System
 
 ### Power Is Permanent

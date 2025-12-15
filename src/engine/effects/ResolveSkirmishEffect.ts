@@ -138,9 +138,6 @@ export class ResolveSkirmishEffect extends Effect {
           // Call onLeave to cleanup rules and subscriptions
           unit.onLeave();
         }
-
-        // CRITICAL: Clear slot modifiers (V2 key change - modifiers don't persist)
-        slot.modifier = 0;
       }
 
       // Reset terrain winner

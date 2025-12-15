@@ -1,21 +1,22 @@
-import type { PlayerId, TerrainId, TargetInfo, GameState, UnitCard as IUnitCard, InputRequest, GameEvent } from '../types';
+import type { PlayerId, TerrainId, TargetInfo, GameState, UnitCard as IUnitCard, GameEvent } from '../types';
 import type { GameEngine } from '../GameEngine';
+import { GameEntity } from '../GameEntity';
 import { RuleType, type RuleModifier, type SlotCoord } from '../rules/RuleTypes';
 import type { Trait } from '../traits/Trait';
 
 /**
  * Base class for all cards
+ * Extends GameEntity for common functionality (requestInput, engine access)
  */
-export abstract class Card {
+export abstract class Card extends GameEntity {
   id: string; // Unique instance ID
   cardId: string; // Card type ID (e.g., "scout")
   name: string;
   description: string; // Card ability description
-  owner: PlayerId;
-  engine: GameEngine;
   private eventUnsubscribers: (() => void)[] = [];
 
   constructor(cardId: string, name: string, description: string, owner: PlayerId, engine: GameEngine) {
+    super(engine, owner);
     // Use engine's seeded RNG for deterministic card IDs
     // Generate a random number between 0 and 999999
     const randomNum = Math.floor(engine.rng.next() * 1000000);
@@ -23,8 +24,6 @@ export abstract class Card {
     this.cardId = cardId;
     this.name = name;
     this.description = description;
-    this.owner = owner;
-    this.engine = engine;
   }
 
   /**
@@ -306,34 +305,6 @@ export class UnitCard extends Card implements IUnitCard {
     });
 
     this.onLeave();
-  }
-
-  // ========== Input Request Helper ==========
-
-  /**
-   * Request player input (targeting, modal choices, etc.)
-   * This method suspends effect execution until player provides input
-   *
-   * Example:
-   *   const targetId = await this.requestInput({
-   *     type: 'target',
-   *     targetType: 'enemy_unit',
-   *     validTargetIds: enemies.map(e => e.id),
-   *     context: 'Archer Deploy ability'
-   *   });
-   */
-  requestInput(request: InputRequest): Promise<any> {
-    return new Promise(async (resolve) => {
-      // Store the resolve function so submitInput() can call it
-      this.engine.pendingInputResolve = resolve;
-
-      // Emit INPUT_REQUIRED event
-      await this.engine.emitEvent({
-        type: 'INPUT_REQUIRED',
-        playerId: this.owner,
-        inputRequest: request,
-      });
-    });
   }
 
   // ========== Lifecycle Hooks ==========

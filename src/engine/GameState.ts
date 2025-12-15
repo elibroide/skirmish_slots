@@ -1,9 +1,10 @@
-import type { GameState, TerrainState, PlayerId, TerrainId, UnitCard } from './types';
+import type { GameState, TerrainState, PlayerId, TerrainId, UnitCard, LeaderState } from './types';
 import type { Card } from './cards/Card';
 import { Player } from './Player';
 import type { GameEngine } from './GameEngine';
 import type { SeededRNG } from './SeededRNG';
 import { GAME_CONSTANTS } from '../utils/constants';
+import { createLeaderState } from './leaders';
 
 /**
  * Create an initial game state for a new game
@@ -12,11 +13,13 @@ export function createInitialGameState(
   deck1: Card[],
   deck2: Card[],
   engine: GameEngine,
-  rng: SeededRNG
+  rng: SeededRNG,
+  leader1Id?: string,
+  leader2Id?: string
 ): GameState {
   const player0 = new Player(0, engine);
   player0.deck = [...deck1];
-  
+
   const player1 = new Player(1, engine);
   player1.deck = [...deck2];
 
@@ -32,10 +35,13 @@ export function createInitialGameState(
   return {
     players: [player0, player1],
     terrains: [emptyTerrain(0), emptyTerrain(1), emptyTerrain(2), emptyTerrain(3), emptyTerrain(4)],
+    leaders: [createLeaderState(leader1Id), createLeaderState(leader2Id)],
     currentSkirmish: 1,  // Changed from currentRound
+    currentTurn: 1,      // Increments each time a player passes
     currentPlayer: rng.next() < 0.5 ? 0 : 1, // Random starting player (deterministic)
     isDone: [false, false],           // Player locked out for skirmish
     hasActedThisTurn: [false, false], // Did player take action this turn?
+    hasPlayedCardThisTurn: [false, false], // Did player play a card this turn? (limit 1)
     tieSkirmishes: 0,  // Changed from tieRounds
     matchWinner: undefined,
   };

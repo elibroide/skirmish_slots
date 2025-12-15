@@ -25,13 +25,13 @@ export type OngoingTrigger =
 
 export type ProximityType = 'CLOSE' | 'IN_FRONT' | 'SAME_TERRAIN';
 export type OngoingTargetType = 'SELF' | 'CLOSE_ALLY' | 'CLOSE_ENEMY' | 'EVENT_SOURCE';
-export type OngoingEffectType = 'ADD_POWER' | 'DEAL_DAMAGE' | 'ADD_SLOT_MODIFIER' | 'BOUNCE' | 'MOVE';
+export type OngoingEffectType = 'ADD_POWER' | 'DEAL_DAMAGE' | 'ADD_SLOT_MODIFIER' | 'BOUNCE' | 'MOVE' | 'HEAL' | 'CREATE_CARDS';
 
 export interface OngoingEffectConfig {
   target?: OngoingTargetType;
   targetDecision?: 'ALL' | 'SELF' | 'RANDOM';
   effect: OngoingEffectType;
-  value: number | ((event: GameEvent) => number);
+  value: number | string | ((event: GameEvent) => number | string);
 }
 
 export interface OngoingReactionConfig {
@@ -42,7 +42,7 @@ export interface OngoingReactionConfig {
   target?: OngoingTargetType;
   targetDecision?: 'ALL' | 'SELF' | 'RANDOM';
   effect?: OngoingEffectType;
-  value?: number | ((event: GameEvent) => number);
+  value?: number | string | ((event: GameEvent) => number | string);
   effects?: OngoingEffectConfig[];
 }
 
@@ -227,17 +227,17 @@ export class OngoingReactionTrait extends Trait {
 
     switch (effectConfig.effect) {
       case 'ADD_POWER':
-        await target.addPower(value);
+        await target.addPower(value as number);
         break;
 
       case 'DEAL_DAMAGE':
-        await target.dealDamage(value);
+        await target.dealDamage(value as number);
         break;
 
       case 'ADD_SLOT_MODIFIER':
         if (target.terrainId !== null) {
           const slot = this.engine.state.terrains[target.terrainId].slots[target.owner];
-          slot.modifier += value;
+          slot.modifier += value as number;
 
           await this.engine.emitEvent({
             type: 'SLOT_MODIFIER_CHANGED',
@@ -260,7 +260,7 @@ export class OngoingReactionTrait extends Trait {
         if (target.terrainId !== null) {
           const currentTerrainId = target.terrainId;
           const emptySlots = [];
-          
+
           // Find all empty ally slots (excluding current position)
           for (let terrainId = 0; terrainId < 5; terrainId++) {
             if (terrainId !== currentTerrainId) {
@@ -270,21 +270,21 @@ export class OngoingReactionTrait extends Trait {
               }
             }
           }
-          
+
           // If there are empty slots, move to a random one
           if (emptySlots.length > 0) {
             const randomIndex = Math.floor(this.engine.rng.next() * emptySlots.length);
             const newTerrainId = emptySlots[randomIndex];
-            
+
             // Remove from current slot
             const oldSlot = this.engine.state.terrains[currentTerrainId].slots[target.owner];
             oldSlot.unit = null;
-            
+
             // Add to new slot
             const newSlot = this.engine.state.terrains[newTerrainId].slots[target.owner];
             newSlot.unit = target as any;
             target.terrainId = newTerrainId as any;
-            
+
             // Emit move event
             await this.engine.emitEvent({
               type: 'UNIT_MOVED',
@@ -294,6 +294,34 @@ export class OngoingReactionTrait extends Trait {
               playerId: target.owner
             });
           }
+        }
+        break;
+
+      case 'HEAL':
+        // Heal the target unit
+        await target.heal(value as number);
+        break;
+
+      case 'CREATE_CARDS':
+        // Create cards and add them to owner's hand
+        // value should be a string like "spike:2" meaning create 2 spike cards
+        const valueStr = String(value);
+        const [cardId, countStr] = valueStr.includes(':') ? valueStr.split(':') : [valueStr, '1'];
+        const count = parseInt(countStr, 10) || 1;
+
+        const { createCard } = await import('../cards');
+        const player = this.engine.getPlayer(this.owner.owner);
+
+        for (let i = 0; i < count; i++) {
+          const card = createCard(cardId, this.owner.owner, this.engine);
+          player.hand.push(card);
+
+          await this.engine.emitEvent({
+            type: 'CARD_DRAWN',
+            playerId: this.owner.owner,
+            count: 1,
+            cardId: card.id,
+          });
         }
         break;
     }

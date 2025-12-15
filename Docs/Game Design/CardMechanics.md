@@ -445,23 +445,19 @@ if (shield >= damage) {
 ### Dominant
 
 **Type:** Conditional passive ability
-**Trigger:** Active only when unit is LEADING its lane
+**Trigger:** Trigger only ONCE when the turn starts and you control the unit's lane
 
 **Definition:**
-- A unit is **Dominant** when its Power > opposing enemy's Power in the same lane
-- "Dominant: [Effect]" abilities only work while the unit is leading
+- Trigger once when your turn starts and you control this lane.
 
 **Mechanics:**
-- Dominant status checked after every power change in lane
-- Updates dynamically as power changes
-- Only active when strictly greater (ties don't count)
 - If no enemy in lane, unit is Dominant (leading by default)
 
 **Example Effects:**
-- "Dominant: Actions you play deal +2 damage"
+- "Dominant: Actions you play this skirmish deal additional 2 damage"
 - "Dominant: Close allies get +1 Power"
-- "Dominant: This unit has Shield 2"
-- "Dominant: At end of turn, deal 1 damage to a far enemy"
+- "Dominant: Kill a close enemy"
+- "Dominant: You get 1 Skirmish Point"
 
 **Visual:**
 - Crown or glow icon above unit when Dominant
@@ -471,7 +467,7 @@ if (shield >= damage) {
 **Strategic Implications:**
 - Creates lane control objectives
 - Encourages fighting for specific terrains
-- Power swings can turn Dominant on/off mid-skirmish
+- Once effect is done, the fight is over and can move on to something else
 
 ---
 

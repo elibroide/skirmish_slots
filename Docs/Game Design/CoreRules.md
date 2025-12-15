@@ -150,7 +150,7 @@
 
 ### What Clears
 - **All Units:** Removed from terrains to graveyard
-- **Slot Modifiers:** All power modifiers cleared
+- **Slot Modifiers:** Power modifiers on slots STAYS between Skirmishes
 - **Turn State:** Pass status resets
 
 ---
@@ -209,6 +209,17 @@ When you click **Pass**:
 - All discarded/killed cards go to graveyard
 - Graveyard persists between skirmishes
 - Face-up, both players can see contents
+
+---
+
+## Slot Modifiers
+
+### Give a slot modifier +-X
+- Some effects on cards or abilities will grant slots power modifier
+- These power modifiers will affect the unit on them (positively or negatively)
+- A unit with a negative modifier that will lower its power to less or equal to 0 will die immediately
+- Modifiers STAYS between skirmishes and are a long time investment
+- Modifiers stack, negative and positive modifiers cancel each other out
 
 ---
 

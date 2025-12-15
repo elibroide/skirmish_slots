@@ -19,11 +19,11 @@ import type { PlayerController } from './controllers/PlayerController';
 import { RuleManager } from './rules/RuleManager';
 import { RuleType } from './rules/RuleTypes';
 import { Player } from './Player';
-import { TurnEndEffect } from './effects/TurnEndEffect';
-import { ResolveSkirmishEffect } from './effects';
+import { PlayCardEffect, ActivateEffect, PassEffect, ActivateLeaderEffect } from './effects';
 import { GameLogger } from './GameLogger';
 import { SeededRNG } from './SeededRNG';
 import { StateHasher } from './StateHasher';
+import { getLeader } from './leaders'; // Used by isLegalAction and calculateTerrainWinner
 
 /**
  * Core game engine.
@@ -86,9 +86,9 @@ export class GameEngine {
     });
   }
 
-  async initializeGame(deck1: Card[], deck2: Card[]) {
+  async initializeGame(deck1: Card[], deck2: Card[], leader1Id?: string, leader2Id?: string) {
     // Pass 'this' (the engine) and RNG to createInitialGameState
-    this.state = createInitialGameState(deck1, deck2, this, this.rng);
+    this.state = createInitialGameState(deck1, deck2, this, this.rng, leader1Id, leader2Id);
 
     // Start the first skirmish (draw initial hands)
     const { StartSkirmishEffect } = await import('./effects/StartSkirmishEffect');
@@ -122,7 +122,8 @@ export class GameEngine {
 
   /**
    * Process a game action
-   * Now async to support input requests during effect execution
+   * Now async to support input requests during effect execution.
+   * All actions are wrapped in Effects for consistent ordering and status effect management.
    */
   async processAction(action: GameAction): Promise<GameState> {
     // Validate action
@@ -132,44 +133,23 @@ export class GameEngine {
 
     await this.actionEmitter.emit(action);
 
+    // Wrap all actions in effects for consistent effect stack ordering
     switch (action.type) {
-      case 'PLAY_CARD': {
-        // Player plays the card - mark as acted
-        // Note: Does NOT end turn - player can play multiple cards before passing
-        this.state.hasActedThisTurn[action.playerId] = true;
-        const player = this.getPlayer(action.playerId);
-        await player.playCard(action.cardId, action.targetSlot);
+      case 'PLAY_CARD':
+        this.addInterrupt(new PlayCardEffect(action.playerId, action.cardId, action.targetSlot));
         break;
-      }
 
-      case 'ACTIVATE': {
-        // Unit activates ability - mark as acted
-        this.state.hasActedThisTurn[action.playerId] = true;
-        const unit = this.getUnitById(action.unitId);
-        if (unit) {
-          await unit.activate();
-        }
+      case 'ACTIVATE':
+        this.addInterrupt(new ActivateEffect(action.playerId, action.unitId));
         break;
-      }
 
-      case 'PASS': {
-        // Player passes - check if they become "done" (locked out)
-        const becomesDone = !this.state.hasActedThisTurn[action.playerId];
-
-        if (becomesDone) {
-          // No action taken this turn - player is locked out for the skirmish
-          this.state.isDone[action.playerId] = true;
-        }
-
-        await this.emitEvent({
-          type: 'PLAYER_PASSED',
-          playerId: action.playerId,
-          isDone: becomesDone,
-        });
-
-        this.addInterrupt(new TurnEndEffect());
+      case 'PASS':
+        this.addInterrupt(new PassEffect(action.playerId));
         break;
-      }
+
+      case 'ACTIVATE_LEADER':
+        this.addInterrupt(new ActivateLeaderEffect(action.playerId));
+        break;
     }
 
     // Process effect stack (await it) - triggers like TurnEnd or OnDeploy/OnDeath run here
@@ -203,15 +183,33 @@ export class GameEngine {
 
   /**
    * Check if current player needs to make a decision and emit ACTION_REQUIRED
+   * Auto-passes if the player has acted this turn and has no more actions available
    */
   private async checkForRequiredActions(): Promise<void> {
     const currentPlayer = this.state.currentPlayer;
 
-    // Only emit if game is ongoing and player hasn't declared done
+    // Only check if game is ongoing and player hasn't declared done
     if (
       this.state.matchWinner === undefined &&
-      !this.state.isDone[currentPlayer]  // Changed from hasPassed
+      !this.state.isDone[currentPlayer]
     ) {
+      // Get all legal actions for the current player
+      const legalActions = this.getLegalActions(currentPlayer);
+
+      // Auto-pass only if:
+      // 1. Player has acted this turn (played a card or activated something)
+      // 2. The only remaining action is PASS
+      // This prevents infinite loops when a player hasn't done anything yet
+      if (
+        this.state.hasActedThisTurn[currentPlayer] &&
+        legalActions.length === 1 &&
+        legalActions[0].type === 'PASS'
+      ) {
+        // Automatically pass for the player
+        await this.processAction({ type: 'PASS', playerId: currentPlayer });
+        return;
+      }
+
       await this.emitEvent({
         type: 'ACTION_REQUIRED',
         playerId: currentPlayer,
@@ -246,7 +244,6 @@ export class GameEngine {
       // Wait for events to be processed (critical for async event listeners)
       for (const e of result.events) {
         await this.emitEvent(e);
-        this.stateChecker.checkStateConditions(this.state);
       }
     }
   }
@@ -330,6 +327,15 @@ export class GameEngine {
 
     switch (action.type) {
       case 'PLAY_CARD': {
+        // Check if player has already played a card this turn
+        // Exception: unlimited plays allowed when opponent is done
+        const opponent = (1 - action.playerId) as PlayerId;
+        const opponentIsDone = this.state.isDone[opponent];
+        if (this.state.hasPlayedCardThisTurn[action.playerId] && !opponentIsDone) {
+          console.log(`action [${JSON.stringify(action)}] already played a card this turn`);
+          return false;
+        }
+
         // Find card in hand
         const player = this.state.players[action.playerId];
         const card = player.hand.find((c) => c.id === action.cardId);
@@ -379,6 +385,18 @@ export class GameEngine {
 
       case 'PASS':
         return true;
+
+      case 'ACTIVATE_LEADER': {
+        const leaderState = this.state.leaders[action.playerId];
+        if (!leaderState) return false;
+        if (leaderState.currentCharges <= 0) return false;
+        if (leaderState.isExhausted) return false;
+
+        // Check if leader has an ability and if it can be activated
+        const leader = getLeader(leaderState.leaderId, this, action.playerId);
+        if (!leader.ability) return false; // Rookie has no ability
+        return leader.ability.canActivate();
+      }
 
       default:
         console.log(`action [${JSON.stringify(action)}] unknown type`);
@@ -448,56 +466,64 @@ export class GameEngine {
     
     // Can always pass (behavior changes based on hasActedThisTurn)
     actions.push({ type: 'PASS', playerId });
-    
+
     const player = this.state.players[playerId];
-    
-    // Check each card in hand
-    player.hand.forEach(card => {
-      if (card.getType() === 'unit') {
-        // Unit cards - check each terrain for valid deployment
-        this.state.terrains.forEach((terrain, terrainId) => {
-          // Must be empty slot
-          if (!terrain.slots[playerId].unit) {
-            // Check deployment rules (e.g., Sentinel blocking)
-            if (this.isDeploymentAllowed(card, terrainId as TerrainId)) {
-              actions.push({
-                type: 'PLAY_CARD',
-                playerId,
-                cardId: card.id,
-                targetSlot: { terrainId: terrainId as TerrainId, playerId }
-              });
-            }
-          }
-        });
-      } else {
-        // Action cards
-        if (!card.needsTarget()) {
-          // No target needed - always valid
-          actions.push({
-            type: 'PLAY_CARD',
-            playerId,
-            cardId: card.id
-          });
-        } else {
-          // Action card with targeting
-          const targets = card.getValidTargets(this.state);
-          if (targets.type === 'slots' && targets.validSlots) {
-            targets.validSlots.forEach((slot: { terrainId: TerrainId; playerId: PlayerId }) => {
-              // Check targeting rules
-              if (this.isTargetingAllowed(card, slot)) {
+
+    // Only allow playing cards if player hasn't played one this turn
+    // Exception: unlimited plays allowed when opponent is done
+    const opponentId = (1 - playerId) as PlayerId;
+    const opponentIsDone = this.state.isDone[opponentId];
+    const canPlayCard = !this.state.hasPlayedCardThisTurn[playerId] || opponentIsDone;
+
+    // Check each card in hand (only if player can still play a card)
+    if (canPlayCard) {
+      player.hand.forEach(card => {
+        if (card.getType() === 'unit') {
+          // Unit cards - check each terrain for valid deployment
+          this.state.terrains.forEach((terrain, terrainId) => {
+            // Must be empty slot
+            if (!terrain.slots[playerId].unit) {
+              // Check deployment rules (e.g., Sentinel blocking)
+              if (this.isDeploymentAllowed(card, terrainId as TerrainId)) {
                 actions.push({
                   type: 'PLAY_CARD',
                   playerId,
                   cardId: card.id,
-                  targetSlot: slot
+                  targetSlot: { terrainId: terrainId as TerrainId, playerId }
                 });
               }
+            }
+          });
+        } else {
+          // Action cards
+          if (!card.needsTarget()) {
+            // No target needed - always valid
+            actions.push({
+              type: 'PLAY_CARD',
+              playerId,
+              cardId: card.id
             });
+          } else {
+            // Action card with targeting
+            const targets = card.getValidTargets(this.state);
+            if (targets.type === 'slots' && targets.validSlots) {
+              targets.validSlots.forEach((slot: { terrainId: TerrainId; playerId: PlayerId }) => {
+                // Check targeting rules
+                if (this.isTargetingAllowed(card, slot)) {
+                  actions.push({
+                    type: 'PLAY_CARD',
+                    playerId,
+                    cardId: card.id,
+                    targetSlot: slot
+                  });
+                }
+              });
+            }
           }
         }
-      }
-    });
-    
+      });
+    }
+
     // Check activate actions for units on field
     this.state.terrains.forEach(terrain => {
       const unit = terrain.slots[playerId].unit;
@@ -512,7 +538,22 @@ export class GameEngine {
         }
       }
     });
-    
+
+    // Check leader ability
+    const leaderState = this.state.leaders[playerId];
+    if (leaderState) {
+      const leader = getLeader(leaderState.leaderId, this, playerId);
+      if (leader.ability &&
+          leaderState.currentCharges > 0 &&
+          !leaderState.isExhausted &&
+          leader.ability.canActivate()) {
+        actions.push({
+          type: 'ACTIVATE_LEADER',
+          playerId,
+        });
+      }
+    }
+
     return actions;
   }
 

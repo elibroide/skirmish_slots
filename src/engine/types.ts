@@ -40,6 +40,20 @@ export interface PlayerState {
   skirmishesWon: number;
 }
 
+// Leader System Types
+export interface LeaderDefinition {
+  leaderId: string;           // Unique identifier (e.g., "warlord", "sage")
+  name: string;               // Display name
+  maxCharges: number;         // Maximum charges (0 for no ability)
+  abilityDescription: string; // Human-readable ability text
+}
+
+export interface LeaderState {
+  leaderId: string;           // Which leader this player is using
+  currentCharges: number;     // Remaining charges
+  isExhausted: boolean;       // Cannot use ability this skirmish (future use)
+}
+
 export interface GameState {
   players: [PlayerState, PlayerState];
   terrains: [
@@ -49,10 +63,13 @@ export interface GameState {
     TerrainState,
     TerrainState
   ];
+  leaders: [LeaderState, LeaderState]; // One per player
   currentSkirmish: number;
+  currentTurn: number;                  // Increments each time a player passes
   currentPlayer: PlayerId;
   isDone: [boolean, boolean];           // Player locked out for skirmish
   hasActedThisTurn: [boolean, boolean]; // Did player take action this turn?
+  hasPlayedCardThisTurn: [boolean, boolean]; // Did player play a card this turn? (limit 1)
   tieSkirmishes: number;
   matchWinner?: PlayerId;
 }
@@ -81,6 +98,11 @@ export type GameAction =
       type: 'INPUT';
       playerId: PlayerId;
       input: any;
+      checksum?: string;
+    }
+  | {
+      type: 'ACTIVATE_LEADER';
+      playerId: PlayerId;
       checksum?: string;
     };
 
@@ -114,6 +136,8 @@ export type GameEvent =
   | { type: 'PLAYER_PASSED'; playerId: PlayerId; isDone: boolean }
   | { type: 'STATE_SNAPSHOT'; state: GameState }
   | { type: 'ACTION_EXECUTED'; action: GameAction } // For network sync
+  | { type: 'LEADER_ABILITY_ACTIVATED'; playerId: PlayerId; leaderId: string; abilityName: string; chargesRemaining: number }
+  | { type: 'LEADER_CHARGES_CHANGED'; playerId: PlayerId; oldCharges: number; newCharges: number }
   // Legacy/Migration types (to satisfy old code if needed)
   | { type: 'ROUND_ENDED'; roundNumber: number; winner: PlayerId | null; vp: [number, number] }
   | { type: 'SLOT_RESOLVED'; slotId: number; winner: PlayerId | null; unit0Power: number; unit1Power: number }

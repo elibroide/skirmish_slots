@@ -7,6 +7,7 @@ import { Card } from './Card';
 import { GameOverModal } from './GameOverModal';
 import { useGameStore } from '../store/gameStore';
 import { GameEngine } from '../../engine/GameEngine';
+import { getLeader } from '../../engine/leaders';
 
 interface GameBoardProps {
   gameState: GameState;
@@ -135,13 +136,27 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   };
 
   const handleUnitClick = (unitId: string) => {
+    console.log('[UI] handleUnitClick called with unitId:', unitId);
+    console.log('[UI] isAwaitingInput:', isAwaitingInput, 'pendingInputRequest:', pendingInputRequest);
+
     // Only handle clicks if we're awaiting input for targeting
     if (!isAwaitingInput) return;
     if (!pendingInputRequest || pendingInputRequest.type !== 'target') return;
 
-    // Find the unit's slot
+    // Check if we're targeting by unit ID (e.g., Warlord ability)
+    if (pendingInputRequest.validTargetIds) {
+        const isValid = pendingInputRequest.validTargetIds.includes(unitId);
+        console.log('[UI] Checking validTargetIds:', pendingInputRequest.validTargetIds, 'isValid:', isValid);
+        if (!isValid) return;
+        // Submit the unit ID directly
+        console.log('[UI] Submitting unit ID:', unitId);
+        engine.submitInput(unitId);
+        return;
+    }
+
+    // Otherwise, find the unit's slot for slot-based targeting
     let targetSlot: { terrainId: TerrainId; playerId: PlayerId } | null = null;
-    
+
     // Search for unit in terrains
     for (let i = 0; i < gameState.terrains.length; i++) {
         const terrain = gameState.terrains[i];
@@ -198,6 +213,42 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       playerId,
     });
   };
+
+  const handleActivateLeader = (playerId: PlayerId) => {
+    // Validate turn
+    if (gameState.currentPlayer !== playerId) return;
+
+    const leaderState = gameState.leaders[playerId];
+    if (!leaderState || leaderState.currentCharges <= 0) return;
+
+    const leader = getLeader(leaderState.leaderId, engine, playerId);
+    if (!leader.ability) return;
+
+    console.log(`[Action] ${playerId === localPlayerId ? 'YOU' : 'OPPONENT'} activating leader ability (Player ${playerId})`);
+    engine.submitAction({
+      type: 'ACTIVATE_LEADER',
+      playerId,
+    });
+  };
+
+  // Get leader info for both players
+  const localLeaderState = gameState.leaders[localPlayerId];
+  const opponentLeaderState = gameState.leaders[opponentId];
+  const localLeader = getLeader(localLeaderState.leaderId, engine, localPlayerId);
+  const opponentLeader = getLeader(opponentLeaderState.leaderId, engine, opponentId);
+
+  // Check if leader ability can be activated
+  const canActivateLocalLeader = localLeader.ability !== null &&
+    localLeaderState.currentCharges > 0 &&
+    !localLeaderState.isExhausted &&
+    isLocalPlayerTurn &&
+    localLeader.ability.canActivate();
+
+  const canActivateOpponentLeader = opponentLeader.ability !== null &&
+    opponentLeaderState.currentCharges > 0 &&
+    !opponentLeaderState.isExhausted &&
+    !isLocalPlayerTurn &&
+    opponentLeader.ability.canActivate();
 
   // Calculate projected SP using Engine logic
   const calculateProjectedSP = () => {
@@ -285,6 +336,29 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 <span>Hand:</span>
                 <span>{opponentPlayer.hand.length}</span>
                 </div>
+            )}
+            {/* Leader Display */}
+            {opponentLeader.definition.maxCharges > 0 && (
+              <div className="bg-purple-100 px-2 py-1 rounded text-xs font-ui">
+                <div className="flex justify-between items-center">
+                  <span className="font-bold">{opponentLeader.definition.name}</span>
+                  <span className="text-purple-600">
+                    {opponentLeaderState.currentCharges}/{opponentLeader.definition.maxCharges}
+                  </span>
+                </div>
+                <div className="text-stone-500 text-[10px] mt-0.5">
+                  {opponentLeader.definition.abilityDescription}
+                </div>
+                {isGodMode && (
+                  <button
+                    onClick={() => handleActivateLeader(opponentId)}
+                    disabled={!canActivateOpponentLeader}
+                    className="w-full mt-1 bg-purple-400 hover:bg-purple-500 disabled:bg-stone-400 border border-stone-800 rounded px-1 py-0.5 text-[10px]"
+                  >
+                    Activate
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -407,6 +481,27 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               <span>Discard:</span>
               <span>{localPlayer.graveyard.length}</span>
             </div>
+            {/* Leader Display */}
+            {localLeader.definition.maxCharges > 0 && (
+              <div className="bg-purple-100 px-2 py-1 rounded text-xs font-ui">
+                <div className="flex justify-between items-center">
+                  <span className="font-bold">{localLeader.definition.name}</span>
+                  <span className="text-purple-600">
+                    {localLeaderState.currentCharges}/{localLeader.definition.maxCharges}
+                  </span>
+                </div>
+                <div className="text-stone-500 text-[10px] mt-0.5">
+                  {localLeader.definition.abilityDescription}
+                </div>
+                <button
+                  onClick={() => handleActivateLeader(localPlayerId)}
+                  disabled={!canActivateLocalLeader}
+                  className="w-full mt-1 bg-purple-400 hover:bg-purple-500 disabled:bg-stone-400 border border-stone-800 rounded px-1 py-0.5 text-[10px]"
+                >
+                  Activate
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -445,12 +540,16 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             const isOpponentSlotValid = isSlotValidTarget(terrainId, opponentId, opponentSlot.unit?.id);
             const isPlayerSlotValid = isSlotValidTarget(terrainId, localPlayerId, playerSlot.unit?.id);
 
-            // Input Request Targeting (e.g. Archer deploy ability)
-            const isOpponentSlotTargetable = isAwaitingInput && pendingInputRequest?.type === 'target' && 
-                pendingInputRequest.validSlots?.some(s => s.terrainId === terrainId && s.playerId === opponentId);
-                
-            const isPlayerSlotTargetable = isAwaitingInput && pendingInputRequest?.type === 'target' && 
-                pendingInputRequest.validSlots?.some(s => s.terrainId === terrainId && s.playerId === localPlayerId);
+            // Input Request Targeting (e.g. Archer deploy ability, Warlord leader ability)
+            const isOpponentSlotTargetable = isAwaitingInput && pendingInputRequest?.type === 'target' && (
+                pendingInputRequest.validSlots?.some(s => s.terrainId === terrainId && s.playerId === opponentId) ||
+                (pendingInputRequest.validTargetIds && opponentSlot.unit && pendingInputRequest.validTargetIds.includes(opponentSlot.unit.id))
+            );
+
+            const isPlayerSlotTargetable = isAwaitingInput && pendingInputRequest?.type === 'target' && (
+                pendingInputRequest.validSlots?.some(s => s.terrainId === terrainId && s.playerId === localPlayerId) ||
+                (pendingInputRequest.validTargetIds && playerSlot.unit && pendingInputRequest.validTargetIds.includes(playerSlot.unit.id))
+            );
 
             return (
               <div key={terrainId} className="flex flex-col gap-4 relative">

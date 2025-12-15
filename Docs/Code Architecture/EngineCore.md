@@ -23,12 +23,19 @@ The Game Engine is the central brain of the application. It manages the game sta
 interface GameState {
   players: [PlayerState, PlayerState];
   terrains: TerrainState[];
+  leaders: [LeaderState, LeaderState]; // One per player
   currentSkirmish: number;
   currentPlayer: PlayerId;
   matchWinner: PlayerId | undefined;
   isDone: [boolean, boolean];           // Player locked out for skirmish
   hasActedThisTurn: [boolean, boolean]; // Did player take action this turn?
   tieSkirmishes: number;
+}
+
+interface LeaderState {
+  leaderId: string;           // Which leader this player is using
+  currentCharges: number;     // Remaining charges
+  isExhausted: boolean;       // Cannot use ability this skirmish (future use)
 }
 ```
 
@@ -132,3 +139,77 @@ processAction(action: GameAction): GameState {
 7.  **Engine emits Events**
     *   All intermediate events already emitted
     *   State Snapshot emitted at very end
+
+---
+
+## Leader System
+
+### Overview
+
+Each player has a **Leader** with a unique ability that can be activated using charges. Leader abilities are **Quick Actions** - they don't end the turn or pass priority.
+
+### Leader Definition
+
+```typescript
+interface LeaderDefinition {
+  leaderId: string;           // Unique identifier (e.g., "warlord", "sage")
+  name: string;               // Display name
+  maxCharges: number;         // Maximum charges (0 for no ability)
+  abilityDescription: string; // Human-readable ability text
+}
+```
+
+### Available Leaders
+
+| Leader | Charges | Ability |
+|--------|---------|---------|
+| Rookie | 0 | No ability (default/blank leader) |
+| Sage | 1 | Draw 1 card |
+| Warlord | 2 | Deal 1 damage to an enemy unit |
+
+### ACTIVATE_LEADER Action
+
+```typescript
+{
+  type: 'ACTIVATE_LEADER';
+  playerId: PlayerId;
+  checksum?: string;
+}
+```
+
+### Quick Action Behavior
+
+When a player activates their leader ability:
+1. Consume 1 charge
+2. Execute the ability effect
+3. **NO turn end** - player retains priority
+4. **hasActedThisTurn is NOT set** - player can still perform other actions or pass
+
+This allows chaining leader abilities with card plays:
+- Use leader ability
+- Play a card
+- Pass turn
+
+### Charge Reset
+
+Charges are reset **per match** (not per skirmish). Once used, charges don't refill until the next game.
+
+### File Structure
+
+```
+src/engine/leaders/
+  Leader.ts           # Base LeaderAbility class
+  LeaderRegistry.ts   # Leader definitions and factory
+  abilities/
+    SageAbility.ts    # Sage: Draw 1 card
+    WarlordAbility.ts # Warlord: Deal 1 damage
+    index.ts          # Exports
+  index.ts            # Main exports
+```
+
+### Events
+
+| Event | Description |
+|-------|-------------|
+| `LEADER_CHARGES_CHANGED` | Emitted when charges are consumed |
+| `LEADER_ABILITY_ACTIVATED` | Emitted after ability executes |

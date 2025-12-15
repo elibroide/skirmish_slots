@@ -109,10 +109,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     ]
   },
 
-  // Engineer (1): On your turn start, my slot gets +1
   engineer: {
     name: 'Engineer',
-    description: 'On your turn start, my slot gets +1.',
+    description: 'On your turn start, my slot gets +2.',
     basePower: 1,
     traits: [
       {
@@ -121,7 +120,7 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
           listenTo: 'YOUR_TURN_START',
           target: 'SELF',
           effect: 'ADD_SLOT_MODIFIER',
-          value: 1
+          value: 2
         }
       }
     ]
@@ -321,21 +320,50 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     ]
   },
 
-  // Rookie (3): Activate (Cooldown 2): My slot and a close slot get +2
-  rookie: {
-    name: 'Rookie',
-    description: 'Activate (Cooldown 2): My slot and a close slot get +2',
-    basePower: 3,
+  underdog: {
+    name: 'Underdog',
+    description: 'When a close ally deploys for the first time each turn, give me and that ally +3.',
+    basePower: 1,
     traits: [
       {
-        type: 'activate',
+        type: 'ongoingReaction',
         config: {
-          cooldownMax: 2,
-          description: 'Fortify',
-          effect: async (owner: UnitCard) => {
-            // TODO: Implement rookie activation logic
-            // This needs slot targeting
-          }
+          listenTo: 'UNIT_DEPLOYED',
+          proximity: 'CLOSE',
+          filter: (() => {
+            // Track which turn each card instance last triggered (keyed by card id)
+            const lastTriggeredTurn = new Map<string, number>();
+            return (event, owner) => {
+              // Only trigger for ally deployments (not self)
+              if (!('playerId' in event) || event.playerId !== owner.owner) {
+                return false;
+              }
+              // Don't trigger for our own deployment
+              if ('unitId' in event && event.unitId === owner.id) {
+                return false;
+              }
+              // Check if we've already triggered this turn
+              const currentTurn = owner.engine.state.currentTurn;
+              if (lastTriggeredTurn.get(owner.id) === currentTurn) {
+                return false;
+              }
+              // Mark as triggered for this turn
+              lastTriggeredTurn.set(owner.id, currentTurn);
+              return true;
+            };
+          })(),
+          effects: [
+            {
+              target: 'SELF',
+              effect: 'ADD_POWER',
+              value: 3
+            },
+            {
+              target: 'EVENT_SOURCE',
+              effect: 'ADD_POWER',
+              value: 3
+            }
+          ]
         }
       }
     ]
@@ -541,6 +569,125 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
               value: 0
             }
           ]
+        }
+      }
+    ]
+  },
+
+  // Thief (3): Deploy: Steal slot modifier from a close slot
+  thief: {
+    name: 'Thief',
+    description: 'Deploy: Steal slot modifier from a close slot.',
+    basePower: 3,
+    traits: [
+      {
+        type: 'reaction',
+        config: {
+          trigger: 'ON_DEPLOY',
+          effects: [
+            {
+              // First effect: Remove modifier from target slot
+              target: 'SLOT',
+              targetDecision: 'PLAYER',
+              effect: 'REMOVE_SLOT_MODIFIER',
+              value: 0
+            },
+            {
+              // Second effect: Add the stolen amount to own slot
+              target: 'SELF',
+              effect: 'ADD_SLOT_MODIFIER',
+              value: (context) => context.effectResults[0]?.amount || 0
+            }
+          ]
+        }
+      }
+    ]
+  },
+
+  // Zombie (2): Consume: +3
+  zombie: {
+    name: 'Zombie',
+    description: 'Consume: +3',
+    basePower: 2,
+    traits: [
+      {
+        type: 'reaction',
+        config: {
+          trigger: 'ON_CONSUME',
+          target: 'SELF',
+          effect: 'ADD_POWER',
+          value: 3
+        }
+      }
+    ]
+  },
+
+  // Berserker (4): Turn starts: Heal me. When I'm healed, I get bonus equal to power I gained.
+  berserker: {
+    name: 'Berserker',
+    description: 'Turn starts: Heal me. When I\'m healed, I get bonus equal to power I gained.',
+    basePower: 4,
+    traits: [
+      {
+        type: 'ongoingReaction',
+        config: {
+          listenTo: 'YOUR_TURN_START',
+          target: 'SELF',
+          effect: 'HEAL',
+          value: 999 // Heal fully
+        }
+      },
+      {
+        type: 'ongoingReaction',
+        config: {
+          listenTo: 'UNIT_HEALED',
+          filter: (event, owner) => {
+            return 'unitId' in event && event.unitId === owner.id;
+          },
+          target: 'SELF',
+          effect: 'ADD_POWER',
+          value: (event) => ('amount' in event ? event.amount : 0) || 0
+        }
+      }
+    ]
+  },
+
+  // Arms Peddler (5): Dominant: Draw two Spikes. This triggers only once.
+  armsPeddler: {
+    name: 'Arms Peddler',
+    description: 'Dominant: Draw two Spikes. This triggers only once.',
+    basePower: 5,
+    traits: [
+      {
+        type: 'ongoingReaction',
+        config: {
+          listenTo: 'YOUR_TURN_START',
+          filter: (() => {
+            // Track if this instance has triggered (resets when bounced/redeployed)
+            const hasTriggered = new WeakMap<UnitCard, boolean>();
+            return (_event, owner) => {
+              // Check if already triggered
+              if (hasTriggered.get(owner)) {
+                return false;
+              }
+              // Check Dominant: controlling the lane (higher power in terrain)
+              if (owner.terrainId === null) return false;
+              const terrain = owner.engine.state.terrains[owner.terrainId];
+              const mySlot = terrain.slots[owner.owner];
+              const enemySlot = terrain.slots[owner.engine.getOpponent(owner.owner)];
+              const myPower = (mySlot.unit?.power || 0) + mySlot.modifier;
+              const enemyPower = (enemySlot.unit?.power || 0) + enemySlot.modifier;
+              if (myPower <= enemyPower) {
+                return false; // Not dominant
+              }
+              // Mark as triggered
+              hasTriggered.set(owner, true);
+              return true;
+            };
+          })(),
+          target: 'SELF',
+          effect: 'CREATE_CARDS',
+          value: 'spike:2'
         }
       }
     ]

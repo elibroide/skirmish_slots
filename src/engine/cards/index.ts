@@ -6,10 +6,12 @@ import { UNIT_CARD_DEFINITIONS } from './cardDefinitions';
 
 // Actions (still class-based)
 import { Assassinate } from './actions/Assassinate';
+import { Brawl } from './actions/Brawl';
 import { Energize } from './actions/Energize';
 import { Fireball } from './actions/Fireball';
 import { Repositioning } from './actions/Repositioning';
 import { Seed } from './actions/Seed';
+import { Spike } from './actions/Spike';
 import { Strike } from './actions/Strike';
 import { Unsummon } from './actions/Unsummon';
 
@@ -24,10 +26,12 @@ const CardRegistry: Record<string, CardFactory> = {
 
   // Actions - still class-based
   assassinate: (owner, engine) => new Assassinate(owner, engine),
+  brawl: (owner, engine) => new Brawl(owner, engine),
   energize: (owner, engine) => new Energize(owner, engine),
   fireball: (owner, engine) => new Fireball(owner, engine),
   repositioning: (owner, engine) => new Repositioning(owner, engine),
   seed: (owner, engine) => new Seed(owner, engine),
+  spike: (owner, engine) => new Spike(owner, engine),
   strike: (owner, engine) => new Strike(owner, engine),
   unsummon: (owner, engine) => new Unsummon(owner, engine),
 };

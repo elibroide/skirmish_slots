@@ -1,9 +1,8 @@
 import { create } from 'zustand';
 import type { GameState, PlayerId, GameEvent, InputRequest } from '../../engine/types';
 import { GameEngine } from '../../engine/GameEngine';
-import { createStarterDeck, createTestDeck } from '../../utils/deckBuilder';
+import { createStarter1Deck, createStarter2Deck, createTestDeck } from '../../utils/deckBuilder';
 import { createDeck } from '../../engine/cards';
-import { shuffle } from '../../utils/helpers';
 import { HumanController } from '../../engine/controllers/HumanController';
 import { AIController } from '../../engine/controllers/AIController';
 import { ClaudeAI } from '../../engine/ai/ClaudeAI';
@@ -162,13 +161,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
 
     // Create decks - use deck builder's deck for player, starter deck for opponent
-    let player0Deck = createStarterDeck(0, engine);
-    const player1Deck = createStarterDeck(1, engine);
+    let player0Deck = createStarter1Deck(0, engine);
+    const player1Deck = createStarter2Deck(1, engine);
 
     //player0Deck = createTestDeck(0, engine);
 
-    // Initialize game (cast to any to bypass type mismatch between Card class and Card interface)
-    engine.initializeGame(player0Deck as any, player1Deck as any);
+    // Initialize game with leaders (cast to any to bypass type mismatch between Card class and Card interface)
+    // Player 0 gets Sage (1 charge, draw 1 card), Player 1 gets Warlord (2 charges, deal 1 damage)
+    engine.initializeGame(player0Deck as any, player1Deck as any, 'sage', 'warlord');
 
     // Subscribe to ALL engine events (this is how UI stays in sync)
     engine.onEvent((event: GameEvent) => {
