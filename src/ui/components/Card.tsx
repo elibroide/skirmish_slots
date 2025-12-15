@@ -83,6 +83,20 @@ export const Card: React.FC<CardProps> = ({
         </div>
       )}
 
+      {/* Shield Circle (bottom-left corner, only for units with shield > 0) */}
+      {isUnit && unitCard && unitCard.shield > 0 && (
+        <div
+          className="
+            absolute -bottom-3 -left-3 w-10 h-10 rounded-full
+            bg-sky-400 border-2 border-stone-800 shadow-sm
+            flex items-center justify-center
+            font-bold text-xl text-white
+          "
+        >
+          {unitCard.shield}
+        </div>
+      )}
+
       {/* Card Type Badge */}
       <div className="absolute top-1 right-1">
         <span className="font-ui text-[10px] px-1.5 py-0.5 rounded bg-stone-800 text-amber-50">

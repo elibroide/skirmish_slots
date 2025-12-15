@@ -167,6 +167,7 @@ export interface Card {
 export interface UnitCard extends Card {
   power: number;
   originalPower: number;
+  shield: number;
   terrainId: TerrainId | null;
   canActivate(): boolean;
   requestInput(request: InputRequest): Promise<any>;

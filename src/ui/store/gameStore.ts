@@ -162,7 +162,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     // Create decks - use deck builder's deck for player, starter deck for opponent
     let player0Deck = createStarter1Deck(0, engine);
-    const player1Deck = createStarter2Deck(1, engine);
+    const player1Deck = createStarter1Deck(1, engine);
 
     //player0Deck = createTestDeck(0, engine);
 

@@ -6,7 +6,7 @@ import { TriggerEffect } from '../effects/TriggerEffect';
 export type TriggerType = 'ON_DEPLOY' | 'ON_DEATH' | 'ON_CONQUER' | 'ON_CONSUME' | 'ON_CONSUMED';
 export type TargetType = 'SELF' | 'CLOSE_ALLY' | 'CLOSE_ENEMY' | 'CLOSE_ANY' | 'IN_FRONT' | 'ALL_ENEMIES' | 'SLOT' | 'CLOSE_ALLY_SLOT' | 'CONSUMING_UNIT' | 'CONSUMED_UNIT';
 export type TargetDecision = 'PLAYER' | 'RANDOM' | 'ALL' | 'FIRST';
-export type EffectType = 'DEAL_DAMAGE' | 'ADD_POWER' | 'SET_POWER' | 'DRAW_CARDS' | 'ADD_SLOT_MODIFIER' | 'KILL' | 'CLEANSE' | 'DEPLOY_UNIT' | 'REMOVE_SLOT_MODIFIER';
+export type EffectType = 'DEAL_DAMAGE' | 'ADD_POWER' | 'SET_POWER' | 'DRAW_CARDS' | 'ADD_SLOT_MODIFIER' | 'KILL' | 'CLEANSE' | 'DEPLOY_UNIT' | 'REMOVE_SLOT_MODIFIER' | 'ADD_SHIELD';
 
 export interface ReactionEffectConfig {
   target?: TargetType;
@@ -347,6 +347,12 @@ export class ReactionTrait extends Trait {
         const token = createUnitCard(tokenId as any, this.owner.owner, this.engine);
         await token.deploy(slot.terrainId);
         return { type: 'deploy', unitId: token.id };
+
+      case 'ADD_SHIELD':
+        if (targetUnit) {
+          await targetUnit.addShield(value as number);
+        }
+        return { type: 'shield', amount: value };
     }
 
     return { type: 'unknown' };
@@ -577,6 +583,12 @@ export class ReactionTrait extends Trait {
         const tokenId = typeof this.config.value === 'string' ? this.config.value : String(value);
         const token = createUnitCard(tokenId as any, this.owner.owner, this.engine);
         await token.deploy(slot.terrainId);
+        break;
+
+      case 'ADD_SHIELD':
+        if (targetUnit) {
+          await targetUnit.addShield(value as number);
+        }
         break;
     }
   }

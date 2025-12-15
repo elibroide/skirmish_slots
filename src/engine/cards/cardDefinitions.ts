@@ -543,6 +543,24 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     traits: []
   },
 
+  // Warrior (4): Deploy: Gain 2 Shield
+  warrior: {
+    name: 'Warrior',
+    description: 'Deploy: Gain 2 Shield.',
+    basePower: 4,
+    traits: [
+      {
+        type: 'reaction',
+        config: {
+          trigger: 'ON_DEPLOY',
+          target: 'SELF',
+          effect: 'ADD_SHIELD',
+          value: 2
+        }
+      }
+    ]
+  },
+
   // Ninja (1): When a close enemy is deployed, give my slot +1 and move me to another random empty ally slot
   ninja: {
     name: 'Ninja',

@@ -136,6 +136,7 @@ export class UnitCard extends Card implements IUnitCard {
   originalPower: number;
   damage: number = 0;
   buffs: number = 0;
+  shield: number = 0;
   terrainId: TerrainId | null = null;
 
   // Traits (ECS Components)
@@ -295,6 +296,7 @@ export class UnitCard extends Card implements IUnitCard {
     // 3. Reset State
     this.buffs = 0;
     this.damage = 0;
+    this.shield = 0;
 
     await this.engine.emitEvent({
       type: 'UNIT_BOUNCED',
@@ -469,24 +471,39 @@ export class UnitCard extends Card implements IUnitCard {
 
   /**
    * Deal damage to this unit (reduce power)
+   * Shield absorbs damage first before health is reduced
    */
   async dealDamage(amount: number): Promise<void> {
     const oldPower = this.power;
-    
-    // Apply trait interceptors (e.g., Shield)
-    let actualDamage = amount;
+
+    // Apply trait interceptors (e.g., ShieldTrait for temporary shields)
+    let remainingDamage = amount;
     for (const trait of this.traits) {
-      actualDamage = trait.interceptDamage(actualDamage);
+      remainingDamage = trait.interceptDamage(remainingDamage);
     }
-    
-    this.damage += actualDamage;
+
+    // Shield absorbs damage before health
+    if (this.shield > 0) {
+      if (this.shield >= remainingDamage) {
+        // Shield absorbs all damage
+        this.shield -= remainingDamage;
+        remainingDamage = 0;
+      } else {
+        // Shield partially absorbs, overflow goes to health
+        remainingDamage -= this.shield;
+        this.shield = 0;
+      }
+    }
+
+    // Apply remaining damage to health
+    this.damage += remainingDamage;
     // Cap damage logic is handled in getter (max(0, p))
 
     await this.engine.emitEvent({
       type: 'UNIT_DAMAGED',
       unitId: this.id,
       terrainId: this.terrainId!,
-      amount: actualDamage,
+      amount: remainingDamage,
       newPower: this.power,
       // Removed duplicate keys
     });
@@ -503,7 +520,7 @@ export class UnitCard extends Card implements IUnitCard {
     // Healing reduces accumulated damage
     const damageToHeal = Math.min(this.damage, amount);
     this.damage -= damageToHeal;
-    
+
     if (damageToHeal > 0) {
       await this.engine.emitEvent({
         type: 'UNIT_HEALED',
@@ -516,6 +533,14 @@ export class UnitCard extends Card implements IUnitCard {
 
       this.onPowerChanged(oldPower, this.power);
     }
+  }
+
+  /**
+   * Add shield to this unit
+   * Shield absorbs damage before health is reduced
+   */
+  async addShield(amount: number): Promise<void> {
+    this.shield += amount;
   }
 
   /**
