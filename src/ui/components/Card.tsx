@@ -97,6 +97,24 @@ export const Card: React.FC<CardProps> = ({
         </div>
       )}
 
+      {/* Dominant Crown Icon (top-left corner, only for units with Dominant trait) */}
+      {isUnit && unitCard && unitCard.hasDominant && (
+        <div
+          className={`
+            absolute -top-2 -left-2 w-8 h-8 rounded-full
+            border-2 border-stone-800 shadow-sm
+            flex items-center justify-center text-lg
+            ${unitCard.dominantTriggered
+              ? 'bg-stone-300 opacity-50'  // Grayed out when triggered
+              : 'bg-yellow-400'            // Active
+            }
+          `}
+          title={unitCard.dominantTriggered ? 'Dominant: Already triggered' : 'Dominant: Active'}
+        >
+          👑
+        </div>
+      )}
+
       {/* Card Type Badge */}
       <div className="absolute top-1 right-1">
         <span className="font-ui text-[10px] px-1.5 py-0.5 rounded bg-stone-800 text-amber-50">

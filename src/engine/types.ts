@@ -169,6 +169,8 @@ export interface UnitCard extends Card {
   originalPower: number;
   shield: number;
   terrainId: TerrainId | null;
+  hasDominant: boolean;           // True if unit has Dominant trait
+  dominantTriggered: boolean;     // True if Dominant has already fired
   canActivate(): boolean;
   requestInput(request: InputRequest): Promise<any>;
 }

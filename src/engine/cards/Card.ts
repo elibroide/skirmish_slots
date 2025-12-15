@@ -139,6 +139,10 @@ export class UnitCard extends Card implements IUnitCard {
   shield: number = 0;
   terrainId: TerrainId | null = null;
 
+  // Dominant mechanic state
+  hasDominant: boolean = false;          // True if unit has Dominant trait
+  dominantTriggered: boolean = false;    // True if Dominant has already fired
+
   // Traits (ECS Components)
   traits: Trait[] = [];
 
@@ -297,6 +301,7 @@ export class UnitCard extends Card implements IUnitCard {
     this.buffs = 0;
     this.damage = 0;
     this.shield = 0;
+    this.dominantTriggered = false; // Reset Dominant trigger on bounce
 
     await this.engine.emitEvent({
       type: 'UNIT_BOUNCED',

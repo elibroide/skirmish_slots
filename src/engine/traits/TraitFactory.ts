@@ -6,6 +6,7 @@ import { ShieldTrait, type ShieldConfig } from './ShieldTrait';
 import { ActivateTrait, type ActivateConfig } from './ActivateTrait';
 import { SpecialTrait, type SpecialHook } from './SpecialTrait';
 import { DeployConditionTrait, type DeployConditionConfig } from './DeployConditionTrait';
+import { DominantTrait, type DominantConfig } from './DominantTrait';
 import type { UnitCard } from '../cards/Card';
 import type { GameEngine } from '../GameEngine';
 
@@ -16,6 +17,7 @@ export type TraitDefinition =
   | { type: 'shield'; config: ShieldConfig }
   | { type: 'activate'; config: ActivateConfig }
   | { type: 'deployCondition'; config: DeployConditionConfig }
+  | { type: 'dominant'; config: DominantConfig }
   | { type: 'special'; hook: SpecialHook; implementation: (owner: UnitCard, engine: GameEngine) => Promise<void> | void; name?: string };
 
 /**
@@ -40,6 +42,9 @@ export function createTrait(definition: TraitDefinition, owner: UnitCard): Trait
 
     case 'deployCondition':
       return new DeployConditionTrait(definition.config, owner);
+
+    case 'dominant':
+      return new DominantTrait(definition.config, owner);
 
     case 'special':
       return new SpecialTrait(

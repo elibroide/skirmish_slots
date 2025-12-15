@@ -709,6 +709,23 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
         }
       }
     ]
+  },
+
+  // Vicious (5): Dominant: +3
+  vicious: {
+    name: 'Vicious',
+    description: 'Dominant: +3',
+    basePower: 5,
+    traits: [
+      {
+        type: 'dominant',
+        config: {
+          effect: 'ADD_POWER',
+          target: 'SELF',
+          value: 3
+        }
+      }
+    ]
   }
 };
 
