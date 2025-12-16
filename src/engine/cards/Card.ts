@@ -314,6 +314,75 @@ export class UnitCard extends Card implements IUnitCard {
     this.onLeave();
   }
 
+  /**
+   * Move this unit to a different terrain slot (same player).
+   * Does NOT trigger onDeploy - this is a repositioning, not deployment.
+   */
+  async move(targetTerrainId: TerrainId): Promise<void> {
+    const fromTerrainId = this.terrainId;
+    if (fromTerrainId === null) return;
+    if (fromTerrainId === targetTerrainId) return; // No-op if same slot
+
+    // 1. Remove from current slot
+    const fromTerrain = this.engine.state.terrains[fromTerrainId];
+    fromTerrain.slots[this.owner].unit = null;
+
+    // 2. Place in new slot
+    const toTerrain = this.engine.state.terrains[targetTerrainId];
+    toTerrain.slots[this.owner].unit = this;
+    this.terrainId = targetTerrainId;
+
+    // 3. Emit UNIT_MOVED event
+    await this.engine.emitEvent({
+      type: 'UNIT_MOVED',
+      unitId: this.id,
+      fromTerrainId,
+      toTerrainId: targetTerrainId,
+      playerId: this.owner,
+    });
+
+    // NOTE: Do NOT call onDeploy() - move is not a deploy
+  }
+
+  /**
+   * Swap two units' positions (both must belong to same player).
+   */
+  static async swap(unit1: UnitCard, unit2: UnitCard): Promise<void> {
+    if (unit1.owner !== unit2.owner) return;
+    if (unit1.terrainId === null || unit2.terrainId === null) return;
+
+    const terrain1 = unit1.terrainId;
+    const terrain2 = unit2.terrainId;
+
+    // Swap terrain references
+    const t1 = unit1.engine.state.terrains[terrain1];
+    const t2 = unit1.engine.state.terrains[terrain2];
+
+    t1.slots[unit1.owner].unit = unit2;
+    t2.slots[unit2.owner].unit = unit1;
+
+    unit1.terrainId = terrain2;
+    unit2.terrainId = terrain1;
+
+    // Emit events for both
+    await unit1.engine.emitEvent({
+      type: 'UNIT_MOVED',
+      unitId: unit1.id,
+      fromTerrainId: terrain1,
+      toTerrainId: terrain2,
+      playerId: unit1.owner,
+    });
+    await unit1.engine.emitEvent({
+      type: 'UNIT_MOVED',
+      unitId: unit2.id,
+      fromTerrainId: terrain2,
+      toTerrainId: terrain1,
+      playerId: unit2.owner,
+    });
+
+    // NOTE: Do NOT call onDeploy() - swap is not a deploy
+  }
+
   // ========== Lifecycle Hooks ==========
   // These are called automatically by effects
   // Now async to support requestInput() calls

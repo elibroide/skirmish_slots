@@ -413,15 +413,12 @@ export class GameEngine {
     const terrain = this.state.terrains[terrainId];
     const slot = terrain.slots[card.owner];
     const existingUnit = slot.unit;
-    
-    // Basic rule: can deploy if slot is empty OR unit can be consumed
-    let allowed = true;
-    if (existingUnit) {
-        // If unit is in place, it MUST be consumable. 
-        allowed = true;
-    }
 
-    // Check rules
+    // Default: can only deploy to empty slots
+    // Cards with MUST_CONSUME trait bypass this via getValidTargets() override
+    let allowed = !existingUnit;
+
+    // Check rules (e.g., Sentinel blocking)
     return this.ruleManager.evaluate(
       RuleType.CAN_DEPLOY,
       {

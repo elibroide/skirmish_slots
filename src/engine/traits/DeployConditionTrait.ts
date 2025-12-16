@@ -49,7 +49,7 @@ export class DeployConditionTrait extends Trait {
    */
   private getMustConsumeTargets(
     state: GameState,
-    originalMethod: (state: GameState) => TargetInfo
+    _originalMethod: (state: GameState) => TargetInfo
   ): TargetInfo {
     const validSlots: SlotCoord[] = [];
     const terrains = state.terrains;
@@ -57,19 +57,17 @@ export class DeployConditionTrait extends Trait {
     terrains.forEach((terrain, index) => {
       const terrainId = index as TerrainId;
       const slot = terrain.slots[this.owner.owner];
-      
-      // Check if deployment is allowed by base rules
-      if (this.engine.isDeploymentAllowed(this.owner, terrainId)) {
-        // Must have a unit to consume
-        if (slot.unit) {
-          // Check valid target filter
-          if (!this.config.validTargets || this.config.validTargets === 'ALLIES') {
-            // Only allow consuming own units
-            validSlots.push({ terrainId, playerId: this.owner.owner });
-          } else if (this.config.validTargets === 'ANY') {
-            // Allow consuming any unit (implement if needed)
-            validSlots.push({ terrainId, playerId: this.owner.owner });
-          }
+
+      // For MUST_CONSUME, we require an occupied slot (opposite of normal deployment)
+      // Don't call isDeploymentAllowed() - it rejects occupied slots by default
+      if (slot.unit) {
+        // Check valid target filter
+        if (!this.config.validTargets || this.config.validTargets === 'ALLIES') {
+          // Only allow consuming own units
+          validSlots.push({ terrainId, playerId: this.owner.owner });
+        } else if (this.config.validTargets === 'ANY') {
+          // Allow consuming any unit (implement if needed)
+          validSlots.push({ terrainId, playerId: this.owner.owner });
         }
       }
     });

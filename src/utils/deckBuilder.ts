@@ -86,8 +86,8 @@ export function createStarter1Deck(owner: PlayerId, engine: GameEngine): Card[] 
     // New cards from conversation
     'thief', 'thief',               // 2x Thief (3) - Steal slot modifiers
     'zombie', 'zombie',             // 2x Zombie (2) - Consume: +3
-    'vicious', 'vicious',       // 2x Berserker (4) - Heal & grow
-    'vicious',                  // 1x Arms Peddler (5) - Dominant: create Spikes
+    'repositioning', 'repositioning',       // 2x Berserker (4) - Heal & grow
+    'repositioning',                  // 1x Arms Peddler (5) - Dominant: create Spikes
 
     // Aggressive units
     'archer', 'archer',             // 2x Archer (3) - Deploy damage
