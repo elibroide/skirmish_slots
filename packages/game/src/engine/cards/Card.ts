@@ -145,6 +145,11 @@ export class UnitCard extends Card implements IUnitCard {
 
   // Traits (ECS Components)
   traits: Trait[] = [];
+  
+  // Metadata
+  rarity: 'Bronze' | 'Silver' | 'Gold' = 'Bronze';
+  color: 'Red' | 'Purple' = 'Red';
+  unitType: string = '';
 
   // Override onLeave to notify traits
   onLeave(): void {

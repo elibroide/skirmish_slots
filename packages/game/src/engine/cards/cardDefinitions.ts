@@ -9,6 +9,9 @@ export interface UnitCardDefinition {
   description: string;
   basePower: number;
   traits: TraitDefinition[];
+  rarity: 'Bronze' | 'Silver' | 'Gold';
+  color: 'Red' | 'Purple';
+  unitType: string;
 }
 
 export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
@@ -17,6 +20,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Acolyte',
     description: 'Consumed: Consuming unit gets +3',
     basePower: 1,
+    rarity: 'Bronze',
+    color: 'Red',
+    unitType: 'Human Cultist',
     traits: [
       {
         type: 'reaction',
@@ -32,9 +38,12 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
 
   // Apprentice (3): Consume: Draw a card
   apprentice: {
-    name: 'Apprentice',
+    name: 'Hopeless Apprentice',
     description: 'Consume: Draw a card.',
     basePower: 3,
+    rarity: 'Bronze',
+    color: 'Purple',
+    unitType: 'Human Mage',
     traits: [
       {
         type: 'reaction',
@@ -52,6 +61,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Archer',
     description: 'Deploy: Deal 2 damage to a close enemy',
     basePower: 3,
+    rarity: 'Bronze',
+    color: 'Red',
+    unitType: 'Elf Archer',
     traits: [
       {
         type: 'reaction',
@@ -71,6 +83,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Bard',
     description: 'When your turn starts, close allies get +1.',
     basePower: 2,
+    rarity: 'Silver',
+    color: 'Red',
+    unitType: 'Human Bard',
     traits: [
       {
         type: 'ongoingReaction',
@@ -90,6 +105,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Champion',
     description: '',
     basePower: 5,
+    rarity: 'Silver',
+    color: 'Red',
+    unitType: 'Human Warrior',
     traits: []
   },
 
@@ -98,6 +116,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Dragon',
     description: 'I can only be deployed to consume another unit.',
     basePower: 7,
+    rarity: 'Gold',
+    color: 'Red',
+    unitType: 'Dragon',
     traits: [
       {
         type: 'deployCondition',
@@ -113,6 +134,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Engineer',
     description: 'On your turn start, my slot gets +2.',
     basePower: 1,
+    rarity: 'Silver',
+    color: 'Purple',
+    unitType: 'Gnome Engineer',
     traits: [
       {
         type: 'ongoingReaction',
@@ -131,6 +155,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Ghoul',
     description: 'When a close unit dies, I get +2.',
     basePower: 1,
+    rarity: 'Bronze',
+    color: 'Purple',
+    unitType: 'Undead Ghoul',
     traits: [
       {
         type: 'ongoingReaction',
@@ -150,6 +177,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Hunter',
     description: 'Kill a close wounded enemy.',
     basePower: 4,
+    rarity: 'Silver',
+    color: 'Red',
+    unitType: 'Human Hunter',
     traits: [
       {
         type: 'reaction',
@@ -170,6 +200,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Knight',
     description: 'Deploy: You may deploy a Squire to a close ally slot.',
     basePower: 3,
+    rarity: 'Gold',
+    color: 'Red',
+    unitType: 'Human Knight',
     traits: [
       {
         type: 'reaction',
@@ -189,6 +222,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Mimic',
     description: 'Deploy: My power becomes equal to the enemy in front of me.',
     basePower: 1,
+    rarity: 'Silver',
+    color: 'Purple',
+    unitType: 'Shapechanger',
     traits: [
       {
         type: 'reaction',
@@ -210,6 +246,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Necromancer',
     description: 'Activate (cooldown 1): You may deploy a dead ally with power 3 or less.',
     basePower: 2,
+    rarity: 'Gold',
+    color: 'Purple',
+    unitType: 'Human Warlock',
     traits: [
       {
         type: 'activate',
@@ -230,6 +269,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Noble',
     description: 'Conquer: Draw two cards.',
     basePower: 4,
+    rarity: 'Silver',
+    color: 'Purple',
+    unitType: 'Human Noble',
     traits: [
       {
         type: 'reaction',
@@ -247,6 +289,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Priest',
     description: 'Deploy: Cleanse a close slot (remove all modifiers from slot and buffs from unit)',
     basePower: 2,
+    rarity: 'Bronze',
+    color: 'Purple',
+    unitType: 'Human Cleric',
     traits: [
       {
         type: 'reaction',
@@ -266,6 +311,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Ranger',
     description: 'Activate: Move me to a close ally slot.',
     basePower: 4,
+    rarity: 'Bronze',
+    color: 'Red',
+    unitType: 'Elf Ranger',
     traits: [
       {
         type: 'activate',
@@ -286,6 +334,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Rogue',
     description: 'This terrain is won by the lowest power instead of the highest.',
     basePower: 2,
+    rarity: 'Gold',
+    color: 'Purple',
+    unitType: 'Human Rogue',
     traits: [
       {
         type: 'ruleModifier',
@@ -324,6 +375,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Underdog',
     description: 'When a close ally deploys for the first time each turn, give me and that ally +3.',
     basePower: 1,
+    rarity: 'Silver',
+    color: 'Red',
+    unitType: 'Human Commoner',
     traits: [
       {
         type: 'ongoingReaction',
@@ -374,6 +428,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Roots',
     description: 'Death: My slot gets +X modifier equal to my power',
     basePower: 2,
+    rarity: 'Bronze',
+    color: 'Purple',
+    unitType: 'Plant Spirit',
     traits: [
       {
         type: 'reaction',
@@ -392,6 +449,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Scout',
     description: 'Deploy: Draw a card.',
     basePower: 2,
+    rarity: 'Bronze',
+    color: 'Red',
+    unitType: 'Human Scout',
     traits: [
       {
         type: 'reaction',
@@ -409,6 +469,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Sentinel',
     description: 'An enemy cannot be deployed in front of me.',
     basePower: 2,
+    rarity: 'Silver',
+    color: 'Red',
+    unitType: 'Construct Sentinel',
     traits: [
       {
         type: 'ruleModifier',
@@ -441,6 +504,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Turret',
     description: 'When your turn ends, deal 1 damage to a random enemy.',
     basePower: 3,
+    rarity: 'Gold',
+    color: 'Purple',
+    unitType: 'Construct Turret',
     traits: [
       {
         type: 'ongoingReaction',
@@ -459,6 +525,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Vampire',
     description: 'When a close unit is dealt damage, I gain that much power. Activate (Cooldown 1): Deal 2 damage to a close unit.',
     basePower: 2,
+    rarity: 'Gold',
+    color: 'Purple',
+    unitType: 'Undead Vampire',
     traits: [
       {
         type: 'ongoingReaction',
@@ -489,6 +558,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Veteran',
     description: '(Pure stats, no ability)',
     basePower: 4,
+    rarity: 'Bronze',
+    color: 'Red',
+    unitType: 'Human Veteran',
     traits: []
   },
 
@@ -497,6 +569,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Warlock',
     description: 'Consume: I deal damage to a close enemy equal to the consumed unit\'s power.',
     basePower: 3,
+    rarity: 'Silver',
+    color: 'Purple',
+    unitType: 'Human Warlock',
     traits: [
       {
         type: 'reaction',
@@ -516,6 +591,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Wizard',
     description: 'When you play an action, give my slot +2.',
     basePower: 3,
+    rarity: 'Silver',
+    color: 'Purple',
+    unitType: 'Human Wizard',
     traits: [
       {
         type: 'ongoingReaction',
@@ -540,6 +618,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Squire',
     description: '',
     basePower: 1,
+    rarity: 'Bronze',
+    color: 'Red',
+    unitType: 'Human Squire',
     traits: []
   },
 
@@ -548,6 +629,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Warrior',
     description: 'Deploy: Gain 2 Shield.',
     basePower: 4,
+    rarity: 'Bronze',
+    color: 'Red',
+    unitType: 'Human Warrior',
     traits: [
       {
         type: 'reaction',
@@ -566,6 +650,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Ninja',
     description: 'When a close enemy is deployed, give my slot +1 and move me to another random empty ally slot.',
     basePower: 3,
+    rarity: 'Gold',
+    color: 'Purple',
+    unitType: 'Human Ninja',
     traits: [
       {
         type: 'ongoingReaction',
@@ -597,6 +684,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Thief',
     description: 'Deploy: Steal slot modifier from a close slot.',
     basePower: 3,
+    rarity: 'Silver',
+    color: 'Purple',
+    unitType: 'Human Thief',
     traits: [
       {
         type: 'reaction',
@@ -627,6 +717,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Zombie',
     description: 'Consume: +3',
     basePower: 2,
+    rarity: 'Bronze',
+    color: 'Purple',
+    unitType: 'Undead Zombie',
     traits: [
       {
         type: 'reaction',
@@ -645,6 +738,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Berserker',
     description: 'Turn starts: Heal me. When I\'m healed, I get bonus equal to power I gained.',
     basePower: 4,
+    rarity: 'Silver',
+    color: 'Red',
+    unitType: 'Human Berserker',
     traits: [
       {
         type: 'ongoingReaction',
@@ -675,6 +771,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Arms Peddler',
     description: 'Dominant: Draw two Spikes. This triggers only once.',
     basePower: 5,
+    rarity: 'Gold',
+    color: 'Red',
+    unitType: 'Human Merchant',
     traits: [
       {
         type: 'ongoingReaction',
@@ -716,6 +815,9 @@ export const UNIT_CARD_DEFINITIONS: Record<string, UnitCardDefinition> = {
     name: 'Vicious',
     description: 'Dominant: +3',
     basePower: 5,
+    rarity: 'Silver',
+    color: 'Red',
+    unitType: 'Beast',
     traits: [
       {
         type: 'dominant',

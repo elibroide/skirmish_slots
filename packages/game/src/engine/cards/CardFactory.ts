@@ -34,6 +34,11 @@ export function createUnitCard(
     card.addTrait(trait);
   }
 
+  // Assign metadata
+  card.rarity = def.rarity;
+  card.color = def.color;
+  card.unitType = def.unitType;
+
   return card;
 }
 

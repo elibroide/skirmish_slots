@@ -3,6 +3,7 @@ export default {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
+    "../card-maker/src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
