@@ -6,6 +6,7 @@ export type GameMode = 'vs-ai' | 'human-vs-human' | 'god-mode' | 'network';
 export type MainMenuProps = {
   onStartGame: (mode: GameMode, opponentType: OpponentType | string) => void;
   onOpenDeckBuilder: () => void;
+  onOpenDebug?: () => void;
 };
 
 /**
@@ -15,7 +16,7 @@ export type MainMenuProps = {
  * - Start a single player game (with opponent selection: AI or Human for testing)
  * - Open the deck builder
  */
-export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenDeckBuilder }) => {
+export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenDeckBuilder, onOpenDebug }) => {
   const [selectedOpponent, setSelectedOpponent] = useState<OpponentType>('claude');
   const [gameIdInput, setGameIdInput] = useState('');
   const [isCreatingGame, setIsCreatingGame] = useState(false);
@@ -27,15 +28,18 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenDeckBuild
 
   const handleCreateNetworkGame = async () => {
     setIsCreatingGame(true);
-    try {
+    try
+    {
       await onStartGame('network', 'create');
-    } finally {
+    } finally
+    {
       setIsCreatingGame(false);
     }
   };
 
   const handleJoinGame = () => {
-    if (!gameIdInput.trim()) {
+    if (!gameIdInput.trim())
+    {
       alert('Please enter a Game ID');
       return;
     }
@@ -53,40 +57,37 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenDeckBuild
         <div className="bg-white rounded-lg shadow-lg p-8 space-y-6">
           <div className="space-y-4">
             <h2 className="font-hand text-3xl text-stone-800 mb-4">Single Player</h2>
-            
+
             <div className="bg-stone-100 rounded-lg p-4 space-y-3">
               <label className="font-ui text-stone-700 font-semibold">Opponent:</label>
-              
+
               <div className="grid grid-cols-3 gap-3">
                 <button
                   onClick={() => setSelectedOpponent('heuristic')}
-                  className={`px-4 py-2 rounded-lg font-ui font-semibold transition-colors ${
-                    selectedOpponent === 'heuristic'
-                      ? 'bg-stone-700 text-white'
-                      : 'bg-white text-stone-700 hover:bg-stone-200'
-                  }`}
+                  className={`px-4 py-2 rounded-lg font-ui font-semibold transition-colors ${selectedOpponent === 'heuristic'
+                    ? 'bg-stone-700 text-white'
+                    : 'bg-white text-stone-700 hover:bg-stone-200'
+                    }`}
                 >
                   Heuristic AI
                 </button>
-                
+
                 <button
                   onClick={() => setSelectedOpponent('claude')}
-                  className={`px-4 py-2 rounded-lg font-ui font-semibold transition-colors ${
-                    selectedOpponent === 'claude'
-                      ? 'bg-stone-700 text-white'
-                      : 'bg-white text-stone-700 hover:bg-stone-200'
-                  }`}
+                  className={`px-4 py-2 rounded-lg font-ui font-semibold transition-colors ${selectedOpponent === 'claude'
+                    ? 'bg-stone-700 text-white'
+                    : 'bg-white text-stone-700 hover:bg-stone-200'
+                    }`}
                 >
                   Claude AI
                 </button>
 
                 <button
                   onClick={() => setSelectedOpponent('human')}
-                  className={`px-4 py-2 rounded-lg font-ui font-semibold transition-colors ${
-                    selectedOpponent === 'human'
-                      ? 'bg-stone-700 text-white'
-                      : 'bg-white text-stone-700 hover:bg-stone-200'
-                  }`}
+                  className={`px-4 py-2 rounded-lg font-ui font-semibold transition-colors ${selectedOpponent === 'human'
+                    ? 'bg-stone-700 text-white'
+                    : 'bg-white text-stone-700 hover:bg-stone-200'
+                    }`}
                 >
                   Human
                 </button>
@@ -115,7 +116,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenDeckBuild
 
           <div className="border-t border-stone-300 pt-6">
             <h2 className="font-hand text-3xl text-stone-800 mb-4">Network Multiplayer</h2>
-            
+
             <div className="space-y-3">
               <button
                 onClick={handleCreateNetworkGame}
@@ -124,7 +125,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenDeckBuild
               >
                 {isCreatingGame ? 'Creating Game...' : 'Host Network Game'}
               </button>
-              
+
               <div className="bg-stone-100 rounded-lg p-4">
                 <label className="font-ui text-stone-700 font-semibold block mb-2">
                   Join a Game:
@@ -161,6 +162,16 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenDeckBuild
               className="w-full bg-amber-600 hover:bg-amber-700 text-white font-hand text-2xl py-4 rounded-lg transition-colors shadow-md"
             >
               Build Your Deck
+            </button>
+          </div>
+
+          <div className="border-t border-stone-300 pt-6">
+            <h2 className="font-hand text-3xl text-stone-800 mb-4">Development</h2>
+            <button
+              onClick={onOpenDebug}
+              className="w-full bg-gray-600 hover:bg-gray-700 text-white font-hand text-2xl py-4 rounded-lg transition-colors shadow-md"
+            >
+              Debug Card Renderer
             </button>
           </div>
         </div>

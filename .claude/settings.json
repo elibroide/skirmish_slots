@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__trello__*"
+    ]
+  },
+  "mcpServers": {
+    "trello": {
+      "command": "npx",
+      "args": ["-y", "@delorenj/mcp-server-trello"],
+      "env": {
+        "TRELLO_API_KEY": "14d43347edc13ea7cd32918cfccabbd0",
+        "TRELLO_TOKEN": "ATTA9473ebb86c5ecab3091f248d49e722d048186ae71ff41e827383ff20c3bbf8166CC04852"
+      }
+    }
+  }
+}
