@@ -5,8 +5,9 @@ import { DeckBuilder } from './components/DeckBuilder';
 import { WaitingRoom } from './components/WaitingRoom';
 import { useGameStore } from './store/gameStore';
 import { TestCardView } from '../components/debug/TestCardView';
+import { DebugScene } from '../ui-new/DebugScene';
 
-type Screen = 'menu' | 'deck-builder' | 'game' | 'waiting-room' | 'debug';
+type Screen = 'menu' | 'deck-builder' | 'game' | 'waiting-room' | 'debug' | 'ui-debug';
 
 /**
  * Main App Component
@@ -68,9 +69,25 @@ export default function App() {
     setCurrentScreen('debug');
   };
 
+  const handleOpenUIDebug = () => {
+    setCurrentScreen('ui-debug');
+  };
+
   if (currentScreen === 'menu')
   {
-    return <MainMenu onStartGame={handleStartGame} onOpenDeckBuilder={handleOpenDeckBuilder} onOpenDebug={handleOpenDebug} />;
+    return (
+      <MainMenu
+        onStartGame={handleStartGame}
+        onOpenDeckBuilder={handleOpenDeckBuilder}
+        onOpenDebug={handleOpenDebug}
+        onOpenUIDebug={handleOpenUIDebug}
+      />
+    );
+  }
+
+  if (currentScreen === 'ui-debug')
+  {
+    return <DebugScene onBack={handleBackToMenu} />;
   }
 
   if (currentScreen === 'debug')

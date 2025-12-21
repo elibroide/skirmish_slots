@@ -58,15 +58,20 @@ export const TemplateEditor: React.FC = () => {
 
     // If no template is active (and we have templates), select the first one
     React.useEffect(() => {
-        if (!activeTemplateId && templates.length > 0)
+        if (templates.length > 0)
         {
-            setActiveTemplateId(templates[0].id);
+            // Check if active ID corresponds to a real template
+            const activeExists = templates.some(t => t.id === activeTemplateId);
+            if (!activeTemplateId || !activeExists)
+            {
+                setActiveTemplateId(templates[0].id);
+            }
         } else if (templates.length === 0)
         {
             // Should not really happen due to migration, but fallback
             addTemplate("Default Template");
         }
-    }, [activeTemplateId, templates.length, setActiveTemplateId, addTemplate]);
+    }, [activeTemplateId, templates, setActiveTemplateId, addTemplate]);
 
     if (!template) return <div className="p-8 text-center text-gray-500">Loading Template...</div>;
 

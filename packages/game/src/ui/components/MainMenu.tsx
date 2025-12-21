@@ -7,6 +7,7 @@ export type MainMenuProps = {
   onStartGame: (mode: GameMode, opponentType: OpponentType | string) => void;
   onOpenDeckBuilder: () => void;
   onOpenDebug?: () => void;
+  onOpenUIDebug?: () => void;
 };
 
 /**
@@ -16,7 +17,7 @@ export type MainMenuProps = {
  * - Start a single player game (with opponent selection: AI or Human for testing)
  * - Open the deck builder
  */
-export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenDeckBuilder, onOpenDebug }) => {
+export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenDeckBuilder, onOpenDebug, onOpenUIDebug }) => {
   const [selectedOpponent, setSelectedOpponent] = useState<OpponentType>('claude');
   const [gameIdInput, setGameIdInput] = useState('');
   const [isCreatingGame, setIsCreatingGame] = useState(false);
@@ -167,12 +168,20 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenDeckBuild
 
           <div className="border-t border-stone-300 pt-6">
             <h2 className="font-hand text-3xl text-stone-800 mb-4">Development</h2>
-            <button
-              onClick={onOpenDebug}
-              className="w-full bg-gray-600 hover:bg-gray-700 text-white font-hand text-2xl py-4 rounded-lg transition-colors shadow-md"
-            >
-              Debug Card Renderer
-            </button>
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={onOpenDebug}
+                className="w-full bg-gray-600 hover:bg-gray-700 text-white font-hand text-2xl py-4 rounded-lg transition-colors shadow-md"
+              >
+                Card Debugger
+              </button>
+              <button
+                onClick={onOpenUIDebug}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-hand text-2xl py-4 rounded-lg transition-colors shadow-md"
+              >
+                UI Playground
+              </button>
+            </div>
           </div>
         </div>
 

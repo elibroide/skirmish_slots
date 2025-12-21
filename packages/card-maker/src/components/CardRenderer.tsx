@@ -130,7 +130,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({ template, data, sche
 
     return (
         <div
-            className={clsx("relative overflow-hidden bg-white shadow-lg", className)}
+            className={clsx("relative overflow-hidden shadow-lg", className)}
             style={{
                 width: '750px',
                 height: '1050px',

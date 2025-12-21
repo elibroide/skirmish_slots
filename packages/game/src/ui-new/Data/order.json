@@ -1,0 +1,594 @@
+{
+  "schema": [
+    {
+      "key": "name",
+      "type": "text",
+      "label": "Name",
+      "example": "Raging Goblin"
+    },
+    {
+      "key": "color",
+      "type": "text",
+      "label": "Color",
+      "example": "Purple",
+      "options": [
+        "Red",
+        "Purple",
+        "Green"
+      ],
+      "defaultValue": "Purple",
+      "scope": "card_only"
+    },
+    {
+      "key": "rarity",
+      "type": "text",
+      "label": "Rarity",
+      "example": "Bronze",
+      "options": [
+        "Bronze",
+        "Silver",
+        "Gold"
+      ],
+      "defaultValue": "Bronze",
+      "scope": "card_only"
+    },
+    {
+      "key": "power",
+      "type": "number",
+      "label": "Power",
+      "example": "5"
+    },
+    {
+      "key": "text",
+      "type": "richtext",
+      "label": "Text",
+      "example": "Adamant: I deal 5 damage to target creature that you don't control"
+    },
+    {
+      "key": "type",
+      "type": "text",
+      "label": "Type",
+      "example": "Goblin"
+    },
+    {
+      "key": "rarityImage",
+      "type": "image",
+      "label": "Rarity Image",
+      "example": "RI",
+      "readOnly": true
+    },
+    {
+      "key": "powerImage",
+      "type": "image",
+      "label": "Power Image",
+      "example": "PI",
+      "readOnly": true
+    },
+    {
+      "key": "keywords",
+      "type": "tags",
+      "label": "Keywords",
+      "scope": "card_only"
+    },
+    {
+      "key": "notes",
+      "type": "richtext",
+      "label": "Notes",
+      "scope": "card_only"
+    }
+  ],
+  "templates": [
+    {
+      "id": "994790f0-4b5b-4d02-b900-87a16e988860",
+      "name": "Normal_old",
+      "frameUrl": "/templates/frame-red.png",
+      "zones": [
+        {
+          "id": "b88545db-fa6a-4aee-9349-1c7daf6dcbff",
+          "schemaKey": "powerImage",
+          "x": 3.8333152031249997,
+          "y": 0.2380952380952381,
+          "width": 21.46666666666667,
+          "height": 15.238095238095239,
+          "style": {
+            "color": "#ffffff",
+            "backgroundColor": "transparent",
+            "fontSize": "24px",
+            "textAlign": "center",
+            "fontFamily": "sans-serif",
+            "wordWrap": "break-word"
+          },
+          "src": "/assets/powerImage/power-red.png",
+          "variants": [
+            {
+              "id": "1daa6649-8ba6-4f4e-898c-c16ad2eb972b",
+              "name": "Purple",
+              "src": "/assets/powerImage/power-purple.png"
+            },
+            {
+              "id": "768c33f3-5db6-4bfa-8ed4-4b2a2294f7dc",
+              "name": "Red",
+              "src": "/assets/powerImage/power-red.png"
+            }
+          ]
+        },
+        {
+          "id": "509022aa-a93f-4c4a-8a3b-2acc0182b87f",
+          "schemaKey": "name",
+          "x": 18.03333362649205,
+          "y": 49.928578443101806,
+          "width": 66.8,
+          "height": 8.857142857142856,
+          "style": {
+            "color": "#ffffff",
+            "backgroundColor": "transparent",
+            "fontSize": "50px",
+            "textAlign": "center",
+            "fontFamily": "Open Sans",
+            "textStrokeColor": "#171717",
+            "textStrokeWidth": "3px",
+            "fontWeight": "bold"
+          }
+        },
+        {
+          "id": "3c7a52dd-f318-41b6-aa2a-23eccff7f18f",
+          "schemaKey": "power",
+          "x": 9.666670233854168,
+          "y": 3.452380952380951,
+          "width": 10.133333333333333,
+          "height": 8.380952380952381,
+          "style": {
+            "color": "#ffffff",
+            "backgroundColor": "transparent",
+            "fontSize": "75px",
+            "textAlign": "center",
+            "fontFamily": "Open Sans",
+            "textStrokeWidth": "4px",
+            "textStrokeColor": "#000000",
+            "fontWeight": "bold",
+            "fontStyle": "normal"
+          }
+        },
+        {
+          "id": "516c38d1-b4ca-473b-ad7d-0271567213da",
+          "schemaKey": "type",
+          "x": 22.333352959805488,
+          "y": 93.61905305989583,
+          "width": 57.733333333333334,
+          "height": 4,
+          "style": {
+            "color": "#ffffff",
+            "backgroundColor": "transparent",
+            "fontSize": "30px",
+            "textAlign": "center",
+            "fontFamily": "Open Sans",
+            "textStrokeColor": "#000000",
+            "fontWeight": "bold",
+            "textStrokeWidth": "1.5px"
+          }
+        },
+        {
+          "id": "246e26c4-06cd-47e5-8a58-af029d6fc407",
+          "schemaKey": "text",
+          "x": 20,
+          "y": 64.28571747209821,
+          "width": 61.73333333333333,
+          "height": 25.238095238095237,
+          "style": {
+            "color": "#000000",
+            "backgroundColor": "transparent",
+            "fontSize": "45px",
+            "textAlign": "center",
+            "fontFamily": "Roboto",
+            "verticalAlign": "top",
+            "wordWrap": "break-word"
+          }
+        },
+        {
+          "id": "3b3a16c2-ed8c-418a-8996-f10c710e3ff4",
+          "schemaKey": "rarityImage",
+          "x": 81.14765012511022,
+          "y": 4.568028588752688,
+          "width": 9.2,
+          "height": 7.7142857142857135,
+          "style": {
+            "color": "#ffffff",
+            "backgroundColor": "transparent",
+            "fontSize": "24px",
+            "textAlign": "center",
+            "fontFamily": "sans-serif",
+            "wordWrap": "break-word"
+          },
+          "src": "/assets/rarityImage/slab-bronze.png",
+          "variants": [
+            {
+              "id": "fcfb2110-41e3-4b3f-9940-9ef73c4aa5ad",
+              "name": "Bronze",
+              "src": "/assets/rarityImage/slab-bronze.png"
+            },
+            {
+              "id": "976c966b-d9bb-4f51-bb88-4d1953b323aa",
+              "name": "Silver",
+              "src": "/assets/rarityImage/slab-silver.png"
+            },
+            {
+              "id": "9cbd1d05-5675-4a6e-9cc0-a914474a7b7d",
+              "name": "Gold",
+              "src": "/assets/rarityImage/slab-gold.png"
+            }
+          ]
+        }
+      ],
+      "frameVariants": [
+        {
+          "id": "ef5ece3c-76ea-49dd-8b82-92abee658bfe",
+          "name": "Purple",
+          "url": "/templates/frame-purple.png"
+        },
+        {
+          "id": "066b8f96-1d7a-463b-a5aa-48dd3146a1df",
+          "name": "Red",
+          "url": "/templates/frame-red.png"
+        }
+      ],
+      "automations": [
+        {
+          "id": "fc21d38c-9df7-485a-946a-e46b6bcf2f2d",
+          "name": "ActionPower",
+          "conditions": [
+            {
+              "id": "67c38bda-ac3b-4492-a3b2-721fabed4b48",
+              "field": "type",
+              "operator": "equals",
+              "value": "Action"
+            }
+          ],
+          "effects": [
+            {
+              "id": "616124d7-315e-4c99-96b1-aad98dbd58c7",
+              "target": "powerImage",
+              "property": "visible",
+              "value": false
+            },
+            {
+              "id": "a90d9a50-2afe-48d1-aaa8-922974642006",
+              "target": "power",
+              "property": "visible",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": "fbb2e5dc-84ab-4624-89b5-075d5682176c",
+          "name": "Color",
+          "conditions": [
+            {
+              "id": "a2ffe30c-2910-4f61-9bea-e242c15dca6a",
+              "field": "name",
+              "operator": "not_equals",
+              "value": "gyugy"
+            }
+          ],
+          "effects": [
+            {
+              "id": "8cdfcb6b-5717-42ec-a6bb-9d1851a7dd23",
+              "target": "FRAME",
+              "property": "frameVariant",
+              "value": "color",
+              "fromField": true
+            },
+            {
+              "id": "82f5c53b-f3ad-45d2-ad55-b773335464d9",
+              "target": "powerImage",
+              "property": "frameVariant",
+              "value": "color",
+              "fromField": true
+            }
+          ]
+        },
+        {
+          "id": "b12a357f-7405-4377-9d87-84f697bdc5a3",
+          "name": "Rarity",
+          "conditions": [
+            {
+              "id": "1ecf8e23-9979-4762-a2a3-d55a07601950",
+              "field": "rarity",
+              "operator": "not_equals",
+              "value": "bkjhb"
+            }
+          ],
+          "effects": [
+            {
+              "id": "fa24566e-e532-4c17-8858-96b16c159040",
+              "target": "rarityImage",
+              "property": "frameVariant",
+              "value": "rarity",
+              "fromField": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "d121f059-6ab7-4a4a-a704-e3b29a6dfd73",
+      "name": "BoardTile",
+      "frameUrl": "/templates/tile-red.png",
+      "zones": [],
+      "frameVariants": [
+        {
+          "id": "a42de071-2ee7-4841-85aa-1f664e15eac5",
+          "name": "Purple",
+          "url": "/templates/tile-purple.png"
+        }
+      ],
+      "automations": [
+        {
+          "id": "42323f4a-f184-462f-8d99-9a24bbcce723",
+          "name": "Color",
+          "conditions": [
+            {
+              "id": "7f485c77-7c29-452a-a1fc-3d1b19b9efac",
+              "field": "color",
+              "operator": "not_equals",
+              "value": ""
+            }
+          ],
+          "effects": [
+            {
+              "id": "c25f36a7-91d9-4973-9d7f-ac27ee9970ee",
+              "target": "FRAME",
+              "property": "frameVariant",
+              "value": "color",
+              "fromField": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "4c01f57f-4ace-4e7f-8e0e-a57aaf31efcd",
+      "name": "Normal",
+      "frameUrl": "/templates/template-order.png",
+      "zones": [
+        {
+          "id": "3eb05ce0-f1c9-4cc1-be19-3da1882a4dd2",
+          "schemaKey": "name",
+          "x": 15.666666666666664,
+          "y": 4.928571428571429,
+          "width": 62.93333333333333,
+          "height": 5.238095238095238,
+          "style": {
+            "color": "#000000",
+            "backgroundColor": "transparent",
+            "fontSize": "45px",
+            "textAlign": "center",
+            "fontFamily": "Cinzel",
+            "wordWrap": "break-word",
+            "textStrokeWidth": "2px",
+            "textStrokeColor": "#000000",
+            "fontWeight": "bold",
+            "fontStyle": "normal"
+          }
+        },
+        {
+          "id": "38083ca1-1c04-4e11-bbfb-9407bbdfda42",
+          "schemaKey": "text",
+          "x": 13.466666666666665,
+          "y": 75.90476190476191,
+          "width": 73.86666666666667,
+          "height": 17.047619047619047,
+          "style": {
+            "color": "#000000",
+            "backgroundColor": "transparent",
+            "fontSize": "35px",
+            "textAlign": "left",
+            "fontFamily": "Lato",
+            "wordWrap": "break-word",
+            "verticalAlign": "top"
+          }
+        },
+        {
+          "id": "392cee56-b19e-46ec-9c67-8a9406e6c5a9",
+          "schemaKey": "type",
+          "x": 13.366669127604167,
+          "y": 67.26190476190477,
+          "width": 64.66666666666666,
+          "height": 4.761904761904762,
+          "style": {
+            "color": "#000000",
+            "backgroundColor": "transparent",
+            "fontSize": "30px",
+            "textAlign": "left",
+            "fontFamily": "Lato",
+            "wordWrap": "break-word"
+          }
+        },
+        {
+          "id": "8f734721-72f4-4a77-b53c-b62bcaba0396",
+          "schemaKey": "power",
+          "x": 82.00000000000003,
+          "y": 4.642857142857143,
+          "width": 8.266666666666666,
+          "height": 5.714285714285714,
+          "style": {
+            "color": "#ffffff",
+            "backgroundColor": "transparent",
+            "fontSize": "60px",
+            "textAlign": "center",
+            "fontFamily": "Impact",
+            "wordWrap": "normal",
+            "textStrokeWidth": "3px",
+            "textStrokeColor": "#000000",
+            "fontWeight": "bold",
+            "fontStyle": "normal"
+          }
+        },
+        {
+          "id": "05f69c01-0ffc-4dc8-9559-f9a46b9ea447",
+          "schemaKey": "rarityImage",
+          "x": 81.6,
+          "y": 67.14285714285714,
+          "width": 7.466666666666668,
+          "height": 5.333333333333334,
+          "style": {
+            "color": "#ffffff",
+            "backgroundColor": "transparent",
+            "fontSize": "24px",
+            "textAlign": "center",
+            "fontFamily": "sans-serif",
+            "wordWrap": "break-word"
+          },
+          "src": "/assets/rarityImage/slab-bronze.png",
+          "variants": [
+            {
+              "id": "f27dd22d-fe76-4f30-a817-37fa0cdc124f",
+              "name": "Bronze",
+              "src": "/assets/rarityImage/slab-bronze.png"
+            },
+            {
+              "id": "43d5a41d-d8e2-4287-b6b4-c630b5bfb806",
+              "name": "Silver",
+              "src": "/assets/rarityImage/slab-silver.png"
+            },
+            {
+              "id": "ff2c82d4-5e29-44fe-857b-c4b07455ca92",
+              "name": "Gold",
+              "src": "/assets/rarityImage/slab-gold.png"
+            }
+          ]
+        }
+      ],
+      "frameVariants": [
+        {
+          "id": "ca14ff3b-f150-4a4b-ae46-36c834d18498",
+          "name": "Order",
+          "url": "/templates/template-order.png"
+        }
+      ],
+      "automations": [
+        {
+          "id": "04283328-d80a-4290-ba85-1c8f4f3db486",
+          "name": "Rarity",
+          "conditions": [
+            {
+              "id": "eecbe737-830f-4f81-9bdb-43299aee1bc5",
+              "field": "name",
+              "operator": "not_equals",
+              "value": ""
+            }
+          ],
+          "effects": [
+            {
+              "id": "cafb83a3-c346-48f7-8ae0-f8523805c9d8",
+              "target": "rarityImage",
+              "property": "frameVariant",
+              "value": "rarity",
+              "fromField": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "id": "8afaa05f-48d0-40d8-a014-72176dce6ce4",
+      "templateId": "4c01f57f-4ace-4e7f-8e0e-a57aaf31efcd",
+      "data": {
+        "name": "Hound Guard",
+        "color": "Purple",
+        "rarity": "Bronze",
+        "notes": "<p></p>",
+        "text": "<p><strong>Deploy:</strong>&nbsp;I&nbsp;get&nbsp;+2&nbsp;shield.</p>",
+        "power": "4",
+        "type": "Order — Dog Soldier"
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/Castle Guard.png",
+        "x": 75,
+        "y": 125,
+        "scale": 0.35,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      },
+      "frameVariantId": "ca14ff3b-f150-4a4b-ae46-36c834d18498"
+    },
+    {
+      "id": "d7c94368-00fd-44dd-9b2f-6fa1042e8c80",
+      "templateId": "4c01f57f-4ace-4e7f-8e0e-a57aaf31efcd",
+      "data": {
+        "name": "Royal Houndsman",
+        "color": "Purple",
+        "rarity": "Silver",
+        "notes": "<p></p>",
+        "text": "<p><strong>Deploy</strong>:&nbsp;Close&nbsp;allies&nbsp;get&nbsp;+2&nbsp;power.</p>",
+        "power": "7",
+        "type": "Order — Dog Soldier"
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/RoyalHoundsman.png",
+        "x": 75,
+        "y": 125,
+        "scale": 0.35,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      },
+      "frameVariantId": "ca14ff3b-f150-4a4b-ae46-36c834d18498"
+    },
+    {
+      "id": "772dc3ee-350d-441f-b92b-c24c13cfb455",
+      "templateId": "4c01f57f-4ace-4e7f-8e0e-a57aaf31efcd",
+      "data": {
+        "name": "Commander Pug",
+        "color": "Purple",
+        "rarity": "Gold",
+        "notes": "<p></p>",
+        "text": "<p><strong>Deploy:</strong>&nbsp;Close&nbsp;allies&nbsp;get&nbsp;+1&nbsp;shield&nbsp;and&nbsp;battle&nbsp;their&nbsp;opposing&nbsp;enemies.</p>",
+        "power": "8",
+        "type": "Order — Dog Soldier"
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/General Pug.png",
+        "x": 75,
+        "y": 125,
+        "scale": 0.35,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      },
+      "frameVariantId": "ca14ff3b-f150-4a4b-ae46-36c834d18498"
+    },
+    {
+      "id": "c2b3dfd9-647f-4337-bb47-d75d26a8ccc6",
+      "templateId": "4c01f57f-4ace-4e7f-8e0e-a57aaf31efcd",
+      "data": {
+        "name": "War Plans",
+        "color": "Purple",
+        "rarity": "Silver",
+        "notes": "<p></p>",
+        "text": "<p>Draw&nbsp;two&nbsp;random&nbsp;bronze&nbsp;Order&nbsp;cards&nbsp;from&nbsp;your&nbsp;deck.</p>",
+        "power": "",
+        "type": "Order — Action"
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/WarPlans.png",
+        "x": 75,
+        "y": 80,
+        "scale": 0.35,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    }
+  ]
+}
