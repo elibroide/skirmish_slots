@@ -3,7 +3,7 @@ import { useStore } from '../store/useStore';
 import { CardRenderer } from './CardRenderer';
 import { ImagePicker } from './ImagePicker';
 import { RichTextEditor } from './RichTextEditor';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 
 export const CardSmith: React.FC = () => {
     const { schema, cards, templates, addCard, updateCard, deleteCard, duplicateCard, activeCardId, setActiveCardId } = useStore();
@@ -115,14 +115,13 @@ export const CardSmith: React.FC = () => {
             try
             {
                 // Wait for images to load (simplified)
-                const canvas = await html2canvas(renderRef.current, {
-                    useCORS: true,
-                    scale: 2, // High res export
-                    backgroundColor: null
+                const dataUrl = await toPng(renderRef.current, {
+                    cacheBust: true,
+                    pixelRatio: 2 // High res export
                 });
                 const link = document.createElement('a');
                 link.download = `${activeCard?.data[schema[0]?.key] || 'card'}.png`;
-                link.href = canvas.toDataURL('image/png');
+                link.href = dataUrl;
                 link.click();
             } catch (err)
             {
