@@ -3,6 +3,8 @@ import { Card, HandSettings, BASE_CARD_HEIGHT } from './Card';
 import { DraggedCard } from './DraggedCard';
 import { ReturningCard } from './ReturningCard';
 import type { CardInstance, CardTemplate, CardSchema } from '@skirmish/card-maker';
+import { SlammingCard } from './SlammingCard';
+import { useGameStore, BoardSlot } from '../../store/gameStore';
 
 interface HandProps {
     cards: CardInstance[];
@@ -28,6 +30,13 @@ interface ReturningCardState {
     fromPosition: { x: number; y: number };
     targetPosition: { x: number; y: number };
     rotation: number;
+}
+
+interface SlammingCardState {
+    card: CardInstance;
+    startPosition: { x: number; y: number };
+    targetPosition: { x: number; y: number };
+    slotId: number;
 }
 
 interface DragStartPos {
@@ -59,6 +68,7 @@ export const Hand: React.FC<HandProps> = ({
         lastTime: 0
     });
     const [returningCard, setReturningCard] = useState<ReturningCardState | null>(null);
+    const [slammingCards, setSlammingCards] = useState<SlammingCardState[]>([]);
     const [binHovered, setBinHovered] = useState(false);
 
     // Use a fixed ref for bin since it's likely outside, or we find it by selector
@@ -180,12 +190,52 @@ export const Hand: React.FC<HandProps> = ({
 
         if (dragState.isDragging && dragState.card)
         {
-            const binElement = document.getElementById('destroy-zone');
-            if (binElement) binElement.removeAttribute('data-hovered');
+            // Check for collision with Board Slots using shared Store
+            const slots = useGameStore.getState().slots;
+            let droppedOnSlotId: number | null = null;
+            let droppedSlotPos: { x: number, y: number } | null = null;
 
-            if (binHovered)
+            // Simple point-in-rect collision
+            for (const slot of Object.values(slots))
             {
+                // Check if slot is empty (or we can implement replace logic later)
+                if (!slot.content)
+                {
+                    // Since Phaser coordinates are centered, we need to calculate bounds
+                    // Assuming width/height are full dimensions
+                    const halfW = slot.width / 2;
+                    const halfH = slot.height / 2;
+
+                    if (
+                        dragState.position.x >= slot.x - halfW &&
+                        dragState.position.x <= slot.x + halfW &&
+                        dragState.position.y >= slot.y - halfH &&
+                        dragState.position.y <= slot.y + halfH
+                    )
+                    {
+                        droppedOnSlotId = slot.id;
+                        droppedSlotPos = { x: slot.x, y: slot.y };
+                        break;
+                    }
+                }
+            }
+
+            if (droppedOnSlotId !== null && droppedSlotPos)
+            {
+                // SUCCESS: Play Card -> Animate Slam
+                console.log(`Dropped on Slot ${droppedOnSlotId}`);
+
+                // 1. Remove from Hand (UI)
                 onRemoveCard(dragState.card.id);
+
+                // 2. Add to Slamming Queue
+                setSlammingCards(prev => [...prev, {
+                    card: dragState.card!,
+                    slotId: droppedOnSlotId!,
+                    startPosition: dragState.position,
+                    targetPosition: droppedSlotPos!
+                }]);
+
             } else
             {
                 // Return to hand
@@ -251,24 +301,11 @@ export const Hand: React.FC<HandProps> = ({
                     const now = Date.now();
                     const timeSinceLastMove = now - prev.lastTime;
 
-                    // If we haven't moved in 50ms, start decaying velocity
                     if (timeSinceLastMove > 50)
                     {
-                        // Stop if already negligible
-                        if (Math.abs(prev.velocity.x) < 0.1 && Math.abs(prev.velocity.y) < 0.1)
-                        {
-                            return prev;
-                        }
-
-                        // Apply a gentle decay per frame (adjust 0.9 as needed for smoothness)
+                        if (Math.abs(prev.velocity.x) < 0.1 && Math.abs(prev.velocity.y) < 0.1) return prev;
                         const decayFactor = 0.92;
-                        return {
-                            ...prev,
-                            velocity: {
-                                x: prev.velocity.x * decayFactor,
-                                y: prev.velocity.y * decayFactor
-                            }
-                        };
+                        return { ...prev, velocity: { x: prev.velocity.x * decayFactor, y: prev.velocity.y * decayFactor } };
                     }
                     return prev;
                 });
@@ -290,6 +327,14 @@ export const Hand: React.FC<HandProps> = ({
             };
         }
     }, [dragState.isDragging, isMouseDown, handleMouseMove, handleMouseUp]);
+
+    const handleSlamComplete = useCallback((cardId: string, slotId: number) => {
+        // Remove from animation queue
+        setSlammingCards(prev => prev.filter(c => c.card.id !== cardId));
+
+        // Notify Store (Unit Spawns + FX)
+        useGameStore.getState().occupySlot(slotId, cardId);
+    }, []);
 
     return (
         <>
@@ -353,7 +398,19 @@ export const Hand: React.FC<HandProps> = ({
                     schema={schema}
                 />
             )}
+
+            {slammingCards.map(s => (
+                <SlammingCard
+                    key={s.card.id}
+                    card={s.card}
+                    startPosition={s.startPosition}
+                    targetPosition={s.targetPosition}
+                    settings={settings}
+                    templates={templates}
+                    schema={schema}
+                    onComplete={() => handleSlamComplete(s.card.id, s.slotId)}
+                />
+            ))}
         </>
     );
 };
-

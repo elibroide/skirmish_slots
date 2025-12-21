@@ -3,6 +3,7 @@ import { Hand } from './components/Hand';
 import { HandSettings } from './components/Card';
 import orderData from './Data/order.json';
 import type { CardInstance } from '@skirmish/card-maker';
+import { PhaserLayer } from '../phaser/PhaserLayer';
 
 const INITIAL_CARDS = orderData.cards as unknown as CardInstance[];
 
@@ -23,13 +24,13 @@ const DEFAULT_SETTINGS: HandSettings = {
   squeezeArcHeight: 0.3,
 
   // Hover effects
-  hoverLift: 170,
-  hoverScale: 2,
-  hoverTransitionDuration: 0.25,
+  hoverLift: 125,
+  hoverScale: 1.3,
+  hoverTransitionDuration: 0.15,
 
   // Drag settings
   dragThresholdY: 50,
-  dragScale: 1.3,
+  dragScale: 1,
 
   // Drag tilt physics
   tiltMaxAngle: 40,
@@ -39,8 +40,14 @@ const DEFAULT_SETTINGS: HandSettings = {
   velocityDecay: 0.85,
 
   // Return animation
-  returnDuration: 0.35,
+  returnDuration: 0.15,
   returnSpringiness: 1.56,
+
+  // Slam Animation
+  slamDuration: 0.6,
+  slamScalePeak: 1.5,
+  slamScaleLand: 0.8,
+  slamHeight: -100, // Negative goes UP in this context if adding to Y, or subtract if absolute. Hand coords Y is up? Mouse Y is down. Usually Y increase = down. So negative is up.
 
   // Size & Scale
   cardScale: 0.25, // Default ~187px width
@@ -54,7 +61,7 @@ const DEFAULT_SETTINGS: HandSettings = {
 
   // Positioning
   baseX: 50,
-  baseY: -55,
+  baseY: -100,
 };
 
 const SettingsPanel = ({ settings, onUpdate, onReset, onAddCard, onDrawRandom }: {
@@ -65,12 +72,13 @@ const SettingsPanel = ({ settings, onUpdate, onReset, onAddCard, onDrawRandom }:
   onDrawRandom: () => void;
 }) => {
   const [activeTab, setActiveTab] = useState<'tuning' | 'actions'>('tuning');
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(true);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     'Positioning': true,
     'Fan Layout': true,
     'Hover Effects': false,
     'Drag Physics': false,
+    'Slam Anim': true,
   });
   const [copyFeedback, setCopyFeedback] = useState('');
 
@@ -149,6 +157,15 @@ const SettingsPanel = ({ settings, onUpdate, onReset, onAddCard, onDrawRandom }:
       settings: [
         { key: 'returnDuration', label: 'Duration', min: 0.15, max: 1.0, step: 0.05 },
         { key: 'returnSpringiness', label: 'Bounciness', min: 1, max: 2.5, step: 0.1 },
+      ]
+    },
+    {
+      title: 'Slam Anim',
+      settings: [
+        { key: 'slamDuration', label: 'Duration', min: 0.1, max: 2.0, step: 0.1 },
+        { key: 'slamScalePeak', label: 'Scale Peak', min: 1.0, max: 3.0, step: 0.1 },
+        { key: 'slamScaleLand', label: 'Scale Land', min: 0.1, max: 1.5, step: 0.1 },
+        { key: 'slamHeight', label: 'Diff Y (Up)', min: -300, max: 0, step: 10 },
       ]
     },
   ];
@@ -376,6 +393,8 @@ export const DebugScene: React.FC<DebugSceneProps> = ({ onBack }) => {
           }
       `}</style>
 
+      <PhaserLayer />
+
       {/* Top Left Controls */}
       <div className="absolute top-4 left-4 z-50 flex gap-4">
         <button
@@ -384,15 +403,6 @@ export const DebugScene: React.FC<DebugSceneProps> = ({ onBack }) => {
         >
           <span>←</span> Back to Menu
         </button>
-      </div>
-
-      {/* Destroy Zone */}
-      <div
-        id="destroy-zone"
-        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-32 rounded-2xl flex flex-col items-center justify-center transition-all duration-300 z-0 border-2 border-dashed border-white/10 bg-white/5 opacity-50 hover:opacity-100"
-      >
-        <div className="emoji text-3xl transition-transform duration-300 grayscale opacity-50">🔥</div>
-        <span className="text-white/20 font-bold text-xs uppercase tracking-widest mt-2 transition-colors duration-300">Burn Card</span>
       </div>
 
       {/* Hand Container */}

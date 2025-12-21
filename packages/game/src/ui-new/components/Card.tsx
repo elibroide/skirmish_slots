@@ -27,6 +27,12 @@ export interface HandSettings {
     returnDuration: number;
     returnSpringiness: number;
 
+    // Slam Animation (Anticipation -> Impact)
+    slamDuration: number;    // Total time for the slam sequence
+    slamScalePeak: number;   // Max scale during anticipation
+    slamScaleLand: number;   // Final scale (or scale just before impact)
+    slamHeight: number;      // How high it lifts during anticipation
+
     // Size & Scale
     cardScale: number; // Controls the base size relative to 750x1050
 
