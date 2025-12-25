@@ -9,7 +9,7 @@ import { CollapsibleSection } from './CollapsibleSection';
 import clsx from 'clsx';
 
 // Memoized background to prevent re-rendering massive base64 strings during drag
-const CardFrameBackground = React.memo(({ frameUrl }: { frameUrl?: string }) => {
+const CardFrameBackground = React.memo(({ frameUrl, config }: { frameUrl?: string, config?: any }) => {
     if (!frameUrl)
     {
         return (
@@ -18,12 +18,32 @@ const CardFrameBackground = React.memo(({ frameUrl }: { frameUrl?: string }) => 
             </div>
         );
     }
+
+    // 9-Slice Rendering
+    if (config?.mode === '9slice' && config?.slice)
+    {
+        return (
+            <div
+                className="w-full h-full pointer-events-none select-none absolute inset-0 z-0"
+                style={{
+                    borderStyle: 'solid',
+                    borderWidth: `${config.slice}px`,
+                    borderImageSource: `url(${frameUrl})`,
+                    borderImageSlice: `${config.slice} fill`,
+                    borderImageRepeat: 'stretch',
+                    boxSizing: 'border-box'
+                }}
+            />
+        );
+    }
+
+    // Default Simple Rendering
     return (
         <div
             className="w-full h-full pointer-events-none opacity-40 select-none absolute inset-0 z-0"
             style={{
                 backgroundImage: `url(${frameUrl})`,
-                backgroundSize: 'contain',
+                backgroundSize: '100% 100%', // FORCE STRETCH for simple mode to match 9slice behavior intent (filling box)
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
             }}
@@ -50,7 +70,6 @@ export const TemplateEditor: React.FC = () => {
     } = useStore();
 
     const [scale, setScale] = useState(0.8);
-
     const containerRef = useRef<HTMLDivElement>(null);
 
     // Ensure we have an active template
@@ -99,6 +118,10 @@ export const TemplateEditor: React.FC = () => {
     const handleCreate = () => {
         addTemplate("New Template");
     };
+
+    // Default dimensions
+    const tWidth = template.width || 750;
+    const tHeight = template.height || 1050;
 
     return (
         <div className="flex h-full bg-gray-100 overflow-hidden">
@@ -170,7 +193,34 @@ export const TemplateEditor: React.FC = () => {
                 </div>
 
                 <div className="p-4 space-y-6">
-                    {/* Image Picker */}
+                    {/* Canvas Dimensions */}
+                    <CollapsibleSection id="editor-canvas" title="Canvas Dimensions" defaultOpen={true}>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-xs font-semibold text-gray-600 block mb-1">Width (px)</label>
+                                <input
+                                    type="number"
+                                    value={tWidth}
+                                    onChange={(e) => updateTemplate(template.id, { width: Number(e.target.value) })}
+                                    className="w-full border rounded p-1 text-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs font-semibold text-gray-600 block mb-1">Height (px)</label>
+                                <input
+                                    type="number"
+                                    value={tHeight}
+                                    onChange={(e) => updateTemplate(template.id, { height: Number(e.target.value) })}
+                                    className="w-full border rounded p-1 text-sm"
+                                />
+                            </div>
+                        </div>
+                        <div className="text-[10px] text-gray-400 mt-2 italic">
+                            Standard Size: 750 x 1050
+                        </div>
+                    </CollapsibleSection>
+
+                    {/* Image Picker & 9-Slice */}
                     <CollapsibleSection id="editor-card-frame" title="Card Frame" defaultOpen={true}>
                         <ImagePicker
                             currentUrl={template.frameUrl}
@@ -178,6 +228,46 @@ export const TemplateEditor: React.FC = () => {
                             onClear={() => setTemplateFrame("")}
                             directory="templates"
                         />
+
+                        {/* 9-Slice Controls */}
+                        <div className="mt-4 pt-4 border-t border-dashed">
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="text-xs font-bold text-gray-700">9-Slice Scaling</label>
+                                <input
+                                    type="checkbox"
+                                    checked={template.frameConfig?.mode === '9slice'}
+                                    onChange={(e) => {
+                                        updateTemplate(template.id, {
+                                            frameConfig: {
+                                                ...template.frameConfig,
+                                                mode: e.target.checked ? '9slice' : 'simple',
+                                                slice: template.frameConfig?.slice || 50
+                                            }
+                                        });
+                                    }}
+                                />
+                            </div>
+
+                            {template.frameConfig?.mode === '9slice' && (
+                                <div className="bg-gray-100 p-2 rounded text-xs space-y-2">
+                                    <div>
+                                        <label className="block mb-1 font-semibold text-gray-600">Slice / Border Width (px)</label>
+                                        <div className="flex gap-2 items-center">
+                                            <input
+                                                type="range" min="1" max="300" step="1"
+                                                value={template.frameConfig.slice || 50}
+                                                onChange={(e) => updateTemplate(template.id, { frameConfig: { ...template.frameConfig!, slice: Number(e.target.value) } })}
+                                                className="flex-1"
+                                            />
+                                            <span className="font-mono w-8 text-right">{template.frameConfig.slice}</span>
+                                        </div>
+                                    </div>
+                                    <p className="text-[10px] text-gray-500">
+                                        This defines the size of the corners that WON'T stretch. The middle sections will stretch to fit the custom width.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
                     </CollapsibleSection>
 
                     {/* Frame Variants */}
@@ -750,8 +840,8 @@ export const TemplateEditor: React.FC = () => {
                         ref={containerRef}
                         className="relative bg-white shadow-2xl ring-1 ring-black/5"
                         style={{
-                            width: '750px',
-                            height: '1050px',
+                            width: `${tWidth}px`,
+                            height: `${tHeight}px`,
                             transform: `scale(${scale})`,
                             transformOrigin: 'center center',
                             flexShrink: 0
@@ -765,7 +855,7 @@ export const TemplateEditor: React.FC = () => {
                         }}
                     >
                         {/* Frame Background */}
-                        <CardFrameBackground frameUrl={template.frameUrl} />
+                        <CardFrameBackground frameUrl={template.frameUrl} config={template.frameConfig} />
 
                         {/* Zones - Interactive */}
                         {template.zones.map(zone => {
@@ -778,8 +868,8 @@ export const TemplateEditor: React.FC = () => {
                                     onUpdate={updateZone}
                                     onSelect={setActiveZoneId}
                                     isSelected={activeZoneId === zone.id}
-                                    containerWidth={750}
-                                    containerHeight={1050}
+                                    containerWidth={tWidth}
+                                    containerHeight={tHeight}
                                     scale={scale}
                                     previewText={previewText}
                                     imageSrc={zone.src} // Pass default image

@@ -6,8 +6,9 @@ import { WaitingRoom } from './components/WaitingRoom';
 import { useGameStore } from './store/gameStore';
 import { TestCardView } from '../components/debug/TestCardView';
 import { DebugScene } from '../ui-new/DebugScene';
+import { CardFrameView } from './components/CardFrameView';
 
-type Screen = 'menu' | 'deck-builder' | 'game' | 'waiting-room' | 'debug' | 'ui-debug';
+type Screen = 'menu' | 'deck-builder' | 'game' | 'waiting-room' | 'debug' | 'ui-debug' | 'card-frame-view';
 
 /**
  * Main App Component
@@ -73,6 +74,10 @@ export default function App() {
     setCurrentScreen('ui-debug');
   };
 
+  const handleOpenCardFrameView = () => {
+    setCurrentScreen('card-frame-view');
+  };
+
   if (currentScreen === 'menu')
   {
     return (
@@ -81,6 +86,7 @@ export default function App() {
         onOpenDeckBuilder={handleOpenDeckBuilder}
         onOpenDebug={handleOpenDebug}
         onOpenUIDebug={handleOpenUIDebug}
+        onOpenCardFrameView={handleOpenCardFrameView}
       />
     );
   }
@@ -119,6 +125,11 @@ export default function App() {
     }
 
     return <WaitingRoom gameCode={networkGameCode || ''} onCancel={handleCancelWaiting} />;
+  }
+
+  if (currentScreen === 'card-frame-view')
+  {
+    return <CardFrameView onBack={handleBackToMenu} />;
   }
 
   if (!gameState || !engine)

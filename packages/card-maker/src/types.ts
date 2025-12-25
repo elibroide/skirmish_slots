@@ -58,6 +58,13 @@ export interface CardTemplate {
   name: string;
   frameUrl: string;
   frameVariants?: { id: string; name: string; url: string }[];
+  width?: number; // Default 750
+  height?: number; // Default 1050
+  frameConfig?: {
+    mode: 'simple' | '9slice';
+    slice?: number; // Single value for uniform slicing for simplicity first
+    borderOutset?: number; // To extend frame outside the content box if needed
+  };
   zones: Zone[];
   automations?: AutomationRule[];
 }

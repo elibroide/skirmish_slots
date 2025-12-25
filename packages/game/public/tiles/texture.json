@@ -1,0 +1,135 @@
+{
+  "frames": {
+    "Drill Sargent.board.png": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 320,
+        "h": 420
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 320,
+        "h": 420
+      },
+      "sourceSize": {
+        "w": 320,
+        "h": 420
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "General Pug.board.png": {
+      "frame": {
+        "x": 0,
+        "y": 420,
+        "w": 320,
+        "h": 420
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 320,
+        "h": 420
+      },
+      "sourceSize": {
+        "w": 320,
+        "h": 420
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "Hound Guard.board.png": {
+      "frame": {
+        "x": 0,
+        "y": 840,
+        "w": 320,
+        "h": 420
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 320,
+        "h": 420
+      },
+      "sourceSize": {
+        "w": 320,
+        "h": 420
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "Pig Farmer.board.png": {
+      "frame": {
+        "x": 0,
+        "y": 1260,
+        "w": 320,
+        "h": 420
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 320,
+        "h": 420
+      },
+      "sourceSize": {
+        "w": 320,
+        "h": 420
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "Royal Houndsman.board.png": {
+      "frame": {
+        "x": 320,
+        "y": 0,
+        "w": 320,
+        "h": 420
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 320,
+        "h": 420
+      },
+      "sourceSize": {
+        "w": 320,
+        "h": 420
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    }
+  },
+  "meta": {
+    "app": "http://free-tex-packer.com",
+    "version": "0.6.7",
+    "image": "texture.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 1024,
+      "h": 2048
+    },
+    "scale": 1
+  }
+}

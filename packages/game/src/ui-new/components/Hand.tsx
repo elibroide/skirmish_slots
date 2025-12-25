@@ -304,7 +304,7 @@ export const Hand: React.FC<HandProps> = ({
                     if (timeSinceLastMove > 50)
                     {
                         if (Math.abs(prev.velocity.x) < 0.1 && Math.abs(prev.velocity.y) < 0.1) return prev;
-                        const decayFactor = 0.92;
+                        const decayFactor = settings.velocityDecay || 0.85;
                         return { ...prev, velocity: { x: prev.velocity.x * decayFactor, y: prev.velocity.y * decayFactor } };
                     }
                     return prev;
@@ -336,6 +336,43 @@ export const Hand: React.FC<HandProps> = ({
         useGameStore.getState().occupySlot(slotId, cardId);
     }, []);
 
+    const getCardGlowState = useCallback((cardId: string, isDraggingThisCard: boolean): 'none' | 'playable' | 'dragging' | 'targeting' => {
+        // 1. If Dragging: check if Targeting or just Dragging
+        // (Hand component cards hide when dragging, but we might want to keep state consistent)
+        if (isDraggingThisCard)
+        {
+            // Check Store for targeting status
+            // Note: We need to access store state non-reactively or via the hook we already have? 
+            // We can resolve it in the map loop. 
+            // But for the Hand Card (which is hidden/dimmed), 'dragging' is enough.
+            return 'dragging';
+            // The DraggedCard component handles the 'targeting' visual.
+        }
+
+        // 2. If Playable (Global debug flag for now, or per-card logic later)
+        if (settings.debugForcePlayable)
+        {
+            return 'playable';
+        }
+
+        // 3. Default
+        return 'none';
+    }, [settings.debugForcePlayable]);
+
+    // Derived state for DraggedCard
+    const draggedCardGlowState = React.useMemo(() => {
+        const storeState = useGameStore.getState();
+        const isTargeting = storeState.dragState.hoveredSlotId !== null &&
+            storeState.slots[storeState.dragState.hoveredSlotId!]?.status === 'showTarget';
+        return isTargeting ? 'targeting' : 'dragging';
+    }, [dragState, hoveredIndex]); // Re-eval when drag state changes (hoveredIndex change during drag?) 
+    // Actually we need to listen to store changes for targeting.
+    // simpler: useGameStore hook inside Hand?
+    const hoveredSlotId = useGameStore(state => state.dragState.hoveredSlotId);
+    const slots = useGameStore(state => state.slots);
+    const isTargeting = hoveredSlotId !== null && slots[hoveredSlotId]?.status === 'showTarget';
+
+
     return (
         <>
             {/* Container for the fan */}
@@ -354,24 +391,30 @@ export const Hand: React.FC<HandProps> = ({
                 }}
             >
                 <div style={{ pointerEvents: 'auto', width: '100%', height: '100%', position: 'relative' }}>
-                    {cards.map((card, index) => (
-                        <Card
-                            key={card.id}
-                            card={card}
-                            index={index}
-                            totalCards={cards.length}
-                            isHovered={hoveredIndex === index}
-                            hoveredIndex={hoveredIndex}
-                            onHover={handleHover}
-                            onLeave={handleLeave}
-                            onDragStart={handleDragStart}
-                            isDragging={dragState.isDragging && dragState.card?.id === card.id}
-                            isReturning={returningCard?.card?.id === card.id}
-                            settings={settings}
-                            templates={templates}
-                            schema={schema}
-                        />
-                    ))}
+                    {cards.map((card, index) => {
+                        const isDraggingThis = dragState.isDragging && dragState.card?.id === card.id;
+                        const glowState = getCardGlowState(card.id, isDraggingThis);
+
+                        return (
+                            <Card
+                                key={card.id}
+                                card={card}
+                                index={index}
+                                totalCards={cards.length}
+                                isHovered={hoveredIndex === index}
+                                hoveredIndex={hoveredIndex}
+                                onHover={handleHover}
+                                onLeave={handleLeave}
+                                onDragStart={handleDragStart}
+                                isDragging={isDraggingThis}
+                                isReturning={returningCard?.card?.id === card.id}
+                                settings={settings}
+                                templates={templates}
+                                schema={schema}
+                                glowState={glowState}
+                            />
+                        );
+                    })}
                 </div>
             </div>
 
@@ -383,6 +426,7 @@ export const Hand: React.FC<HandProps> = ({
                     settings={settings}
                     templates={templates}
                     schema={schema}
+                    glowState={isTargeting ? 'targeting' : 'dragging'}
                 />
             )}
 

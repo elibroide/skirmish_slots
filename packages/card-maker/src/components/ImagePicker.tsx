@@ -34,6 +34,9 @@ export const ImagePicker: React.FC<ImagePickerProps & { directory?: string }> = 
         const paths = Object.keys(modules)
             .map(path => path.replace('/public', ''))
             .filter(path => {
+                // Exclude board tiles
+                if (path.includes('.board')) return false;
+
                 if (directory === 'templates' || directory === 'card-art') return true;
                 // For custom directories, strictly filter by the folder name
                 // e.g. path: /assets/rarityImage/rare.png, directory: 'rarityImage'

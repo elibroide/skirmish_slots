@@ -13,7 +13,7 @@ export const PhaserLayer: React.FC = () => {
         const config = createGameConfig(
             gameContainerRef.current,
             window.innerWidth,
-            window.innerHeight
+            window.innerHeight,
         );
 
         gameRef.current = new Phaser.Game(config);

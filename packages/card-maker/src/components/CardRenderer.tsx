@@ -128,12 +128,15 @@ export const CardRenderer: React.FC<CardRendererProps> = ({ template, data, sche
         );
     };
 
+    const tWidth = template.width || 750;
+    const tHeight = template.height || 1050;
+
     return (
         <div
             className={clsx("relative overflow-hidden shadow-lg", className)}
             style={{
-                width: '750px',
-                height: '1050px',
+                width: `${tWidth}px`,
+                height: `${tHeight}px`,
                 transform: `scale(${scale})`,
                 transformOrigin: 'top left'
             }}
@@ -183,7 +186,29 @@ export const CardRenderer: React.FC<CardRendererProps> = ({ template, data, sche
             {/* Layer 1: Frame */}
             <div className="absolute inset-0 z-10 pointer-events-none">
                 {frameUrl && (
-                    <img src={frameUrl} alt="Frame" className="w-full h-full object-contain" />
+                    template.frameConfig?.mode === '9slice' && template.frameConfig.slice ? (
+                        <div
+                            className="w-full h-full"
+                            style={{
+                                borderStyle: 'solid',
+                                borderWidth: `${template.frameConfig.slice}px`,
+                                borderImageSource: `url(${frameUrl})`,
+                                borderImageSlice: `${template.frameConfig.slice} fill`,
+                                borderImageRepeat: 'stretch',
+                                boxSizing: 'border-box'
+                            }}
+                        />
+                    ) : (
+                        <div
+                            className="w-full h-full"
+                            style={{
+                                backgroundImage: `url(${frameUrl})`,
+                                backgroundSize: '100% 100%',
+                                backgroundPosition: 'center',
+                                backgroundRepeat: 'no-repeat',
+                            }}
+                        />
+                    )
                 )}
             </div>
 

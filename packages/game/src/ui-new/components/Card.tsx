@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { CardRenderer } from '@skirmish/card-maker';
 import type { CardInstance, CardTemplate, CardSchema } from '@skirmish/card-maker';
+import { useGameStore } from '../../store/gameStore';
 
 export const BASE_CARD_WIDTH = 750;
 export const BASE_CARD_HEIGHT = 1050;
@@ -24,6 +25,7 @@ export interface HandSettings {
     tiltSmoothing: number;
     tiltReturnSpeed: number;
     velocityDecay: number;
+    tiltVelocityThreshold: number; // New Setting
     returnDuration: number;
     returnSpringiness: number;
 
@@ -41,12 +43,108 @@ export interface HandSettings {
     showHitAreas: boolean;
     perspective: number;
 
+    // Glow Settings
+    glowColorPlayable: string;
+    glowColorDragging: string;
+    glowColorTargeting: string;
+
+    // Back-Glow Geometry
+    glowExpLeft: number;
+    glowExpRight: number;
+    glowExpTop: number;
+    glowExpBottom: number;
+    glowCornerRadius: number; // 0 = sharp
+    glowOffsetX: number; // Global shift
+    glowOffsetY: number; // Global shift
+    glowOpacity: number; // Edge/Pulse opacity
+    fillOpacity: number; // Solid rect opacity
+    glowPulseSpeed: number; // 0 = no pulse
+    glowBlur: number; // Edge softness
+
+    // Debug
+    debugForcePlayable: boolean;
+
     // Positioning
     baseX: number; // % from left
     baseY: number; // px from bottom
 }
 
-interface CardProps {
+export const DEFAULT_SETTINGS: HandSettings = {
+    // Fan layout
+    fanSpacing: 105,
+    fanRotation: 3.5,
+    fanArcHeight: 3,
+
+    // Manual Squeeze Controls
+    maxCardsSqueeze: 8,
+    squeezeSpacing: 10,
+    squeezeRotation: 0.1,
+    squeezeArcHeight: 0.3,
+
+    // Hover effects
+    hoverLift: 125,
+    hoverScale: 1.3,
+    hoverTransitionDuration: 0.15,
+
+    // Drag settings
+    dragThresholdY: 50,
+    dragScale: 1,
+
+    // Drag tilt physics
+    tiltMaxAngle: 20,
+    tiltSensitivity: 1.5,
+    tiltSmoothing: 0.5,
+    tiltReturnSpeed: 0.15,
+    velocityDecay: 0.85,
+    tiltVelocityThreshold: 2,
+
+    // Return animation
+    returnDuration: 0.15,
+    returnSpringiness: 1.56,
+
+    // Slam Animation
+    slamDuration: 0.6,
+    slamScalePeak: 1.5,
+    slamScaleLand: 0.8,
+    slamHeight: -100,
+
+    // Size & Scale
+    cardScale: 0.25,
+
+    hitAreaWidth: 140,
+    hitAreaHeight: 255,
+    showHitAreas: false,
+
+    // Visual
+    perspective: 2000,
+
+    // Glow Defaults
+    glowColorPlayable: '#21b9c4',
+    glowColorDragging: '#eab308',
+    glowColorTargeting: '#ace708',
+
+    // Back-Glow Defaults
+    glowExpLeft: 4,
+    glowExpRight: -9,
+    glowExpTop: 2.5,
+    glowExpBottom: 2.5,
+    glowCornerRadius: 5,
+    glowOffsetX: 0,
+    glowOffsetY: 0,
+    glowOpacity: 0.5,
+    fillOpacity: 1,
+    glowPulseSpeed: 1,
+    glowBlur: 10,
+
+    debugForcePlayable: true,
+
+    // Positioning
+    baseX: 50,
+    baseY: -150,
+};
+
+// Card component types
+export interface CardProps {
     card: CardInstance;
     index: number;
     totalCards: number;
@@ -60,7 +158,10 @@ interface CardProps {
     settings: HandSettings;
     templates: CardTemplate[];
     schema: CardSchema;
+    glowState: CardGlowState; // Explicit state controller
 }
+
+export type CardGlowState = 'none' | 'playable' | 'dragging' | 'targeting';
 
 export const Card: React.FC<CardProps> = ({
     card,
@@ -75,8 +176,13 @@ export const Card: React.FC<CardProps> = ({
     isReturning,
     settings,
     templates,
-    schema
+    schema,
+    glowState = 'none' // Default to none if not provided
 }) => {
+    // Refs for animation
+    const cardRef = useRef<HTMLDivElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
+
     const centerIndex = (totalCards - 1) / 2;
     const offsetFromCenter = index - centerIndex;
 
@@ -139,6 +245,30 @@ export const Card: React.FC<CardProps> = ({
     const cardWidth = BASE_CARD_WIDTH * settings.cardScale;
     const cardHeight = BASE_CARD_HEIGHT * settings.cardScale;
 
+    // Determine Glow Color based on Explicit State
+    let activeGlowColor: string | null = null;
+    switch (glowState)
+    {
+        case 'targeting':
+            activeGlowColor = settings.glowColorTargeting;
+            break;
+        case 'dragging':
+            activeGlowColor = settings.glowColorDragging;
+            break;
+        case 'playable':
+            activeGlowColor = settings.glowColorPlayable;
+            break;
+        case 'none':
+        default:
+            activeGlowColor = null;
+            break;
+    }
+
+    // Shadow logic (standard lift, independent of glow now)
+    const shadowFilter = isHovered
+        ? 'drop-shadow(0 25px 40px rgba(0,0,0,0.5))'
+        : 'drop-shadow(0 8px 16px rgba(0,0,0,0.3))';
+
     return (
         <div
             style={{
@@ -157,6 +287,72 @@ export const Card: React.FC<CardProps> = ({
             onMouseLeave={onLeave}
             onMouseDown={(e) => onDragStart(e, card, index)}
         >
+            {/* NEW Split Back-Glow with Expansion */}
+            {activeGlowColor && (
+                <>
+                    {/* 1. Pulsing Edge Glow (Deepest) */}
+                    <div
+                        style={{
+                            position: 'absolute',
+                            left: '50%',
+                            bottom: '0',
+                            // Calculate total width/height based on base card + expansions
+                            width: `${cardWidth + settings.glowExpLeft + settings.glowExpRight}px`,
+                            height: `${cardHeight + settings.glowExpTop + settings.glowExpBottom}px`,
+                            // Center horizontally based on expansions relative to center
+                            // X margin: we want the LEFT edge to be at -cardWidth/2 - expLeft
+                            marginLeft: `${-(cardWidth / 2) - settings.glowExpLeft}px`,
+                            marginBottom: `${-settings.glowExpBottom + settings.glowOffsetY}px`,
+                            // Note: anchor is bottom, so we extend down by ExpBottom. 
+                            // ExpTop is handled by height increase upwards.
+
+                            backgroundColor: activeGlowColor,
+                            borderRadius: `${settings.glowCornerRadius}px`,
+                            opacity: settings.glowOpacity,
+                            filter: `blur(${settings.glowBlur}px)`,
+                            transform: `
+                                translateX(${settings.glowOffsetX}px)
+                                translateY(${translateY}px) 
+                                translateZ(${translateZ - 0.2}px) 
+                                rotate(${rotation}deg) 
+                                scale(${visualScale})
+                            `,
+                            transformOrigin: 'center bottom',
+                            transition: `all ${settings.hoverTransitionDuration}s cubic-bezier(0.34, 1.56, 0.64, 1)`,
+                            pointerEvents: 'none',
+                        }}
+                        className={settings.glowPulseSpeed > 0 ? "animate-pulse-glow" : ""}
+                    />
+
+                    {/* 2. Solid Backing Rect (Middle) */}
+                    <div
+                        style={{
+                            position: 'absolute',
+                            left: '50%',
+                            bottom: '0',
+                            width: `${cardWidth + settings.glowExpLeft + settings.glowExpRight}px`,
+                            height: `${cardHeight + settings.glowExpTop + settings.glowExpBottom}px`,
+                            marginLeft: `${-(cardWidth / 2) - settings.glowExpLeft}px`,
+                            marginBottom: `${-settings.glowExpBottom + settings.glowOffsetY}px`,
+
+                            backgroundColor: activeGlowColor,
+                            borderRadius: `${settings.glowCornerRadius}px`,
+                            opacity: settings.fillOpacity,
+                            filter: 'none',
+                            transform: `
+                                translateX(${settings.glowOffsetX}px)
+                                translateY(${translateY}px) 
+                                translateZ(${translateZ - 0.1}px) 
+                                rotate(${rotation}deg) 
+                                scale(${visualScale})
+                            `,
+                            transformOrigin: 'center bottom',
+                            transition: `all ${settings.hoverTransitionDuration}s cubic-bezier(0.34, 1.56, 0.64, 1)`,
+                            pointerEvents: 'none',
+                        }}
+                    />
+                </>
+            )}
             {/* Visual card - positioned behind hit areas */}
             <div
                 style={{
@@ -174,7 +370,7 @@ export const Card: React.FC<CardProps> = ({
           `,
                     transformOrigin: 'center bottom',
                     transition: `all ${settings.hoverTransitionDuration}s cubic-bezier(0.34, 1.56, 0.64, 1)`,
-                    filter: isHovered ? 'drop-shadow(0 25px 40px rgba(0,0,0,0.5))' : 'drop-shadow(0 8px 16px rgba(0,0,0,0.3))',
+                    filter: shadowFilter,
                     pointerEvents: 'none',
                     zIndex: isHovered ? 100 : zIndex,
                     // Center the oversized CardRenderer content

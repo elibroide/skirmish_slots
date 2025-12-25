@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { FullScreenToggle } from './FullScreenToggle';
 
 export type OpponentType = 'heuristic' | 'claude' | 'human';
 export type GameMode = 'vs-ai' | 'human-vs-human' | 'god-mode' | 'network';
@@ -8,6 +9,7 @@ export type MainMenuProps = {
   onOpenDeckBuilder: () => void;
   onOpenDebug?: () => void;
   onOpenUIDebug?: () => void;
+  onOpenCardFrameView?: () => void;
 };
 
 /**
@@ -17,7 +19,7 @@ export type MainMenuProps = {
  * - Start a single player game (with opponent selection: AI or Human for testing)
  * - Open the deck builder
  */
-export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenDeckBuilder, onOpenDebug, onOpenUIDebug }) => {
+export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenDeckBuilder, onOpenDebug, onOpenUIDebug, onOpenCardFrameView }) => {
   const [selectedOpponent, setSelectedOpponent] = useState<OpponentType>('claude');
   const [gameIdInput, setGameIdInput] = useState('');
   const [isCreatingGame, setIsCreatingGame] = useState(false);
@@ -48,7 +50,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenDeckBuild
   };
 
   return (
-    <div className="min-h-screen bg-stone-200 flex items-center justify-center p-8">
+    <div className="min-h-screen bg-stone-200 flex items-center justify-center p-8 relative">
+      <FullScreenToggle className="absolute top-4 right-4" />
       <div className="max-w-2xl w-full">
         <div className="text-center mb-12">
           <h1 className="font-hand text-8xl text-stone-800 mb-4">Skirmish</h1>
@@ -180,6 +183,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenDeckBuild
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white font-hand text-2xl py-4 rounded-lg transition-colors shadow-md"
               >
                 UI Playground
+              </button>
+              <button
+                onClick={onOpenCardFrameView}
+                className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-hand text-2xl py-4 rounded-lg transition-colors shadow-md"
+              >
+                Card Frame
               </button>
             </div>
           </div>

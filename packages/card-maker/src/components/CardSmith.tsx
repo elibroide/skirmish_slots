@@ -9,6 +9,7 @@ export const CardSmith: React.FC = () => {
     const { schema, cards, templates, addCard, updateCard, deleteCard, duplicateCard, activeCardId, setActiveCardId } = useStore();
     const renderRef = useRef<HTMLDivElement>(null);
     const [scale, setScale] = useState(0.8);
+    const [exportScale, setExportScale] = useState(1);
 
     // Search & Sort State
     const [searchQuery, setSearchQuery] = useState("");
@@ -117,7 +118,8 @@ export const CardSmith: React.FC = () => {
                 // Wait for images to load (simplified)
                 const dataUrl = await toPng(renderRef.current, {
                     cacheBust: true,
-                    pixelRatio: 2 // High res export
+                    pixelRatio: exportScale, // Use user-selected scale
+                    backgroundColor: null as any // Force transparency
                 });
                 const link = document.createElement('a');
                 link.download = `${activeCard?.data[schema[0]?.key] || 'card'}.png`;
@@ -234,7 +236,25 @@ export const CardSmith: React.FC = () => {
                 <div className="w-96 bg-gray-50 border-r flex flex-col overflow-y-auto shadow-inner shrink-0">
                     <div className="p-4 border-b bg-white top-0 sticky z-10 font-bold text-gray-700 flex justify-between items-center shadow-sm">
                         <span>Card Data</span>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 items-center">
+                            <select
+                                value={exportScale}
+                                onChange={(e) => setExportScale(Number(e.target.value))}
+                                className="text-xs border rounded bg-gray-50 p-1 mr-1"
+                                title="Export Scale"
+                            >
+                                <option value={0.01}>0.01x</option>
+                                <option value={0.1}>0.1x</option>
+                                <option value={0.25}>0.25x</option>
+                                <option value={0.3}>0.3x</option>
+                                <option value={0.35}>0.35x</option>
+                                <option value={0.4}>0.4x</option>
+                                <option value={0.45}>0.45x</option>
+                                <option value={0.5}>0.5x</option>
+                                <option value={1}>1x</option>
+                                <option value={2}>2x</option>
+                                <option value={4}>4x</option>
+                            </select>
                             <button onClick={handleExport} className="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded border border-indigo-200 hover:bg-indigo-100 font-bold">
                                 📸 Export PNG
                             </button>
@@ -524,7 +544,7 @@ export const CardSmith: React.FC = () => {
                         >
                             {/* We wrap the renderer in a div for html2canvas to target, ensuring clean capture */}
                             {/* NOTE: We duplicate the component for rendering, but in a real app might share ref/instance */}
-                            <div ref={renderRef} className="bg-white">
+                            <div ref={renderRef}>
                                 <CardRenderer
                                     template={cardTemplate}
                                     data={activeCard}

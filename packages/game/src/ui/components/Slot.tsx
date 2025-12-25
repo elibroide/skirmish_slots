@@ -1,6 +1,5 @@
 import React from 'react';
 import type { UnitCard, PlayerId } from '../../engine/types';
-import { Card } from './Card';
 
 interface SlotProps {
   unit: UnitCard | null;
@@ -14,16 +13,16 @@ interface SlotProps {
   isTargetable?: boolean; // For targeting mode - unit can be targeted
   onUnitClick?: (unitId: string) => void; // For clicking units (targeting)
   onSlotClick?: (terrainId: number, playerId: PlayerId) => void; // For clicking slots (targeting)
+  slotId?: number; // Numeric ID for tracking
 }
 
 /**
  * Slot Component
- * Represents one player's slot on a terrain
- * From mockup:
- * - Dashed border when empty and targetable (blue)
- * - Solid border when occupied (yellow/amber cards)
- * - Shows slot modifier as badge at bottom
- * - Shows crown icon if this player won the terrain
+ * 
+ * DESIGN UPDATE:
+ * - Visuals (dotted lines, glows, unit art) are now handled by Phaser (BoardScene.ts).
+ * - This React component acts as a transparent interaction layer (Drop Target / Click Target).
+ * - We still render badges (Modifier, Crown) here overlaying the Phaser slot.
  */
 export const Slot: React.FC<SlotProps> = ({
   unit,
@@ -37,11 +36,12 @@ export const Slot: React.FC<SlotProps> = ({
   isTargetable = false,
   onUnitClick,
   onSlotClick,
+  slotId,
 }) => {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    // Allow drop if it's player's slot OR if it's highlighted/targetable (for actions targeting enemies/terrain)
-    if (onDrop && (isPlayerSlot || isHighlighted || isTargetable)) {
+    if (onDrop && (isPlayerSlot || isHighlighted || isTargetable))
+    {
       onDrop(terrainId, playerId);
     }
   };
@@ -51,64 +51,41 @@ export const Slot: React.FC<SlotProps> = ({
   };
 
   const handleClick = () => {
-    // If targetable, handle clicks
-    if (isTargetable) {
-      // Prioritize slot click if handler exists (generic slot targeting)
-      if (onSlotClick) {
+    if (isTargetable)
+    {
+      if (onSlotClick)
+      {
         onSlotClick(terrainId, playerId);
         return;
       }
-      
-      // Fallback to unit click if unit exists (legacy/specific unit targeting)
-      if (unit && onUnitClick) {
+      if (unit && onUnitClick)
+      {
         onUnitClick(unit.id);
       }
     }
   };
 
-  // Slot styling based on state
-  const getSlotClasses = () => {
-    const base = 'w-36 h-52 rounded-xl border-2 flex flex-col items-center justify-center relative';
-
-    if (isTargetable) {
-      // Slot/Unit can be targeted - show as valid target
-      // Use green for targetable to indicate "Click me"
-      return `${base} border-green-500 bg-green-50/50 border-solid shadow-lg cursor-pointer animate-pulse`;
-    }
-
-    if (isHighlighted && !unit) {
-      // Valid target for deployment (drag & drop hint)
-      return `${base} border-blue-500 bg-blue-50/50 border-dashed`;
-    }
-
-    if (unit) {
-      // Has a card - subtle background
-      return `${base} border-stone-400 bg-stone-300/30`;
-    }
-
-    // Empty slot
-    return `${base} border-stone-400 bg-stone-300/50 border-dashed`;
-  };
-
   return (
     <div
-      className={getSlotClasses()}
+      className="w-full h-full relative cursor-pointer group"
       onDrop={handleDrop}
       onDragOver={handleDragOver}
       onClick={handleClick}
     >
-      {/* Card or empty state */}
-      {unit ? (
-        <div className="p-1">
-          <Card card={unit} />
-          {isTargetable && (
-            <div className="absolute inset-0 border-4 border-green-400 rounded-xl pointer-events-none animate-pulse" />
-          )}
-        </div>
-      ) : (
-        <span className="font-ui text-xs text-stone-400">
-          {isHighlighted ? 'Drop here' : 'Empty'}
-        </span>
+      {/* 
+        DEBUG/HOVER HINT: 
+        Uncomment bg-red-500/20 to see the interactable area 
+      */}
+      {/* <div className="absolute inset-0 bg-red-500/20 pointer-events-none" /> */}
+
+      {/* 
+        Targeting Indicator:
+        If targetable, we still might want a React overlay cursor/border or rely on Phaser?
+        Phaser handles visuals, but "Targetable" pointer interactions might need visual feedback here?
+        For now, let's keep a subtle pulse if targetable to ensure usability.
+      */}
+      {isTargetable && (
+        <div className="absolute inset-0 border-4 border-green-400/50 rounded-xl pointer-events-none animate-pulse" />
       )}
 
       {/* Slot Modifier Badge */}
@@ -119,7 +96,7 @@ export const Slot: React.FC<SlotProps> = ({
             ${isPlayerSlot ? '-bottom-2' : '-top-2'}
             px-3 py-1 rounded-full text-xs font-bold
             ${slotModifier > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}
-            border border-stone-800 shadow-sm
+            border border-stone-800 shadow-sm z-10
           `}
         >
           {slotModifier > 0 ? '+' : ''}{slotModifier}
@@ -128,7 +105,7 @@ export const Slot: React.FC<SlotProps> = ({
 
       {/* Crown - Winner indicator */}
       {winner === playerId && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-2xl">
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-2xl z-10 drop-shadow-md">
           👑
         </div>
       )}

@@ -14,6 +14,7 @@ interface DroppableSlotProps {
   isTargetable?: boolean;
   onUnitClick?: (unitId: string) => void;
   onSlotClick?: (terrainId: number, playerId: PlayerId) => void;
+  slotId?: number; // Numeric ID for tracking (0-9)
 }
 
 export const DroppableSlot: React.FC<DroppableSlotProps> = ({
@@ -27,16 +28,18 @@ export const DroppableSlot: React.FC<DroppableSlotProps> = ({
   isTargetable,
   onUnitClick,
   onSlotClick,
+  slotId,
 }) => {
   const { setNodeRef, isOver } = useDroppable({
     id: `slot-${terrainId}-${playerId}`,
     data: {
       slotCoord: { terrainId, playerId },
+      slotId, // Pass for drag over tracking
     },
   });
 
   return (
-    <div ref={setNodeRef}>
+    <div ref={setNodeRef} className="w-full h-full">
       <Slot
         terrainId={terrainId}
         playerId={playerId}
@@ -48,8 +51,8 @@ export const DroppableSlot: React.FC<DroppableSlotProps> = ({
         isTargetable={isTargetable}
         onUnitClick={onUnitClick}
         onSlotClick={onSlotClick}
+        slotId={slotId}
       />
     </div>
   );
 };
-
