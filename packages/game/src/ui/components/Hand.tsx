@@ -80,21 +80,24 @@ export const Hand: React.FC<HandProps> = ({
 
     // Facedown (Opponent) Logic: No interactions
     const canInteract = !isFacedown;
+    const setHoveredCard = useGameStore(state => state.setHoveredCard);
 
     const handleHover = useCallback((index: number) => {
         if (!dragState.isDragging && canInteract)
         {
             console.log(`[Hand] Hover card in hand: ${index}`);
             setHoveredIndex(index);
+            setHoveredCard(cards[index]);
         }
-    }, [dragState.isDragging, canInteract]);
+    }, [dragState.isDragging, canInteract, cards, setHoveredCard]);
 
     const handleLeave = useCallback(() => {
         if (!dragState.isDragging && canInteract)
         {
             setHoveredIndex(null);
+            setHoveredCard(null);
         }
-    }, [dragState.isDragging, canInteract]);
+    }, [dragState.isDragging, canInteract, setHoveredCard]);
 
     const [dragStartPos, setDragStartPos] = useState<DragStartPos | null>(null);
     const [pendingDrag, setPendingDrag] = useState<PendingDrag | null>(null);

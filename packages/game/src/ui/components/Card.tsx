@@ -3,6 +3,7 @@ import { CardRenderer } from '@skirmish/card-maker';
 import type { CardInstance, CardTemplate, CardSchema } from '@skirmish/card-maker';
 import { useGameStore } from '../../store/gameStore';
 import { CardBack } from './CardBack';
+import { CardTooltip } from './CardTooltip';
 
 export const BASE_CARD_WIDTH = 750;
 export const BASE_CARD_HEIGHT = 1050;
@@ -193,6 +194,10 @@ export const Card: React.FC<CardProps> = ({
     // Refs for animation
     const cardRef = useRef<HTMLDivElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
+
+    // Get Hand Tooltip Settings from global store (reactive)
+    const storeSettings = useGameStore(state => state.boardSettings);
+    const handTooltipSettings = storeSettings.handTooltipSettings || { show: false };
 
     const centerIndex = (totalCards - 1) / 2;
     const offsetFromCenter = index - centerIndex;
@@ -433,6 +438,14 @@ export const Card: React.FC<CardProps> = ({
                             />
                         ) : (
                             <div className="bg-red-500 text-white p-2">No Template</div>
+                        )}
+
+                        {/* Tooltip Injection */}
+                        {isHovered && !isFacedown && (
+                            <CardTooltip
+                                card={card}
+                                settings={handTooltipSettings}
+                            />
                         )}
                     </div>
                 </>

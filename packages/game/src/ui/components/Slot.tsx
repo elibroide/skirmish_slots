@@ -173,6 +173,35 @@ export const Slot: React.FC<SlotProps> = ({
         '--glow-intensity': slotGlowIntensity,
     } as React.CSSProperties : {};
 
+    // Report Screen Position for Tooltips
+    useEffect(() => {
+        if (!containerRef.current) return;
+
+        const reportPosition = () => {
+            if (!containerRef.current) return;
+            const rect = containerRef.current.getBoundingClientRect();
+            useGameStore.getState().updateSlotPosition(
+                playerId,
+                terrainId,
+                rect.x,
+                rect.y,
+                rect.width,
+                rect.height
+            );
+        };
+
+        // Report initial and on resize/scroll
+        const timer = setTimeout(reportPosition, 100);
+        window.addEventListener('resize', reportPosition);
+        window.addEventListener('scroll', reportPosition);
+
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener('resize', reportPosition);
+            window.removeEventListener('scroll', reportPosition);
+        };
+    }, [playerId, terrainId, settings]); // Re-run if layout or scale changes
+
     return (
         <>
             {pulseStyleTag}

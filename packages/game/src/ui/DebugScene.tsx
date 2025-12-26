@@ -9,6 +9,9 @@ import { PhaserLayer } from '../phaser/PhaserLayer';
 import { Board } from './components/Board';
 import { AnimationLayer } from './AnimationLayer';
 import { AnimationManager } from '../engine/AnimationManager';
+import { PassButton } from './components/PassButton';
+import { CardTooltip } from './components/CardTooltip';
+import { BoardCardTooltip } from './components/BoardCardTooltip';
 
 // Filter to only use "Normal" template cards
 const NORMAL_TEMPLATE = orderData.templates.find(t => t.name === 'Normal');
@@ -52,40 +55,69 @@ const InputRange = ({ label, value, min, max, step, onChange, type = 'range' }: 
   step?: number;
   onChange: (val: number) => void;
   type?: string;
-}) => (
-  <div className="space-y-1">
-    <div className="flex justify-between items-center">
-      <label className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">{label}</label>
-      {type !== 'checkbox' && (
+}) => {
+  const [localValue, setLocalValue] = useState(value);
+
+  // Sync local value when prop value changes (e.g. Reset button)
+  // We need a ref to avoid circular fighting if the parent updates slowly, 
+  // but since we are debouncing ONLY the parent update, we should trust the parent's value
+  // if it differs significantly or if we aren't currently editing? 
+  // Actually, simplest is just to sync.
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  // Debounced output
+  useEffect(() => {
+    // If local matches prop, do nothing (initial render or sync)
+    if (localValue === value) return;
+
+    const timer = setTimeout(() => {
+      onChange(localValue);
+    }, 100); // 100ms debounce
+
+    return () => clearTimeout(timer);
+  }, [localValue, onChange, value]);
+
+  const handleChange = (newVal: number) => {
+    setLocalValue(newVal);
+  };
+
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between items-center">
+        <label className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">{label}</label>
+        {type !== 'checkbox' && (
+          <input
+            type="number"
+            value={localValue}
+            step={step}
+            onChange={(e) => handleChange(parseFloat(e.target.value))}
+            className="w-16 text-right font-mono text-[10px] text-stone-700 bg-white border border-stone-200 rounded px-1 focus:outline-none focus:border-blue-400"
+          />
+        )}
+      </div>
+      {type === 'checkbox' ? (
         <input
-          type="number"
-          value={value}
+          type="checkbox"
+          checked={!!localValue}
+          onChange={(e) => handleChange(e.target.checked ? 1 : 0)}
+          className="w-4 h-4 rounded border-stone-300 text-blue-600 focus:ring-blue-500"
+        />
+      ) : (
+        <input
+          type="range"
+          min={min}
+          max={max}
           step={step}
-          onChange={(e) => onChange(parseFloat(e.target.value))}
-          className="w-16 text-right font-mono text-[10px] text-stone-700 bg-white border border-stone-200 rounded px-1 focus:outline-none focus:border-blue-400"
+          value={localValue}
+          onChange={(e) => handleChange(parseFloat(e.target.value))}
+          className="w-full h-1 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-blue-500 hover:accent-blue-400"
         />
       )}
     </div>
-    {type === 'checkbox' ? (
-      <input
-        type="checkbox"
-        checked={!!value}
-        onChange={(e) => onChange(e.target.checked ? 1 : 0)}
-        className="w-4 h-4 rounded border-stone-300 text-blue-600 focus:ring-blue-500"
-      />
-    ) : (
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="w-full h-1 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-blue-500 hover:accent-blue-400"
-      />
-    )}
-  </div>
-);
+  );
+};
 
 const SettingsPanel = ({ settings, onUpdate, onReset, onAddCard, onDrawRandom, onAddOpponentCard }: {
   settings: HandSettings;
@@ -106,13 +138,7 @@ const SettingsPanel = ({ settings, onUpdate, onReset, onAddCard, onDrawRandom, o
   const setDragState = useGameStore(state => state.setDragState);
   const setHoveredSlot = useGameStore(state => state.setHoveredSlot);
 
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    'Hand Positioning': true,
-    'Slot Layout': true,
-    'Card Margins': true,
-    'Debug State': true,
-    'Actions': true,
-  });
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [activeAnimCategory, setActiveAnimCategory] = useState<string>('playerPlay');
   const [copyFeedback, setCopyFeedback] = useState('');
 
@@ -126,6 +152,69 @@ const SettingsPanel = ({ settings, onUpdate, onReset, onAddCard, onDrawRandom, o
       animationSettings: {
         ...currentAnimSettings,
         [type]: newAnimConfig
+      }
+    });
+    updateBoard({
+      animationSettings: {
+        ...currentAnimSettings,
+        [type]: newAnimConfig
+      }
+    });
+  };
+
+  const updatePassButtonSetting = (keyPath: string, val: any) => {
+
+    // keyPath examples: 'passButtonSettings.x', 'passButtonSettings.colors.pass'
+    const parts = keyPath.split('.');
+    // parts[0] is 'passButtonSettings'
+    // parts[1] might be 'x' or 'colors' or 'glow'
+    // parts[2] might be 'pass' etc.
+
+    const cur = boardSettings.passButtonSettings;
+
+    // We only support 1 or 2 levels deep for now based on the schema
+    // Level 1: passButtonSettings.x
+    // Level 2: passButtonSettings.colors.pass
+
+    let newSettings: any;
+
+    if (parts.length === 2)
+    {
+      // e.g. passButtonSettings.x
+      newSettings = {
+        ...cur,
+        [parts[1]]: val
+      };
+    } else if (parts.length === 3)
+    {
+      // e.g. passButtonSettings.colors.pass
+      const groupKey = parts[1] as 'colors' | 'glow';
+      newSettings = {
+        ...cur,
+        [groupKey]: {
+          ...cur[groupKey],
+          [parts[2]]: val
+        }
+      };
+    } else
+    {
+      console.warn('Unsupported key depth for pass button settings', keyPath);
+      return;
+    }
+
+    updateBoard({ passButtonSettings: newSettings });
+  };
+
+  const updateTooltipSetting = (keyPath: string, val: any) => {
+    // keyPath: handTooltipSettings.offsetX
+    const parts = keyPath.split('.');
+    const prop = parts[1];
+    const cur = boardSettings.handTooltipSettings;
+
+    updateBoard({
+      handTooltipSettings: {
+        ...cur,
+        [prop]: val
       }
     });
   };
@@ -259,6 +348,58 @@ const SettingsPanel = ({ settings, onUpdate, onReset, onAddCard, onDrawRandom, o
         { key: 'slamHeight', label: 'Lift (Neg)', min: -600, max: 0, step: 10 },
       ]
     },
+    {
+      title: 'Pass Button',
+      settings: [
+        // Position
+        { key: 'passButtonSettings.x', label: 'Pos X (%)', min: 0, max: 100, step: 1 },
+        { key: 'passButtonSettings.y', label: 'Pos Y (%)', min: 0, max: 100, step: 1 },
+        { key: 'passButtonSettings.scale', label: 'Scale', min: 0.5, max: 3.0, step: 0.1 },
+
+        // Colors
+        { key: 'passButtonSettings.colors.pass', label: 'Pass Color', type: 'color' },
+        { key: 'passButtonSettings.colors.passClicked', label: 'Pass Clicked', type: 'color' },
+        { key: 'passButtonSettings.colors.done', label: 'Done Color', type: 'color' },
+        { key: 'passButtonSettings.colors.doneClicked', label: 'Done Clicked', type: 'color' },
+        { key: 'passButtonSettings.colors.cancel', label: 'Cancel Color', type: 'color' },
+        { key: 'passButtonSettings.colors.cancelClicked', label: 'Cancel Clicked', type: 'color' },
+        { key: 'passButtonSettings.colors.text', label: 'Text Color', type: 'color' },
+
+        // Glow
+        { key: 'passButtonSettings.glow.radius', label: 'Glow Radius', min: 0, max: 50, step: 1 },
+        { key: 'passButtonSettings.glow.intensity', label: 'Glow Intensity', min: 0, max: 1, step: 0.1 },
+        { key: 'passButtonSettings.glow.color', label: 'Glow Color', type: 'color' },
+        { key: 'passButtonSettings.glow.speed', label: 'Glow Speed', min: 0, max: 5, step: 0.1 },
+      ],
+      customContent: (
+        <div className="flex flex-col gap-2 p-2 bg-stone-100 rounded border border-stone-200 mt-2">
+          <div className="text-[10px] font-bold text-stone-600 mb-1">Debug Controls</div>
+          <div className="grid grid-cols-2 gap-1">
+            <button className="px-2 py-1 bg-white border rounded text-[10px]" onClick={() => (window as any).setPassMode('pass')}>Set Pass</button>
+            <button className="px-2 py-1 bg-white border rounded text-[10px]" onClick={() => (window as any).setPassMode('done')}>Set Done</button>
+            <button className="px-2 py-1 bg-white border rounded text-[10px]" onClick={() => (window as any).setPassMode('cancel')}>Set Cancel</button>
+            <button className="px-2 py-1 bg-white border rounded text-[10px]" onClick={() => (window as any).setPassMode('none')}>Set None</button>
+          </div>
+          <div className="grid grid-cols-2 gap-1 mt-1">
+            <button className="px-2 py-1 bg-white border rounded text-[10px]" onClick={() => (window as any).setPassStatus('normal')}>Normal</button>
+            <button className="px-2 py-1 bg-white border rounded text-[10px]" onClick={() => (window as any).setPassStatus('disabled')}>Disabled</button>
+            <button className="px-2 py-1 bg-white border rounded text-[10px]" onClick={() => (window as any).setPassStatus('clicked')}>Clicked</button>
+          </div>
+        </div >
+      )
+    },
+    {
+      title: 'Hand Tooltips',
+      settings: [
+        { key: 'handTooltipSettings.show', label: 'Show Tooltip', type: 'checkbox' },
+        { key: 'handTooltipSettings.offsetX', label: 'Offset X (px)', min: -500, max: 500, step: 5 },
+        { key: 'handTooltipSettings.offsetY', label: 'Offset Y (px)', min: -500, max: 500, step: 5 },
+        { key: 'handTooltipSettings.width', label: 'Width (px)', min: 100, max: 600, step: 10 },
+        { key: 'handTooltipSettings.backgroundColor', label: 'Bg Color', type: 'color' },
+        { key: 'handTooltipSettings.borderColor', label: 'Border Color', type: 'color' },
+        { key: 'handTooltipSettings.borderWidth', label: 'Border Width', min: 0, max: 10, step: 1 },
+      ]
+    },
   ];
 
   const animationSections = [
@@ -304,6 +445,14 @@ const SettingsPanel = ({ settings, onUpdate, onReset, onAddCard, onDrawRandom, o
         </div>
       ),
       settings: []
+    },
+    {
+      title: 'Board Tooltips',
+      settings: [
+        { key: 'boardTooltipScale', label: 'Preview Scale', min: 0.5, max: 2.0, step: 0.1 },
+        { key: 'boardTooltipGap', label: 'Gap X (px)', min: -100, max: 100, step: 5 },
+        { key: 'boardTooltipOffsetY', label: 'Align Offset Y', min: -200, max: 200, step: 5 },
+      ]
     },
     {
       title: 'Board Transform',
@@ -894,21 +1043,30 @@ const SettingsPanel = ({ settings, onUpdate, onReset, onAddCard, onDrawRandom, o
                 className="w-full flex items-center justify-between p-3 bg-white hover:bg-stone-50 text-[10px] font-extrabold uppercase tracking-widest text-stone-400 text-left transition-colors"
               >
                 {section.title}
-                <span className="text-stone-300">{expandedSections[section.title] ? '−' : '+'}</span>
+                <span className="text-stone-300">{expandedSections[section.title] ? '▼' : '▶'}</span>
               </button>
 
-              {(expandedSections[section.title] ?? true) && (
+              {!!expandedSections[section.title] && (
                 <div className="p-3 pt-0 space-y-4 border-t border-stone-100">
                   <div className="h-2"></div>
                   {section.customContent}
                   {section.settings.map((setting: any) => {
                     let currentValue: any;
-                    if (activeTab === 'hand')
+                    // If it's a hand setting (no dots) AND we are on hand tab, use local settings
+                    if (activeTab === 'hand' && !setting.key.includes('.'))
                     {
                       currentValue = (settings as any)[setting.key];
                     } else
                     {
-                      currentValue = (boardSettings as any)[setting.key];
+                      // Otherwise (Animation/Board tabs OR nested keys like passButtonSettings.*), use boardSettings
+                      if (setting.key.includes('.'))
+                      {
+                        const parts = setting.key.split('.');
+                        currentValue = parts.reduce((acc: any, part: string) => acc && acc[part], boardSettings);
+                      } else
+                      {
+                        currentValue = (boardSettings as any)[setting.key];
+                      }
                     }
 
                     if (setting.type === 'color')
@@ -919,12 +1077,21 @@ const SettingsPanel = ({ settings, onUpdate, onReset, onAddCard, onDrawRandom, o
                           label={setting.label}
                           value={currentValue as string}
                           onChange={(val) => {
-                            if (activeTab === 'hand')
+                            if (activeTab === 'hand' && !setting.key.includes('.'))
                             {
                               onUpdate(setting.key as any, val as any);
                             } else
                             {
-                              updateBoard({ [setting.key]: val });
+                              if (setting.key.startsWith('passButtonSettings.'))
+                              {
+                                updatePassButtonSetting(setting.key, val);
+                              } else if (setting.key.startsWith('handTooltipSettings.'))
+                              {
+                                updateTooltipSetting(setting.key, val);
+                              } else
+                              {
+                                updateBoard({ [setting.key]: val });
+                              }
                             }
                           }}
                         />
@@ -941,12 +1108,21 @@ const SettingsPanel = ({ settings, onUpdate, onReset, onAddCard, onDrawRandom, o
                         step={setting.step}
                         type={setting.type}
                         onChange={(val) => {
-                          if (activeTab === 'hand')
+                          if (activeTab === 'hand' && !setting.key.includes('.'))
                           {
                             onUpdate(setting.key as any, val);
                           } else
                           {
-                            updateBoard({ [setting.key]: val });
+                            if (setting.key.startsWith('passButtonSettings.'))
+                            {
+                              updatePassButtonSetting(setting.key, val);
+                            } else if (setting.key.startsWith('handTooltipSettings.'))
+                            {
+                              updateTooltipSetting(setting.key, val);
+                            } else
+                            {
+                              updateBoard({ [setting.key]: val });
+                            }
                           }
                         }}
                       />
@@ -964,7 +1140,22 @@ const SettingsPanel = ({ settings, onUpdate, onReset, onAddCard, onDrawRandom, o
               const state = useGameStore.getState();
               if (activeTab === 'hand')
               {
-                json = JSON.stringify(settings, null, 2);
+                // Merge Pass Button Settings (which are technically Board Settings) with Hand Settings for export
+                const exportData = {
+                  ...settings,
+                  passButtonSettings: state.boardSettings.passButtonSettings,
+                  handTooltipSettings: state.boardSettings.handTooltipSettings // Renamed
+                };
+
+                // Cleanup: Remove any flattened keys that might have polluted settings due to previous bugs
+                Object.keys(exportData).forEach(key => {
+                  if (key.startsWith('passButtonSettings.') || key.startsWith('handTooltipSettings.'))
+                  {
+                    delete (exportData as any)[key];
+                  }
+                });
+
+                json = JSON.stringify(exportData, null, 2);
               } else if (activeTab === 'anim')
               {
                 json = JSON.stringify(state.boardSettings.animationSettings, null, 2);
@@ -989,6 +1180,10 @@ const SettingsPanel = ({ settings, onUpdate, onReset, onAddCard, onDrawRandom, o
 export const DebugScene: React.FC<DebugSceneProps> = ({ onBack }) => {
   const [cards, setCards] = useState<CardInstance[]>(INITIAL_CARDS);
   const [settings, setSettings] = useState<HandSettings>(DEFAULT_SETTINGS);
+
+  // Pass Button State
+  const [passMode, setPassMode] = useState<'pass' | 'done' | 'cancel' | 'none'>('pass');
+  const [passStatus, setPassStatus] = useState<'normal' | 'disabled' | 'clicked'>('normal');
 
   // Opponent Store State
   const opponentCards = useGameStore(state => state.opponentCards);
@@ -1019,6 +1214,10 @@ export const DebugScene: React.FC<DebugSceneProps> = ({ onBack }) => {
 
   // Expose Console Commands
   useEffect(() => {
+    // Pass Button Debug
+    (window as any).setPassMode = setPassMode;
+    (window as any).setPassStatus = setPassStatus;
+
     (window as any).opponentPlay = (cardIndexOrId: number | string, terrainId: number) => {
       const state = useGameStore.getState();
       let cardId: string | undefined;
@@ -1268,7 +1467,23 @@ export const DebugScene: React.FC<DebugSceneProps> = ({ onBack }) => {
       />
 
       {/* Persistent Right Settings Panel */}
-      {/* Persistent Right Settings Panel */}
+      <PassButton
+        mode={passMode}
+        status={passStatus}
+        onClick={() => {
+          console.log('Pass Button Clicked');
+          // Logic for click action (e.g. passing turn) would go here
+        }}
+        onMouseDown={() => setPassStatus('clicked')}
+        onMouseUp={() => setPassStatus('normal')}
+      />
+
+
+
+      {/* Tooltip for board cards */}
+      <BoardCardTooltip />
+
+      {/* UI Overlay */}
       <SettingsPanel
         settings={settings}
         onUpdate={handleChange}
@@ -1277,9 +1492,6 @@ export const DebugScene: React.FC<DebugSceneProps> = ({ onBack }) => {
         onDrawRandom={handleDrawRandomProp}
         onAddOpponentCard={handleDrawOpponentCard}
       />
-
-      {/* Table edge */}
-
     </div>
   );
 };

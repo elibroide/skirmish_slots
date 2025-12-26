@@ -534,7 +534,8 @@
         "notes": "<p></p>",
         "text": "<p><strong>Deploy</strong>:&nbsp;I&nbsp;get&nbsp;+4&nbsp;shield.</p>",
         "power": "6",
-        "type": "Order — Dog Soldier"
+        "type": "Order — Dog Soldier",
+        "keywords": "deploy"
       },
       "artConfig": {
         "imageUrl": "/card-art/Royal Houndsman.png",
@@ -559,7 +560,8 @@
         "notes": "<p></p>",
         "text": "<p><strong>Deploy:</strong>&nbsp;Close&nbsp;allies&nbsp;get&nbsp;+1&nbsp;shield&nbsp;and&nbsp;battle&nbsp;their&nbsp;opposing&nbsp;enemies.</p>",
         "power": "8",
-        "type": "Order — Dog Soldier"
+        "type": "Order — Dog Soldier",
+        "keywords": "deploy, battle"
       },
       "artConfig": {
         "imageUrl": "/card-art/Gemini_Generated_Image_1jhw71jhw71jhw71.png",

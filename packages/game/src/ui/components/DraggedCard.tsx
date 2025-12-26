@@ -1,6 +1,7 @@
 import React from 'react';
 import { HandSettings, BASE_CARD_WIDTH, BASE_CARD_HEIGHT } from './Card';
 import { CardRenderer, CardInstance, CardTemplate, CardSchema } from '@skirmish/card-maker';
+import { CardTooltip } from './CardTooltip';
 
 import { useGameStore } from '../../store/gameStore';
 
@@ -139,6 +140,12 @@ export const DraggedCard: React.FC<DraggedCardProps> = ({
                         className="pointer-events-none origin-top-left"
                     />
                 ) : null}
+
+                {/* Tooltip during drag */}
+                <CardTooltip
+                    card={card}
+                    settings={useGameStore.getState().boardSettings.tooltipSettings}
+                />
             </div>
 
         </div>

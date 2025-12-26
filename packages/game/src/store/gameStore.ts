@@ -110,6 +110,50 @@ export interface BoardSettings {
         playerPlay: AnimationConfig;
         opponentPlay: AnimationConfig;
     };
+
+    // Pass Button Settings
+    passButtonSettings: {
+        // Position percentage (0-100)
+        x: number;
+        y: number;
+        
+        colors: {
+            pass: string;
+            passClicked: string;
+            done: string;
+            doneClicked: string;
+            cancel: string;
+            cancelClicked: string;
+            text: string;
+        };
+        
+        glow: {
+            radius: number;
+            intensity: number;
+            color: string; // Typically matches mode color, but user said "glowing properties here as well (don't need them to be per mode. config are for all modes)"
+            // Wait, "I want it to be glowing when its Normal status"
+            // "don't need them to be per mode. config are for all modes" -> So one glow config
+            speed: number;
+        };
+        
+        scale: number;
+    };
+
+    // Hand Tooltip Settings (Keywords & Relative Position)
+    handTooltipSettings: {
+        show: boolean;
+        offsetX: number;
+        offsetY: number;
+        width: number;
+        backgroundColor: string;
+        borderColor: string;
+        borderWidth: number;
+    };
+
+    // Board Tooltip Config (Global Preview)
+    boardTooltipScale: number;
+    boardTooltipGap: number; // Single offset X (Left/Right alignment)
+    boardTooltipOffsetY: number; // Vertical offset
 }
 
 export interface AnimationConfig {
@@ -140,7 +184,8 @@ interface GameState {
 
   boardSettings: BoardSettings;
   dragState: DragState;
-
+  hoveredCard: CardInstance | null; // Added
+  
   // Opponent Hand
   opponentCards: any[]; // Using any[] temporarily if CardInstance not imported, or update import
   setOpponentCards: (cards: any[]) => void;
@@ -152,6 +197,7 @@ interface GameState {
   
   // Interactions
   setHoveredSlot: (slot: { playerId: PlayerId, terrainId: TerrainId } | null) => void;
+  setHoveredCard: (card: CardInstance | null) => void; // Added
   setSlotStatus: (targets: { playerId: PlayerId, terrainId: TerrainId }[], status: 'idle' | 'showDrop' | 'showTarget') => void;
   setSlotPower: (targets: { playerId: PlayerId, terrainId: TerrainId }[], power: number, state: 'none' | 'contested' | 'winning') => void;
   setSlotModifier: (targets: { playerId: PlayerId, terrainId: TerrainId }[], modifier: number) => void; // Added
@@ -219,6 +265,11 @@ export const useGameStore = create<GameState>((set, get) => ({
         cardMarginLeft: 0.03,
         cardMarginRight: 0.03,
 
+        // Board Tooltip Defaults
+        boardTooltipScale: 1.0,
+        boardTooltipLeftOffsetX: -20, // Default for when tooltip is on the Left
+        boardTooltipRightOffsetX: 20, // Default for when tooltip is on the Right
+
         // Score Totals Defaults
         scoreTotalXOffset: 600, // Roughly outside the 5 slots
         scoreTotalYOffset: 0,
@@ -261,13 +312,53 @@ export const useGameStore = create<GameState>((set, get) => ({
                 triggerNextOn: "slamDone",
                 slamEase: "easeIn"
             }
-        }
+        },
+
+        passButtonSettings: {
+            x: 90, // Bottom-rightish
+            y: 90,
+            colors: {
+                pass: '#3b82f6',   // Blue
+                passClicked: '#2563eb', // Blue-600
+                done: '#10b981',   // Green
+                doneClicked: '#059669', // Green-600
+                cancel: '#ef4444', // Red
+                cancelClicked: '#b91c1c', // Red-700
+                text: '#ffffff'
+            },
+            glow: {
+                radius: 15,
+                intensity: 0.6,
+                color: '#ffffff',
+                speed: 1.5
+            },
+            scale: 1.0
+        },
+
+        // Hand Tooltip Defaults
+        handTooltipSettings: {
+            show: true,
+            offsetX: 100,
+            offsetY: 0,
+            width: 250,
+            backgroundColor: '#1c1917', // stone-900
+            borderColor: '#44403c',     // stone-700
+            borderWidth: 1
+        },
+
+        // Board Tooltip Defaults
+        boardTooltipScale: 0.35,
+        boardTooltipGap: 20,
+        boardTooltipOffsetY: 0
     },
     dragState: {
         isDragging: false,
         cardId: null,
         hoveredSlot: null
     },
+
+    hoveredCard: null,
+
 
     // Opponent Hand Implementation
     opponentCards: [],
@@ -312,6 +403,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     setHoveredSlot: (hoveredSlot) => set((state) => ({ 
         dragState: { ...state.dragState, hoveredSlot } 
     })),
+
+    setHoveredCard: (card) => set({ hoveredCard: card }),
 
     setSlotStatus: (targets, status) => set((state) => {
         const newPlayers = { ...state.players };
