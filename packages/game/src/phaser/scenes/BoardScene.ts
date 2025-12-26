@@ -1,11 +1,13 @@
 import { Scene } from 'phaser';
 import { useGameStore } from '../../store/gameStore';
-import cardData from '../../ui-new/Data/order.json';
+import cardData from '../../ui/Data/order.json';
 
 interface SlotVisuals {
     graphics: Phaser.GameObjects.Graphics;
     unit?: Phaser.GameObjects.Image;
     currentStatus?: string; 
+    powerCircle?: Phaser.GameObjects.Graphics;
+    powerText?: Phaser.GameObjects.Text;
 }
 
 export class BoardScene extends Scene {
@@ -46,10 +48,7 @@ export class BoardScene extends Scene {
             }
         });
 
-        // Subscribe to Drag State changes (Animations)
-        // Note: Slot Status updates (via setSlotStatus) update 'slots', so we might not need to listen to dragState 
-        // IF we only rely on slot.status. But updateBoardLayout pulls from slotsState.
-        // Let's keep this just in case other drag things happen, but strictly we are status driven now.
+        // Subscribe to Drag State changes
         this.dragUnsubscribe = useGameStore.subscribe((state, prevState) => {
             if (state.dragState !== prevState.dragState) {
                 this.updateBoardLayout();
@@ -63,6 +62,10 @@ export class BoardScene extends Scene {
     // ... update() ...
 
     updateBoardLayout() {
+       // DISABLED: Migrated to React (GameBoard.tsx + Slot.tsx)
+       // This scene is now effectively empty but kept for structural integrity if needed later.
+       return;
+
         const state = useGameStore.getState();
         const settings = state.boardSettings;
         const slotsState = state.slots;
@@ -214,8 +217,63 @@ export class BoardScene extends Scene {
                      // WAIT. If registerSlot forces 'idle', we are breaking the status!
                      // I should fix registerSlot to preserve existing status if available, or accept status in payload.
                      
-                     status: slotData?.status || 'idle' // Pass current status back so we don't clobber it
+                     status: slotData?.status || 'idle', // Pass current status back so we don't clobber it
+                     power: slotData?.power || 0,
+                     powerState: slotData?.powerState || 'none'
                 });
+            }
+            // --- 5. Power Circle ---
+            const power = slotData?.power || 0;
+            const powerState = slotData?.powerState || 'none';
+
+            if (!visuals.powerCircle) {
+                visuals.powerCircle = this.add.graphics();
+                visuals.powerText = this.add.text(0, 0, '', {
+                    fontFamily: 'Arial',
+                    fontSize: '16px',
+                    color: '#ffffff',
+                    fontStyle: 'bold'
+                }).setOrigin(0.5);
+                // Ensure depth is high enough
+                visuals.powerCircle.setDepth(10);
+                visuals.powerText.setDepth(11);
+            }
+
+            visuals.powerCircle.setVisible(true);
+            if (visuals.powerText) visuals.powerText.setVisible(true);
+
+            const circleGraphics = visuals.powerCircle;
+            circleGraphics.clear();
+
+            const circleColor = owner === 'player' ? 0x3b82f6 : 0xf97316; // Blue vs Orange // Colors OK!
+            const circleRadius = settings.powerCircleRadius;
+            
+            // Position
+            const slotTopY = baseY - (baseH / 2);
+            const circleY = slotTopY + settings.powerCircleOffsetY;
+            const circleX = baseX + settings.powerCircleOffsetX;
+            
+            // Draw Circle
+            circleGraphics.fillStyle(circleColor, 1);
+            circleGraphics.fillCircle(circleX, circleY, circleRadius);
+
+            // Helper for Winning State (Glow/Stroke)
+            if (powerState === 'winning') {
+                circleGraphics.lineStyle(settings.powerCircleStrokeWidth, 0xffd700, 1); // Gold stroke
+                circleGraphics.strokeCircle(circleX, circleY, circleRadius);
+            } else {
+                 // Contested & None - neutral border
+                circleGraphics.lineStyle(2, 0x000000, 0.5); 
+                circleGraphics.strokeCircle(circleX, circleY, circleRadius);
+            }
+
+            if (visuals.powerText) {
+                visuals.powerText.setText(power.toString());
+                visuals.powerText.setPosition(circleX, circleY);
+                visuals.powerText.setFontSize(settings.powerCircleFontSize);
+                
+                // Center align text
+                visuals.powerText.setOrigin(0.5);
             }
         };
         

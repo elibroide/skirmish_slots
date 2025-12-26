@@ -5,7 +5,7 @@ import { DeckBuilder } from './components/DeckBuilder';
 import { WaitingRoom } from './components/WaitingRoom';
 import { useGameStore } from './store/gameStore';
 import { TestCardView } from '../components/debug/TestCardView';
-import { DebugScene } from '../ui-new/DebugScene';
+import { DebugScene } from '../ui/DebugScene';
 import { CardFrameView } from './components/CardFrameView';
 
 type Screen = 'menu' | 'deck-builder' | 'game' | 'waiting-room' | 'debug' | 'ui-debug' | 'card-frame-view';

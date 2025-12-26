@@ -660,52 +660,93 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               />
             </div>
 
-            {/* 5 Terrains (Absolute Positioned via Store) */}
+            {/* 5 Terrains (Absolute Positioned via React Calculation) */}
             <div className="absolute inset-0 pointer-events-none">
-              {gameState.terrains.map((terrain, index) => {
-                const terrainId = index as TerrainId;
-                const opponentSlot = terrain.slots[opponentId];
-                const playerSlot = terrain.slots[localPlayerId];
+              {/* Layout Calculation - Replaces BoardScene logic */}
+              {(() => {
+                const {
+                  slotHeightPercent, slotAspectRatio,
+                  playerSlotGapPercent, enemySlotGapPercent,
+                  playerRowY, enemyRowY
+                } = useGameStore(s => s.boardSettings);
 
-                // Determine Numeric Slot IDs for Layout
-                // Enemy: 0-4, Player: 5-9
-                const opponentSlotId = index;
-                const playerSlotId = index + 5;
+                // We can't get actual px width/height easily without a ref/resize listener.
+                // BUT, we can use CSS percentages or calc().
+                // Phaser used pixels.
+                // Let's rely on standard calc() for cleaner CSS layout if possible, 
+                // OR use a ResizeObserver on the container.
+                // For immediate parity with Phaser math, pixel math is safer if we want exact positions.
+                // Let's implement a simple internal hook logic here or just a helper.
+                // Actually, standard flex/grid might be easier, but the user wants Tuner control.
+                // Tuner provides percentages.
 
-                const opponentLayout = boardSlots[opponentSlotId];
-                const playerLayout = boardSlots[playerSlotId];
+                // If we use inline styles with `calc(100vh * X)`, we are good!
+                // Width: height * ratio.
+                // Height: 100vh * slotHeightPercent.
 
-                // Use engine to calculate current projected winner (respects Rogue and other rules)
-                const projectedWinner = engine.calculateTerrainWinner(terrainId);
-                const controllingPlayer = projectedWinner === opponentId ? 'opponent' : projectedWinner === localPlayerId ? 'player' : 'tie';
+                const sHeight = `calc(100vh * ${slotHeightPercent})`;
+                const sWidth = `calc(100vh * ${slotHeightPercent} * ${slotAspectRatio})`;
 
-                // Highlighting Logic using generic isSlotValidTarget
-                const isOpponentSlotValid = isSlotValidTarget(terrainId, opponentId, opponentSlot.unit?.id);
-                const isPlayerSlotValid = isSlotValidTarget(terrainId, localPlayerId, playerSlot.unit?.id);
+                // How to center the row?
+                // Total Width = (5 * sWidth) + (4 * Gap).
+                // Start X = (100vw - Total) / 2.
 
-                // Input Request Targeting (e.g. Archer deploy ability, Warlord leader ability)
-                const isOpponentSlotTargetable = isAwaitingInput && pendingInputRequest?.type === 'target' && (
-                  pendingInputRequest.validSlots?.some(s => s.terrainId === terrainId && s.playerId === opponentId) ||
-                  (pendingInputRequest.validTargetIds && opponentSlot.unit && pendingInputRequest.validTargetIds.includes(opponentSlot.unit.id))
-                );
+                // Gap is % of Screen Width (100vw).
+                const sGapEnemy = `(100vw * ${enemySlotGapPercent})`;
+                const sGapPlayer = `(100vw * ${playerSlotGapPercent})`;
 
-                const isPlayerSlotTargetable = isAwaitingInput && pendingInputRequest?.type === 'target' && (
-                  pendingInputRequest.validSlots?.some(s => s.terrainId === terrainId && s.playerId === localPlayerId) ||
-                  (pendingInputRequest.validTargetIds && playerSlot.unit && pendingInputRequest.validTargetIds.includes(playerSlot.unit.id))
-                );
+                // Using flex-row with justify-center is way easier than manual pixel calc!
+                // Let's try to use flex containers for the rows instead of absolute math per slot.
+                // BUT Tuner expects exact positioning (Y percent).
 
-                return (
-                  <React.Fragment key={terrainId}>
-                    {/* Opponent's slot */}
-                    {opponentLayout && (
+                return gameState.terrains.map((terrain, index) => {
+                  const terrainId = index as TerrainId;
+                  const opponentSlot = terrain.slots[opponentId];
+                  const playerSlot = terrain.slots[localPlayerId];
+                  const opponentSlotId = index;
+                  const playerSlotId = index + 5;
+
+                  const isOpponentSlotValid = isSlotValidTarget(terrainId, opponentId, opponentSlot.unit?.id);
+                  const isPlayerSlotValid = isSlotValidTarget(terrainId, localPlayerId, playerSlot.unit?.id);
+
+                  // --- Targetable Logic (same as before) ---
+                  const isOpponentSlotTargetable = isAwaitingInput && pendingInputRequest?.type === 'target' && (
+                    pendingInputRequest.validSlots?.some(s => s.terrainId === terrainId && s.playerId === opponentId) ||
+                    (pendingInputRequest.validTargetIds && opponentSlot.unit && pendingInputRequest.validTargetIds.includes(opponentSlot.unit.id))
+                  );
+
+                  const isPlayerSlotTargetable = isAwaitingInput && pendingInputRequest?.type === 'target' && (
+                    pendingInputRequest.validSlots?.some(s => s.terrainId === terrainId && s.playerId === localPlayerId) ||
+                    (pendingInputRequest.validTargetIds && playerSlot.unit && pendingInputRequest.validTargetIds.includes(playerSlot.unit.id))
+                  );
+
+                  // Calculate Absolute Position using CSS Calc
+                  // X Position: Center offset + (index * (width + gap)) - (TotalWidth / 2) ?
+                  // Simpler: Use a derived `left` percentage?
+                  // Let's iterate:
+                  // Offset for item i = i - 2 (since 5 items, centered at 2).
+                  // Center X = 50vw.
+                  // X = 50vw + (i - 2) * (sWidth + Gap).
+
+                  const i = index;
+                  const offsetI = i - 2;
+
+                  const enemyLeft = `calc(50vw + (${offsetI} * (${sWidth} + ${sGapEnemy})))`;
+                  const playerLeft = `calc(50vw + (${offsetI} * (${sWidth} + ${sGapPlayer})))`;
+
+                  const enemyTop = `calc(100vh * ${enemyRowY})`;
+                  const playerTop = `calc(100vh * ${playerRowY})`;
+
+                  return (
+                    <React.Fragment key={terrainId}>
                       <div
-                        className="absolute pointer-events-auto"
+                        className="absolute pointer-events-auto transition-all duration-300 ease-out"
                         style={{
-                          left: opponentLayout.x,
-                          top: opponentLayout.y,
-                          width: opponentLayout.width,
-                          height: opponentLayout.height,
-                          transform: 'translate(-50%, -50%)'
+                          left: enemyLeft,
+                          top: enemyTop,
+                          width: sWidth,
+                          height: sHeight,
+                          transform: 'translate(-50%, -50%)' // Center anchor
                         }}
                       >
                         <DroppableSlot
@@ -719,21 +760,17 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                           onUnitClick={handleUnitClick}
                           onSlotClick={handleSlotClick}
                           isHighlighted={isOpponentSlotValid}
-                          // Pass ID for tracking
                           slotId={opponentSlotId}
                         />
                       </div>
-                    )}
 
-                    {/* Player's slot */}
-                    {playerLayout && (
                       <div
-                        className="absolute pointer-events-auto"
+                        className="absolute pointer-events-auto transition-all duration-300 ease-out"
                         style={{
-                          left: playerLayout.x,
-                          top: playerLayout.y,
-                          width: playerLayout.width,
-                          height: playerLayout.height,
+                          left: playerLeft,
+                          top: playerTop,
+                          width: sWidth,
+                          height: sHeight,
                           transform: 'translate(-50%, -50%)'
                         }}
                       >
@@ -748,14 +785,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                           isTargetable={isPlayerSlotTargetable || isPlayerSlotValid}
                           onUnitClick={handleUnitClick}
                           onSlotClick={handleSlotClick}
-                          // Pass ID for tracking
                           slotId={playerSlotId}
                         />
                       </div>
-                    )}
-                  </React.Fragment>
-                );
-              })}
+                    </React.Fragment>
+                  );
+                });
+              })()}
             </div>
 
             {/* Player Hand (fanned) - positioned at bottom, slightly occluded */}

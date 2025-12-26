@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './ui/App';
-import './ui/styles/globals.css';
+import App from './legacy-ui/App';
+import './legacy-ui/styles/globals.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
