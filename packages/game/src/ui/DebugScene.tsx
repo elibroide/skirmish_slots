@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Hand } from './components/Hand';
 import { HandSettings, DEFAULT_SETTINGS } from './components/Card';
-import { useGameStore } from '../store/gameStore';
+import { useGameStore, TurnStatus } from '../store/gameStore';
 import { TerrainId, PlayerId } from '../engine/types';
 import orderData from './Data/order.json';
 import type { CardInstance } from '@skirmish/card-maker';
@@ -233,6 +233,20 @@ const SettingsPanel = ({ settings, onUpdate, onReset, onAddCard, onDrawRandom, o
     });
   };
 
+  const updateTurnIndicatorSetting = (keyPath: string, val: any) => {
+    // keyPath: turnIndicatorSettings.playerXPercent
+    const parts = keyPath.split('.');
+    const prop = parts[1];
+    const cur = boardSettings.turnIndicatorSettings;
+
+    updateBoard({
+      turnIndicatorSettings: {
+        ...cur,
+        [prop]: val
+      }
+    });
+  };
+
   const toggleSection = (title: string) => {
     setExpandedSections(prev => ({ ...prev, [title]: !prev[title] }));
   };
@@ -377,6 +391,8 @@ const SettingsPanel = ({ settings, onUpdate, onReset, onAddCard, onDrawRandom, o
         { key: 'passButtonSettings.colors.doneClicked', label: 'Done Clicked', type: 'color' },
         { key: 'passButtonSettings.colors.cancel', label: 'Cancel Color', type: 'color' },
         { key: 'passButtonSettings.colors.cancelClicked', label: 'Cancel Clicked', type: 'color' },
+        { key: 'passButtonSettings.colors.conclude', label: 'Conclude Color', type: 'color' },
+        { key: 'passButtonSettings.colors.concludeClicked', label: 'Conclude Clicked', type: 'color' },
         { key: 'passButtonSettings.colors.text', label: 'Text Color', type: 'color' },
 
         // Glow
@@ -388,10 +404,11 @@ const SettingsPanel = ({ settings, onUpdate, onReset, onAddCard, onDrawRandom, o
       customContent: (
         <div className="flex flex-col gap-2 p-2 bg-stone-100 rounded border border-stone-200 mt-2">
           <div className="text-[10px] font-bold text-stone-600 mb-1">Debug Controls</div>
-          <div className="grid grid-cols-2 gap-1">
+          <div className="grid grid-cols-3 gap-1">
             <button className="px-2 py-1 bg-white border rounded text-[10px]" onClick={() => (window as any).setPassMode('pass')}>Set Pass</button>
             <button className="px-2 py-1 bg-white border rounded text-[10px]" onClick={() => (window as any).setPassMode('done')}>Set Done</button>
             <button className="px-2 py-1 bg-white border rounded text-[10px]" onClick={() => (window as any).setPassMode('cancel')}>Set Cancel</button>
+            <button className="px-2 py-1 bg-white border rounded text-[10px]" onClick={() => (window as any).setPassMode('conclude')}>Set Conclude</button>
             <button className="px-2 py-1 bg-white border rounded text-[10px]" onClick={() => (window as any).setPassMode('none')}>Set None</button>
           </div>
           <div className="grid grid-cols-2 gap-1 mt-1">
@@ -517,39 +534,102 @@ const SettingsPanel = ({ settings, onUpdate, onReset, onAddCard, onDrawRandom, o
         { key: 'cardMarginBottom', label: 'Bottom (%)', min: 0, max: 0.4, step: 0.01 },
       ]
     },
-    {
-      title: 'Score Totals',
-      settings: [
-        { key: 'scoreTotalShow', label: 'Show Box', type: 'checkbox' }, // Added
-        { key: 'scoreTotalXOffset', label: 'Dist. Center (px)', min: 0, max: 1200, step: 10 },
-        { key: 'scoreTotalYOffset', label: 'Y Offset (px)', min: -200, max: 200, step: 5 },
-        { key: 'scoreTotalScale', label: 'Scale', min: 0.1, max: 3.0, step: 0.1 },
-      ]
-    },
+
     {
       title: 'Win Record Visuals',
       settings: [
         { key: 'winRecordSettings.show', label: 'Show', type: 'checkbox' },
 
-        // Base Offsets
+        // --- PLAYER ---
+        { key: 'winRecordSettings.playerXPercent', label: 'Player X (%)', min: 0, max: 100, step: 0.5 },
+        { key: 'winRecordSettings.playerYPercent', label: 'Player Y (%)', min: 0, max: 100, step: 0.5 },
         { key: 'winRecordSettings.playerOffsetX', label: 'Player Off X', min: -200, max: 200, step: 5 },
         { key: 'winRecordSettings.playerOffsetY', label: 'Player Off Y', min: -200, max: 200, step: 5 },
+        { key: 'winRecordSettings.playerTextColor', label: 'Player Text', type: 'color' },
+        { key: 'winRecordSettings.playerTextOffsetX', label: 'P. Text Off X', min: -100, max: 100, step: 2 },
+        { key: 'winRecordSettings.playerTextOffsetY', label: 'P. Text Off Y', min: -50, max: 50, step: 2 },
+        { key: 'winRecordSettings.playerRhombusOffsetX', label: 'P. Rhombus Off X', min: -100, max: 100, step: 2 },
+        { key: 'winRecordSettings.playerRhombusOffsetY', label: 'P. Rhombus Off Y', min: -50, max: 50, step: 2 },
+
+        // --- OPPONENT ---
+        { key: 'winRecordSettings.opponentXPercent', label: 'Enemy X (%)', min: 0, max: 100, step: 0.5 },
+        { key: 'winRecordSettings.opponentYPercent', label: 'Enemy Y (%)', min: 0, max: 100, step: 0.5 },
         { key: 'winRecordSettings.opponentOffsetX', label: 'Enemy Off X', min: -200, max: 200, step: 5 },
         { key: 'winRecordSettings.opponentOffsetY', label: 'Enemy Off Y', min: -200, max: 200, step: 5 },
+        { key: 'winRecordSettings.opponentTextColor', label: 'Enemy Text', type: 'color' },
+        { key: 'winRecordSettings.opponentTextOffsetX', label: 'E. Text Off X', min: -100, max: 100, step: 2 },
+        { key: 'winRecordSettings.opponentTextOffsetY', label: 'E. Text Off Y', min: -50, max: 50, step: 2 },
+        { key: 'winRecordSettings.opponentRhombusOffsetX', label: 'E. Rhombus Off X', min: -100, max: 100, step: 2 },
+        { key: 'winRecordSettings.opponentRhombusOffsetY', label: 'E. Rhombus Off Y', min: -50, max: 50, step: 2 },
 
-        // Relative Element Offsets
-        { key: 'winRecordSettings.textOffsetX', label: 'Text Rel X', min: -100, max: 100, step: 2 },
-        { key: 'winRecordSettings.textOffsetY', label: 'Text Rel Y', min: -50, max: 50, step: 2 },
-        { key: 'winRecordSettings.rhombusOffsetX', label: 'Rhombus Rel X', min: -100, max: 100, step: 2 },
-        { key: 'winRecordSettings.rhombusOffsetY', label: 'Rhombus Rel Y', min: -50, max: 50, step: 2 },
-
-        { key: 'winRecordSettings.scale', label: 'Scale', min: 0.1, max: 2.0, step: 0.1 },
+        // --- SHARED ---
+        { key: 'winRecordSettings.scale', label: 'Global Scale', min: 0.1, max: 2.0, step: 0.1 },
         { key: 'winRecordSettings.spacingX', label: 'Spacing X', min: 0, max: 100, step: 1 },
+        { key: 'winRecordSettings.fontSize', label: 'Font Size', min: 8, max: 40, step: 1 },
+        { key: 'winRecordSettings.rhombusScale', label: 'Rhombus Scale', min: 0.1, max: 3.0, step: 0.1 },
         { key: 'winRecordSettings.emptyColor', label: 'Empty Color', type: 'color' },
         { key: 'winRecordSettings.fillColor', label: 'Fill Color', type: 'color' },
         { key: 'winRecordSettings.strokeColor', label: 'Stroke Color', type: 'color' },
         { key: 'winRecordSettings.strokeWidth', label: 'Stroke Width', min: 0, max: 10, step: 0.5 },
       ]
+    },
+    {
+      title: 'Turn Indicators',
+      settings: [
+        { key: 'turnIndicatorSettings.show', label: 'Show', type: 'checkbox' },
+
+        // Player
+        { key: 'turnIndicatorSettings.playerXPercent', label: 'Player X (%)', min: 0, max: 100, step: 0.5 },
+        { key: 'turnIndicatorSettings.playerYPercent', label: 'Player Y (%)', min: 0, max: 100, step: 0.5 },
+        { key: 'turnIndicatorSettings.playerOffsetX', label: 'Player Off X', min: -200, max: 200, step: 5 },
+        { key: 'turnIndicatorSettings.playerOffsetY', label: 'Player Off Y', min: -200, max: 200, step: 5 },
+        { key: 'turnIndicatorSettings.playerTextColor', label: 'Player Text', type: 'color' },
+
+        // Opponent
+        { key: 'turnIndicatorSettings.opponentXPercent', label: 'Enemy X (%)', min: 0, max: 100, step: 0.5 },
+        { key: 'turnIndicatorSettings.opponentYPercent', label: 'Enemy Y (%)', min: 0, max: 100, step: 0.5 },
+        { key: 'turnIndicatorSettings.opponentOffsetX', label: 'Enemy Off X', min: -200, max: 200, step: 5 },
+        { key: 'turnIndicatorSettings.opponentOffsetY', label: 'Enemy Off Y', min: -200, max: 200, step: 5 },
+        { key: 'turnIndicatorSettings.opponentTextColor', label: 'Enemy Text', type: 'color' },
+
+        // Shared
+        { key: 'turnIndicatorSettings.fontSize', label: 'Font Size', min: 8, max: 60, step: 1 },
+      ],
+      customContent: (
+        <div className="flex flex-col gap-2 p-2 bg-stone-100 rounded border border-stone-200">
+          <div className="text-[10px] font-bold text-stone-600">Player Status</div>
+          <div className="flex flex-wrap gap-1">
+            {(['none', 'turn', 'done', 'last_say'] as TurnStatus[]).map(status => (
+              <button
+                key={status}
+                onClick={() => useGameStore.getState().setPlayerTurnStatus(0, status)}
+                className={`px-2 py-1 text-[10px] rounded border ${useGameStore.getState().players[0]?.turnStatus === status
+                  ? 'bg-blue-500 text-white border-blue-600'
+                  : 'bg-white text-stone-600 border-stone-300 hover:bg-stone-50'
+                  }`}
+              >
+                {status.toUpperCase()}
+              </button>
+            ))}
+          </div>
+
+          <div className="text-[10px] font-bold text-stone-600 mt-2">Opponent Status</div>
+          <div className="flex flex-wrap gap-1">
+            {(['none', 'turn', 'done', 'last_say'] as TurnStatus[]).map(status => (
+              <button
+                key={status}
+                onClick={() => useGameStore.getState().setPlayerTurnStatus(1, status)}
+                className={`px-2 py-1 text-[10px] rounded border ${useGameStore.getState().players[1]?.turnStatus === status
+                  ? 'bg-orange-500 text-white border-orange-600'
+                  : 'bg-white text-stone-600 border-stone-300 hover:bg-stone-50'
+                  }`}
+              >
+                {status.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+      )
     },
     {
       title: 'Slot Modifier',
@@ -1190,6 +1270,9 @@ const SettingsPanel = ({ settings, onUpdate, onReset, onAddCard, onDrawRandom, o
                               } else if (setting.key.startsWith('winRecordSettings.'))
                               {
                                 updateWinRecordSetting(setting.key, val);
+                              } else if (setting.key.startsWith('turnIndicatorSettings.'))
+                              {
+                                updateTurnIndicatorSetting(setting.key, val);
                               } else
                               {
                                 updateBoard({ [setting.key]: val });
@@ -1224,6 +1307,9 @@ const SettingsPanel = ({ settings, onUpdate, onReset, onAddCard, onDrawRandom, o
                             } else if (setting.key.startsWith('winRecordSettings.'))
                             {
                               updateWinRecordSetting(setting.key, val);
+                            } else if (setting.key.startsWith('turnIndicatorSettings.'))
+                            {
+                              updateTurnIndicatorSetting(setting.key, val);
                             } else
                             {
                               updateBoard({ [setting.key]: val });
@@ -1287,7 +1373,7 @@ export const DebugScene: React.FC<DebugSceneProps> = ({ onBack }) => {
   const [settings, setSettings] = useState<HandSettings>(DEFAULT_SETTINGS);
 
   // Pass Button State
-  const [passMode, setPassMode] = useState<'pass' | 'done' | 'cancel' | 'none'>('pass');
+  const [passMode, setPassMode] = useState<'pass' | 'done' | 'cancel' | 'conclude' | 'none'>('pass');
   const [passStatus, setPassStatus] = useState<'normal' | 'disabled' | 'clicked'>('normal');
 
   // Opponent Store State

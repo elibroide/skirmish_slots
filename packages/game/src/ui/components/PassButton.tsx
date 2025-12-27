@@ -2,7 +2,7 @@ import React from 'react';
 import { useGameStore } from '../../store/gameStore';
 
 interface PassButtonProps {
-    mode: 'pass' | 'done' | 'cancel' | 'none';
+    mode: 'pass' | 'done' | 'cancel' | 'conclude' | 'none';
     status: 'disabled' | 'normal' | 'clicked';
     onClick: () => void;
     onMouseDown?: () => void;
@@ -24,6 +24,7 @@ export const PassButton: React.FC<PassButtonProps> = ({ mode, status, onClick, o
                 case 'pass': return colors.passClicked;
                 case 'done': return colors.doneClicked;
                 case 'cancel': return colors.cancelClicked;
+                case 'conclude': return colors.concludeClicked;
                 case 'none': return 'transparent';
             }
         }
@@ -32,6 +33,7 @@ export const PassButton: React.FC<PassButtonProps> = ({ mode, status, onClick, o
             case 'pass': return colors.pass;
             case 'done': return colors.done;
             case 'cancel': return colors.cancel;
+            case 'conclude': return colors.conclude;
             case 'none': return 'transparent';
         }
     };

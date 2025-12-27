@@ -39,11 +39,22 @@ export interface WinRecordSettings {
     opponentOffsetX: number;
     opponentOffsetY: number;
 
+    // Screen Positioning (%)
+    playerXPercent: number;
+    playerYPercent: number;
+    opponentXPercent: number;
+    opponentYPercent: number;
+
     // Element Positioning (Relative)
-    textOffsetX: number;
-    textOffsetY: number;
-    rhombusOffsetX: number;
-    rhombusOffsetY: number;
+    playerTextOffsetX: number;
+    playerTextOffsetY: number;
+    playerRhombusOffsetX: number;
+    playerRhombusOffsetY: number;
+    
+    opponentTextOffsetX: number;
+    opponentTextOffsetY: number;
+    opponentRhombusOffsetX: number;
+    opponentRhombusOffsetY: number;
 
     scale: number;
     spacingX: number;
@@ -51,11 +62,17 @@ export interface WinRecordSettings {
     fillColor: string;
     strokeColor: string;
     strokeWidth: number;
+    playerTextColor: string;
+    opponentTextColor: string;
+    invertOpponent: boolean;
+    fontSize: number;
+    rhombusScale: number;
 }
 
 export interface PlayerStoreData {
     slots: Record<TerrainId, BoardSlot>;
     wins: number; // Track rounds won per player
+    turnStatus: TurnStatus;
 }
 
 export interface BoardSettings {
@@ -113,11 +130,7 @@ export interface BoardSettings {
     cardMarginLeft: number;
     cardMarginRight: number;
 
-    // Score Totals
-    scoreTotalShow: boolean; // Added
-    scoreTotalXOffset: number; // Distance from center
-    scoreTotalYOffset: number; // Vertical offset from row center
-    scoreTotalScale: number;
+
 
     // Slot Modifier Visuals
     slotModifierOffsetX: number;
@@ -148,6 +161,8 @@ export interface BoardSettings {
             doneClicked: string;
             cancel: string;
             cancelClicked: string;
+            conclude: string;
+            concludeClicked: string;
             text: string;
         };
         
@@ -181,6 +196,34 @@ export interface BoardSettings {
 
     // Win Record Visuals
     winRecordSettings: WinRecordSettings;
+    
+    // Turn Indicators
+    turnIndicatorSettings: TurnIndicatorSettings;
+}
+
+export type TurnStatus = 'none' | 'turn' | 'done' | 'last_say';
+
+export interface TurnIndicatorSettings {
+    show: boolean;
+
+    // Positioning
+    playerXPercent: number;
+    playerYPercent: number;
+    playerOffsetX: number;
+    playerOffsetY: number;
+
+    opponentXPercent: number;
+    opponentYPercent: number;
+    opponentOffsetX: number;
+    opponentOffsetY: number;
+
+    // Styling
+    fontSize: number;
+    playerTextColor: string;
+    opponentTextColor: string;
+    
+    // Status Logic
+    // We can add more here if needed, e.g. custom text overrides
 }
 
 export interface AnimationConfig {
@@ -238,6 +281,7 @@ interface GameState {
 
   occupySlot: (playerId: PlayerId, terrainId: TerrainId, cardId: string, instance?: CardInstance) => void;
   clearSlot: (playerId: PlayerId, terrainId: TerrainId) => void;
+  setPlayerTurnStatus: (playerId: PlayerId, status: TurnStatus) => void;
 
   // Settings
   updateBoardSettings: (settings: Partial<BoardSettings>) => void;
@@ -247,8 +291,8 @@ interface GameState {
 export const useGameStore = create<GameState>((set, get) => ({
     // Initial State
     players: {
-        0: { slots: {} as Record<TerrainId, BoardSlot>, wins: 0 },
-        1: { slots: {} as Record<TerrainId, BoardSlot>, wins: 0 }
+        0: { slots: {} as Record<TerrainId, BoardSlot>, wins: 0, turnStatus: 'none' },
+        1: { slots: {} as Record<TerrainId, BoardSlot>, wins: 0, turnStatus: 'none' }
     },
     currentTurn: 'player', // Default
     boardSettings: {
@@ -300,15 +344,13 @@ export const useGameStore = create<GameState>((set, get) => ({
         cardMarginRight: 0.03,
 
         // Board Tooltip Defaults
-        boardTooltipScale: 1.0,
-        boardTooltipLeftOffsetX: -20, // Default for when tooltip is on the Left
-        boardTooltipRightOffsetX: 20, // Default for when tooltip is on the Right
+        boardTooltipScale: 0.35,
+        boardTooltipLeftOffsetX: -20,
+        boardTooltipRightOffsetX: 20,
+        boardTooltipGap: 20,
+        boardTooltipOffsetY: 0,
 
-        // Score Totals Defaults
-        scoreTotalShow: true,
-        scoreTotalXOffset: -600, // Roughly outside the 5 slots
-        scoreTotalYOffset: -85,
-        scoreTotalScale: 0.7,
+
 
         // Slot Modifier Defaults
         slotModifierOffsetX: 0,
@@ -359,6 +401,8 @@ export const useGameStore = create<GameState>((set, get) => ({
                 doneClicked: '#059669', // Green-600
                 cancel: '#ef4444', // Red
                 cancelClicked: '#b91c1c', // Red-700
+                conclude: '#a855f7', // Purple-500
+                concludeClicked: '#7e22ce', // Purple-700
                 text: '#ffffff'
             },
             glow: {
@@ -381,32 +425,55 @@ export const useGameStore = create<GameState>((set, get) => ({
             borderWidth: 1
         },
 
-        // Board Tooltip Defaults
-        boardTooltipScale: 0.35,
-        boardTooltipGap: 20,
-        boardTooltipOffsetY: 0,
 
+
+        // Win Record Defaults
         // Win Record Defaults
         winRecordSettings: {
             show: true,
-            // Base Offsets (using the previously good values as a start)
             playerOffsetX: 0,
-            playerOffsetY: 45,
+            playerOffsetY: 0,
             opponentOffsetX: 0,
-            opponentOffsetY: 45,
+            opponentOffsetY: 0,
+            playerXPercent: 5,
+            playerYPercent: 95,
+            opponentXPercent: 5,
+            opponentYPercent: 4,
+            playerTextOffsetX: 28,
+            playerTextOffsetY: 0,
+            playerRhombusOffsetX: 30,
+            playerRhombusOffsetY: -40,
+            opponentTextOffsetX: 62,
+            opponentTextOffsetY: 0,
+            opponentRhombusOffsetX: 30,
+            opponentRhombusOffsetY: 40,
+            scale: 1,
+            spacingX: 15,
+            emptyColor: "#44403c",
+            fillColor: "#fbbf24",
+            strokeColor: "#ffffff",
+            strokeWidth: 2,
+            playerTextColor: "#3d91ff",
+            opponentTextColor: "#f97316",
+            invertOpponent: false,
+            fontSize: 20,
+            rhombusScale: 1
+        },
 
-            // Relative Offsets
-            textOffsetX: -50,
-            textOffsetY: 0,
-            rhombusOffsetX: 30,
-            rhombusOffsetY: 0,
-
-            scale: 1.0,
-            spacingX: 30,
-            emptyColor: '#44403c', // stone-700
-            fillColor: '#fbbf24',  // amber-400 (goldish)
-            strokeColor: '#ffffff',
-            strokeWidth: 2
+        // Turn Indicator Defaults
+        turnIndicatorSettings: {
+            show: true,
+            playerXPercent: 10,
+            playerYPercent: 65,
+            playerOffsetX: 0,
+            playerOffsetY: 0,
+            opponentXPercent: 10,
+            opponentYPercent: 30,
+            opponentOffsetX: 0,
+            opponentOffsetY: 0,
+            fontSize: 28,
+            playerTextColor: "#3d91ff",
+            opponentTextColor: "#f97316"
         }
     },
     dragState: {
@@ -427,7 +494,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         const newPlayers = { ...state.players };
         
         // Ensure player structure exists (it should from initial state, but helpful for safety)
-        if (!newPlayers[playerId]) newPlayers[playerId] = { slots: {} as Record<TerrainId, BoardSlot>, wins: 0 };
+        if (!newPlayers[playerId]) newPlayers[playerId] = { slots: {} as Record<TerrainId, BoardSlot>, wins: 0, turnStatus: 'none' };
 
         newPlayers[playerId].slots = {
             ...newPlayers[playerId].slots,
@@ -581,6 +648,13 @@ export const useGameStore = create<GameState>((set, get) => ({
             }
         };
     }),
+
+    setPlayerTurnStatus: (playerId, status) => set((state) => ({
+        players: {
+            ...state.players,
+            [playerId]: { ...state.players[playerId], turnStatus: status }
+        }
+    })),
 
     updateBoardSettings: (settings) => set((state) => ({
         boardSettings: { ...state.boardSettings, ...settings }

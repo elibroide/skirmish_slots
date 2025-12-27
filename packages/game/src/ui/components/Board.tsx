@@ -1,7 +1,9 @@
 import React from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { Slot } from './Slot';
-import { ScoreTotal } from './ScoreTotal';
+import { WinIndicators } from './WinIndicators';
+import { TurnIndicators } from './TurnIndicators';
+
 
 export const Board: React.FC = () => {
     const {
@@ -9,7 +11,7 @@ export const Board: React.FC = () => {
         playerSlotGapPercent, enemySlotGapPercent,
         playerRowY, enemyRowY,
         boardScale, boardX, boardY,
-        scoreTotalXOffset, scoreTotalYOffset
+        winRecordSettings
     } = useGameStore(s => s.boardSettings);
 
     const localPlayerId = 0;
@@ -49,6 +51,7 @@ export const Board: React.FC = () => {
                 status: 'idle',
                 power: 0,
                 powerState: 'none',
+                modifier: 0,
                 content: null
             });
 
@@ -61,6 +64,7 @@ export const Board: React.FC = () => {
                 status: 'idle',
                 power: 0,
                 powerState: 'none',
+                modifier: 0,
                 content: null
             });
         });
@@ -80,25 +84,43 @@ export const Board: React.FC = () => {
             <div
                 className="absolute pointer-events-auto"
                 style={{
-                    left: `calc(50vw - ${scoreTotalXOffset}px)`,
-                    top: `calc(100vh * ${playerRowY} + ${scoreTotalYOffset}px)`,
+                    left: `${winRecordSettings.playerXPercent}%`,
+                    top: `${winRecordSettings.playerYPercent}%`,
                     transform: 'translate(-50%, -50%)'
                 }}
             >
-                <ScoreTotal playerId={localPlayerId} isPlayer={true} />
+                <WinIndicators playerId={localPlayerId} isPlayer={true} />
             </div>
 
             {/* Enemy Score */}
             <div
                 className="absolute pointer-events-auto"
                 style={{
-                    left: `calc(50vw - ${scoreTotalXOffset}px)`,
-                    top: `calc(100vh * ${enemyRowY} - ${scoreTotalYOffset}px)`,
+                    left: `${winRecordSettings.opponentXPercent}%`,
+                    top: `${winRecordSettings.opponentYPercent}%`,
                     transform: 'translate(-50%, -50%)'
                 }}
             >
-                <ScoreTotal playerId={opponentId} isPlayer={false} />
+                <WinIndicators playerId={opponentId} isPlayer={false} />
             </div>
+
+            {/* Turn Indicators - Opponent */}
+            <TurnIndicators playerId={opponentId} isPlayer={false} />
+
+            {/* Player Win/Turn Indicators Wrapper */}
+            <div
+                className="absolute pointer-events-none"
+                style={{
+                    left: '50%',
+                    top: '100%',
+                    transform: 'translate(-50%, -50%)'
+                }}
+            >
+                <WinIndicators playerId={localPlayerId} isPlayer={true} />
+            </div>
+
+            {/* Turn Indicators - Player */}
+            <TurnIndicators playerId={localPlayerId} isPlayer={true} />
 
             {lanes.map((laneId) => {
                 const opponentSlotId = laneId;
