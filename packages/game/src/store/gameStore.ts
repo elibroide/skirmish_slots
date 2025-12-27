@@ -22,7 +22,7 @@ export interface BoardSlot {
   power: number;
   powerState: 'none' | 'contested' | 'winning';
   modifier: number; // Added
-    
+  
   // Is something here?
   content: {
     cardId: string;
@@ -31,8 +31,31 @@ export interface BoardSlot {
   } | null;
 }
 
+export interface WinRecordSettings {
+    show: boolean;
+    // Base Positioning (Group)
+    playerOffsetX: number;
+    playerOffsetY: number;
+    opponentOffsetX: number;
+    opponentOffsetY: number;
+
+    // Element Positioning (Relative)
+    textOffsetX: number;
+    textOffsetY: number;
+    rhombusOffsetX: number;
+    rhombusOffsetY: number;
+
+    scale: number;
+    spacingX: number;
+    emptyColor: string;
+    fillColor: string;
+    strokeColor: string;
+    strokeWidth: number;
+}
+
 export interface PlayerStoreData {
     slots: Record<TerrainId, BoardSlot>;
+    wins: number; // Track rounds won per player
 }
 
 export interface BoardSettings {
@@ -91,6 +114,7 @@ export interface BoardSettings {
     cardMarginRight: number;
 
     // Score Totals
+    scoreTotalShow: boolean; // Added
     scoreTotalXOffset: number; // Distance from center
     scoreTotalYOffset: number; // Vertical offset from row center
     scoreTotalScale: number;
@@ -154,6 +178,9 @@ export interface BoardSettings {
     boardTooltipScale: number;
     boardTooltipGap: number; // Single offset X (Left/Right alignment)
     boardTooltipOffsetY: number; // Vertical offset
+
+    // Win Record Visuals
+    winRecordSettings: WinRecordSettings;
 }
 
 export interface AnimationConfig {
@@ -184,6 +211,10 @@ interface GameState {
 
   boardSettings: BoardSettings;
   dragState: DragState;
+  
+  // Game Flow
+  currentTurn: 'player' | 'opponent'; // Added
+  
   hoveredCard: CardInstance | null; // Added
   
   // Opponent Hand
@@ -198,6 +229,8 @@ interface GameState {
   // Interactions
   setHoveredSlot: (slot: { playerId: PlayerId, terrainId: TerrainId } | null) => void;
   setHoveredCard: (card: CardInstance | null) => void; // Added
+  setPlayerWins: (playerId: PlayerId, wins: number) => void;
+  setTurn: (turn: 'player' | 'opponent') => void; // Added
   setSlotStatus: (targets: { playerId: PlayerId, terrainId: TerrainId }[], status: 'idle' | 'showDrop' | 'showTarget') => void;
   setSlotPower: (targets: { playerId: PlayerId, terrainId: TerrainId }[], power: number, state: 'none' | 'contested' | 'winning') => void;
   setSlotModifier: (targets: { playerId: PlayerId, terrainId: TerrainId }[], modifier: number) => void; // Added
@@ -214,9 +247,10 @@ interface GameState {
 export const useGameStore = create<GameState>((set, get) => ({
     // Initial State
     players: {
-        0: { slots: {} as Record<TerrainId, BoardSlot> },
-        1: { slots: {} as Record<TerrainId, BoardSlot> }
+        0: { slots: {} as Record<TerrainId, BoardSlot>, wins: 0 },
+        1: { slots: {} as Record<TerrainId, BoardSlot>, wins: 0 }
     },
+    currentTurn: 'player', // Default
     boardSettings: {
         boardScale: 0.9,
         boardX: 0,
@@ -271,19 +305,20 @@ export const useGameStore = create<GameState>((set, get) => ({
         boardTooltipRightOffsetX: 20, // Default for when tooltip is on the Right
 
         // Score Totals Defaults
-        scoreTotalXOffset: 600, // Roughly outside the 5 slots
-        scoreTotalYOffset: 0,
-        scoreTotalScale: 1.0,
+        scoreTotalShow: true,
+        scoreTotalXOffset: -600, // Roughly outside the 5 slots
+        scoreTotalYOffset: -85,
+        scoreTotalScale: 0.7,
 
         // Slot Modifier Defaults
         slotModifierOffsetX: 0,
-        slotModifierOffsetY: 140, 
-        slotModifierFontSize: 48,
+        slotModifierOffsetY: 130, 
+        slotModifierFontSize: 32,
         slotModifierFontColor: '#ffffff',
         slotModifierPositiveColor: '#4ade80', // Green-400
         slotModifierNegativeColor: '#f87171', // Red-400
         slotModifierStrokeColor: '#000000',
-        slotModifierStrokeWidth: 2,
+        slotModifierStrokeWidth: 0,
 
         animationSettings: {
             playerPlay: {
@@ -349,7 +384,30 @@ export const useGameStore = create<GameState>((set, get) => ({
         // Board Tooltip Defaults
         boardTooltipScale: 0.35,
         boardTooltipGap: 20,
-        boardTooltipOffsetY: 0
+        boardTooltipOffsetY: 0,
+
+        // Win Record Defaults
+        winRecordSettings: {
+            show: true,
+            // Base Offsets (using the previously good values as a start)
+            playerOffsetX: 0,
+            playerOffsetY: 45,
+            opponentOffsetX: 0,
+            opponentOffsetY: 45,
+
+            // Relative Offsets
+            textOffsetX: -50,
+            textOffsetY: 0,
+            rhombusOffsetX: 30,
+            rhombusOffsetY: 0,
+
+            scale: 1.0,
+            spacingX: 30,
+            emptyColor: '#44403c', // stone-700
+            fillColor: '#fbbf24',  // amber-400 (goldish)
+            strokeColor: '#ffffff',
+            strokeWidth: 2
+        }
     },
     dragState: {
         isDragging: false,
@@ -369,7 +427,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         const newPlayers = { ...state.players };
         
         // Ensure player structure exists (it should from initial state, but helpful for safety)
-        if (!newPlayers[playerId]) newPlayers[playerId] = { slots: {} as Record<TerrainId, BoardSlot> };
+        if (!newPlayers[playerId]) newPlayers[playerId] = { slots: {} as Record<TerrainId, BoardSlot>, wins: 0 };
 
         newPlayers[playerId].slots = {
             ...newPlayers[playerId].slots,
@@ -405,6 +463,15 @@ export const useGameStore = create<GameState>((set, get) => ({
     })),
 
     setHoveredCard: (card) => set({ hoveredCard: card }),
+
+    setPlayerWins: (playerId: PlayerId, wins: number) => set((state) => ({
+        players: {
+            ...state.players,
+            [playerId]: { ...state.players[playerId], wins }
+        }
+    })),
+
+    setTurn: (turn) => set({ currentTurn: turn }),
 
     setSlotStatus: (targets, status) => set((state) => {
         const newPlayers = { ...state.players };

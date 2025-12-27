@@ -219,6 +219,20 @@ const SettingsPanel = ({ settings, onUpdate, onReset, onAddCard, onDrawRandom, o
     });
   };
 
+  const updateWinRecordSetting = (keyPath: string, val: any) => {
+    // keyPath: winRecordSettings.offsetX
+    const parts = keyPath.split('.');
+    const prop = parts[1];
+    const cur = boardSettings.winRecordSettings;
+
+    updateBoard({
+      winRecordSettings: {
+        ...cur,
+        [prop]: val
+      }
+    });
+  };
+
   const toggleSection = (title: string) => {
     setExpandedSections(prev => ({ ...prev, [title]: !prev[title] }));
   };
@@ -501,8 +515,40 @@ const SettingsPanel = ({ settings, onUpdate, onReset, onAddCard, onDrawRandom, o
       settings: [
         { key: 'cardMarginTop', label: 'Top (%)', min: 0, max: 0.4, step: 0.01 },
         { key: 'cardMarginBottom', label: 'Bottom (%)', min: 0, max: 0.4, step: 0.01 },
-        { key: 'scoreTotalYOffset', label: 'Y Offset', min: -200, max: 200, step: 10 },
-        { key: 'scoreTotalScale', label: 'Scale', min: 0.5, max: 3.0, step: 0.1 },
+      ]
+    },
+    {
+      title: 'Score Totals',
+      settings: [
+        { key: 'scoreTotalShow', label: 'Show Box', type: 'checkbox' }, // Added
+        { key: 'scoreTotalXOffset', label: 'Dist. Center (px)', min: 0, max: 1200, step: 10 },
+        { key: 'scoreTotalYOffset', label: 'Y Offset (px)', min: -200, max: 200, step: 5 },
+        { key: 'scoreTotalScale', label: 'Scale', min: 0.1, max: 3.0, step: 0.1 },
+      ]
+    },
+    {
+      title: 'Win Record Visuals',
+      settings: [
+        { key: 'winRecordSettings.show', label: 'Show', type: 'checkbox' },
+
+        // Base Offsets
+        { key: 'winRecordSettings.playerOffsetX', label: 'Player Off X', min: -200, max: 200, step: 5 },
+        { key: 'winRecordSettings.playerOffsetY', label: 'Player Off Y', min: -200, max: 200, step: 5 },
+        { key: 'winRecordSettings.opponentOffsetX', label: 'Enemy Off X', min: -200, max: 200, step: 5 },
+        { key: 'winRecordSettings.opponentOffsetY', label: 'Enemy Off Y', min: -200, max: 200, step: 5 },
+
+        // Relative Element Offsets
+        { key: 'winRecordSettings.textOffsetX', label: 'Text Rel X', min: -100, max: 100, step: 2 },
+        { key: 'winRecordSettings.textOffsetY', label: 'Text Rel Y', min: -50, max: 50, step: 2 },
+        { key: 'winRecordSettings.rhombusOffsetX', label: 'Rhombus Rel X', min: -100, max: 100, step: 2 },
+        { key: 'winRecordSettings.rhombusOffsetY', label: 'Rhombus Rel Y', min: -50, max: 50, step: 2 },
+
+        { key: 'winRecordSettings.scale', label: 'Scale', min: 0.1, max: 2.0, step: 0.1 },
+        { key: 'winRecordSettings.spacingX', label: 'Spacing X', min: 0, max: 100, step: 1 },
+        { key: 'winRecordSettings.emptyColor', label: 'Empty Color', type: 'color' },
+        { key: 'winRecordSettings.fillColor', label: 'Fill Color', type: 'color' },
+        { key: 'winRecordSettings.strokeColor', label: 'Stroke Color', type: 'color' },
+        { key: 'winRecordSettings.strokeWidth', label: 'Stroke Width', min: 0, max: 10, step: 0.5 },
       ]
     },
     {
@@ -801,6 +847,59 @@ const SettingsPanel = ({ settings, onUpdate, onReset, onAddCard, onDrawRandom, o
           </div>
         </div>
       )
+    },
+    {
+      title: 'Debug State (Game Flow)',
+      settings: [],
+      customContent: (
+        <div className="flex flex-col gap-2 p-2 bg-stone-100 rounded border border-stone-200">
+          {/* Turn Controls */}
+          <div className="text-[10px] font-bold text-stone-600 mb-1">Set Turn (Triggers Animation?):</div>
+          <div className="flex gap-1 mb-2">
+            <button
+              onClick={() => useGameStore.getState().setTurn('player')}
+              className="flex-1 py-1 bg-blue-50 border border-blue-200 text-blue-700 rounded text-[10px] hover:bg-blue-100"
+            >
+              Your Turn
+            </button>
+            <button
+              onClick={() => useGameStore.getState().setTurn('opponent')}
+              className="flex-1 py-1 bg-orange-50 border border-orange-200 text-orange-700 rounded text-[10px] hover:bg-orange-100"
+            >
+              Enemy Turn
+            </button>
+          </div>
+
+          <div className="h-px bg-stone-200 my-1"></div>
+
+          {/* Win Count Controls */}
+          <div className="text-[10px] font-bold text-stone-600 mb-1">Wins (Player 0 / You):</div>
+          <div className="flex gap-1 mb-2">
+            {[0, 1, 2].map(w => (
+              <button
+                key={w}
+                onClick={() => useGameStore.getState().setPlayerWins(0, w)}
+                className="flex-1 py-1 bg-white border border-stone-300 rounded text-[10px] hover:bg-stone-50"
+              >
+                {w}
+              </button>
+            ))}
+          </div>
+
+          <div className="text-[10px] font-bold text-stone-600 mb-1">Wins (Player 1 / Enemy):</div>
+          <div className="flex gap-1 mb-2">
+            {[0, 1, 2].map(w => (
+              <button
+                key={w}
+                onClick={() => useGameStore.getState().setPlayerWins(1, w)}
+                className="flex-1 py-1 bg-white border border-stone-300 rounded text-[10px] hover:bg-stone-50"
+              >
+                {w}
+              </button>
+            ))}
+          </div>
+        </div>
+      )
     }
   ];
 
@@ -1088,6 +1187,9 @@ const SettingsPanel = ({ settings, onUpdate, onReset, onAddCard, onDrawRandom, o
                               } else if (setting.key.startsWith('handTooltipSettings.'))
                               {
                                 updateTooltipSetting(setting.key, val);
+                              } else if (setting.key.startsWith('winRecordSettings.'))
+                              {
+                                updateWinRecordSetting(setting.key, val);
                               } else
                               {
                                 updateBoard({ [setting.key]: val });
@@ -1119,6 +1221,9 @@ const SettingsPanel = ({ settings, onUpdate, onReset, onAddCard, onDrawRandom, o
                             } else if (setting.key.startsWith('handTooltipSettings.'))
                             {
                               updateTooltipSetting(setting.key, val);
+                            } else if (setting.key.startsWith('winRecordSettings.'))
+                            {
+                              updateWinRecordSetting(setting.key, val);
                             } else
                             {
                               updateBoard({ [setting.key]: val });

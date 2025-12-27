@@ -31,6 +31,21 @@ export const AutomationEditor: React.FC<AutomationEditorProps> = ({ template, on
         onUpdate({ automations: automations.filter(r => r.id !== ruleId) });
     };
 
+    const handleDuplicateRule = (ruleId: string) => {
+        const original = automations.find(r => r.id === ruleId);
+        if (!original) return;
+
+        const newRule: AutomationRule = {
+            ...original,
+            id: crypto.randomUUID(),
+            name: `${original.name} (Copy)`,
+            conditions: original.conditions.map(c => ({ ...c, id: crypto.randomUUID() })),
+            effects: original.effects.map(e => ({ ...e, id: crypto.randomUUID() }))
+        };
+
+        onUpdate({ automations: [...automations, newRule] });
+    };
+
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center">
@@ -52,6 +67,7 @@ export const AutomationEditor: React.FC<AutomationEditorProps> = ({ template, on
                         template={template}
                         onUpdate={(updates) => handleUpdateRule(rule.id, updates)}
                         onDelete={() => handleDeleteRule(rule.id)}
+                        onDuplicate={() => handleDuplicateRule(rule.id)}
                     />
                 ))}
             </div>
@@ -65,7 +81,8 @@ const RuleItem: React.FC<{
     template: CardTemplate;
     onUpdate: (updates: Partial<AutomationRule>) => void;
     onDelete: () => void;
-}> = ({ rule, schema, template, onUpdate, onDelete }) => {
+    onDuplicate: () => void;
+}> = ({ rule, schema, template, onUpdate, onDelete, onDuplicate }) => {
     const [expanded, setExpanded] = useState(false);
 
     // Helpers for Condition Management
@@ -122,12 +139,22 @@ const RuleItem: React.FC<{
                         placeholder="Rule Name"
                     />
                 </div>
-                <button
-                    onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                    className="text-gray-400 hover:text-red-500 px-2"
-                >
-                    ✕
-                </button>
+                <div className="flex gap-1">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
+                        title="Duplicate Rule"
+                        className="text-gray-400 hover:text-blue-500 px-2"
+                    >
+                        📋
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                        title="Delete Rule"
+                        className="text-gray-400 hover:text-red-500 px-2"
+                    >
+                        ✕
+                    </button>
+                </div>
             </div>
 
             {expanded && (

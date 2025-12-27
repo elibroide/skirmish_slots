@@ -1,8 +1,5 @@
-import React, { lazy, Suspense } from 'react';
+import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
-
-// Lazy load ReactQuill to avoid build issues with server-side/static generation if any
-const ReactQuill = lazy(() => import('react-quill-new'));
 
 interface RichTextEditorProps {
     value: string;
@@ -21,7 +18,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange,
     };
 
     return (
-        <Suspense fallback={<div className="h-32 bg-gray-100 flex items-center justify-center text-gray-400">Loading Editor...</div>}>
+        <>
             <div className="bg-white text-gray-800">
                 <ReactQuill
                     theme="snow"
@@ -43,6 +40,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange,
                     font-size: inherit;
                 }
             `}</style>
-        </Suspense>
+        </>
     );
 };

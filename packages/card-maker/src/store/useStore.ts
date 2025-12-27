@@ -162,6 +162,17 @@ export const useStore = create<StoreState>()(
                 }
             } else if (field.key === 'name') {
                 initialData[field.key] = generateRandomName();
+            } else {
+                // Initialize empty defaults for everything else to ensure they exist
+                if (field.type === 'number') {
+                    initialData[field.key] = 0;
+                } else if (field.type === 'tags') {
+                    initialData[field.key] = [];
+                } else if (field.type === 'richtext') {
+                    initialData[field.key] = "<p><br></p>";
+                } else {
+                    initialData[field.key] = "";
+                }
             }
         });
 

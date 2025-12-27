@@ -579,6 +579,10 @@ export const TemplateEditor: React.FC = () => {
                                                 <option value="monospace">Monospace</option>
                                                 <option value="cursive">Cursive</option>
                                                 <option value="fantasy">Fantasy</option>
+                                                <option value="Orbitron">Orbitron</option>
+                                                <option value="Exo 2">Exo 2</option>
+                                                <option value="Titillium Web">Titillium Web</option>
+                                                <option value="Russo One">Russo One</option>
                                                 <option value="Cinzel">Cinzel</option>
                                                 <option value="MedievalSharp">MedievalSharp</option>
                                                 <option value="Uncial Antiqua">Uncial Antiqua</option>
@@ -591,16 +595,19 @@ export const TemplateEditor: React.FC = () => {
                                                 <option value="Open Sans">Open Sans</option>
                                             </select>
                                             <div className="flex gap-1 mt-2">
-                                                <button
-                                                    title="Bold"
-                                                    onClick={() => updateZone(selectedZone.id, { style: { ...selectedZone.style, fontWeight: selectedZone.style?.fontWeight === 'bold' ? 'normal' : 'bold' } })}
-                                                    className={clsx(
-                                                        "px-2 py-1 text-xs border rounded font-bold transition-colors flex-1",
-                                                        selectedZone.style?.fontWeight === 'bold' ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 hover:bg-gray-50"
-                                                    )}
+                                                <select
+                                                    title="Font Weight"
+                                                    value={selectedZone.style?.fontWeight || 'normal'}
+                                                    onChange={(e) => updateZone(selectedZone.id, { style: { ...selectedZone.style, fontWeight: e.target.value } })}
+                                                    className="border rounded text-xs p-1 flex-1 min-w-[80px]"
                                                 >
-                                                    B
-                                                </button>
+                                                    <option value="normal">Normal (400)</option>
+                                                    <option value="500">Medium (500)</option>
+                                                    <option value="600">Semi-Bold (600)</option>
+                                                    <option value="bold">Bold (700)</option>
+                                                    <option value="800">Extra Bold (800)</option>
+                                                    <option value="900">Black (900)</option>
+                                                </select>
                                                 <button
                                                     title="Italic"
                                                     onClick={() => updateZone(selectedZone.id, { style: { ...selectedZone.style, fontStyle: selectedZone.style?.fontStyle === 'italic' ? 'normal' : 'italic' } })}

@@ -99,6 +99,43 @@ export const CardSmith: React.FC = () => {
 
     const displayCards = getFilteredAndSortedCards();
 
+    // --- Image Preloading Logic ---
+    React.useEffect(() => {
+        if (!activeCard) return;
+
+        const preloadImage = (url: string) => {
+            if (!url) return;
+            const img = new Image();
+            img.src = url;
+        };
+
+        // Preload active card's art
+        if (activeCard.artConfig?.imageUrl)
+        {
+            preloadImage(activeCard.artConfig.imageUrl);
+        }
+
+        // Find index of active card in CURRENT list (so we preload what user sees next)
+        const idx = displayCards.findIndex(c => c.id === activeCard.id);
+        if (idx !== -1)
+        {
+            // Preload next 2 and prev 2
+            const toPreload = [
+                displayCards[idx + 1],
+                displayCards[idx + 2],
+                displayCards[idx - 1],
+                displayCards[idx - 2]
+            ];
+
+            toPreload.forEach(c => {
+                if (c && c.artConfig?.imageUrl)
+                {
+                    preloadImage(c.artConfig.imageUrl);
+                }
+            });
+        }
+    }, [activeCardId, displayCards]); // Re-run when active card changes or list changes
+
     const handleCreate = () => {
         // If we have multiple templates, we could ask. For now, defaulting to the first one is fine or the active one.
         // The store's addCard uses activeTemplateId or first available.
@@ -446,6 +483,7 @@ export const CardSmith: React.FC = () => {
                                         ) : field.type === 'richtext' ? (
                                             <div>
                                                 <RichTextEditor
+                                                    key={`${activeCard.id}-${field.key}`}
                                                     value={activeCard.data[field.key] || ''}
                                                     onChange={(val) => updateCard(activeCard.id, { data: { ...activeCard.data, [field.key]: val } })}
                                                     placeholder={`Enter ${field.label}...`}

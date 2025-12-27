@@ -95,6 +95,9 @@ export const CardRenderer: React.FC<CardRendererProps> = ({ template, data, sche
                                 color: zone.style?.color || '#000',
                                 // Inherit other font properties?
                                 fontFamily: zone.style?.fontFamily,
+                                fontWeight: zone.style?.fontWeight,
+                                fontStyle: zone.style?.fontStyle,
+                                textDecoration: zone.style?.textDecoration,
                             }}
                         >
                             {tag}
@@ -121,6 +124,10 @@ export const CardRenderer: React.FC<CardRendererProps> = ({ template, data, sche
                     color: zone.style?.color,
                     alignItems: zone.style?.verticalAlign === 'top' ? 'flex-start' : zone.style?.verticalAlign === 'bottom' ? 'flex-end' : 'center',
                     justifyContent: zone.style?.textAlign === 'center' ? 'center' : zone.style?.textAlign === 'right' ? 'flex-end' : 'flex-start',
+                    // Explicitly pass typography styles to ensure they apply
+                    fontWeight: zone.style?.fontWeight || 'normal',
+                    fontStyle: zone.style?.fontStyle || 'normal',
+                    textDecoration: zone.style?.textDecoration || 'none',
                     // Custom stroke props
                     ...(zone.style as any)
                 }}
