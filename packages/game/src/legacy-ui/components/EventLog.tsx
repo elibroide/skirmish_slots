@@ -1,5 +1,5 @@
 import React from 'react';
-import type { GameEvent, PlayerId } from '../../engine/types';
+import type { GameEvent, PlayerId } from '@skirmish/engine';
 import { useGameStore } from '../store/gameStore';
 
 interface EventLogProps {

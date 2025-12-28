@@ -1,11 +1,11 @@
 import { create } from 'zustand';
-import type { GameState, PlayerId, GameEvent, InputRequest } from '../../engine/types';
-import { GameEngine } from '../../engine/GameEngine';
-import { createStarter1Deck, createStarter2Deck, createTestDeck } from '../../utils/deckBuilder';
-import { createDeck } from '../../engine/cards';
-import { HumanController } from '../../engine/controllers/HumanController';
-import { AIController } from '../../engine/controllers/AIController';
-import { ClaudeAI } from '../../engine/ai/ClaudeAI';
+import type { GameState, PlayerId, GameEvent, InputRequest } from '@skirmish/engine';
+import { GameEngine } from '@skirmish/engine';
+import { createStarter1Deck, createStarter2Deck, createTestDeck } from '@skirmish/engine';
+import { createDeck } from '@skirmish/engine';
+import { HumanController } from '@skirmish/engine';
+import { AIController } from '@skirmish/engine';
+import { ClaudeAI } from '@skirmish/engine';
 import { useDeckStore } from './deckStore';
 
 /**

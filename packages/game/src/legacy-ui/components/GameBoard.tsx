@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { FullScreenToggle } from './FullScreenToggle';
 
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core';
-import { TerrainId, PlayerId, GameState, SlotCoord } from '../../engine/types';
+import { TerrainId, PlayerId, GameState, SlotCoord, UnitCard } from '@skirmish/engine';
 import { DroppableSlot } from './DroppableSlot';
 import { Hand } from './Hand';
 import { Card } from './Card';
 import { GameOverModal } from './GameOverModal';
-import { useGameStore } from '../store/gameStore';
-import { GameEngine } from '../../engine/GameEngine';
-import { getLeader } from '../../engine/leaders';
+import { useGameStore } from '../../store/gameStore';
+import { GameEngine } from '@skirmish/engine';
+import { getLeader } from '@skirmish/engine';
 
 interface GameBoardProps {
   gameState: GameState;
@@ -63,7 +63,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const isAwaitingInput = pendingInputRequest !== null && (pendingInputPlayerId === localPlayerId || isGodMode);
 
   // Store Actions
-  const { setDragState, setHoveredSlot, setSlotStatus, resetSlotStatus, slots: boardSlots } = useGameStore();
+  const { setDragState, setHoveredSlot, setSlotStatus, resetSlotStatus } = useGameStore();
 
   const handleDragStart = (event: DragStartEvent) => {
     const card = engine.getCardById(event.active.id as string);
@@ -312,7 +312,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     if (pendingInputRequest.validSlots)
     {
       const isValid = pendingInputRequest.validSlots.some(
-        s => s.terrainId === targetSlot!.terrainId && s.playerId === targetSlot!.playerId
+        (s: SlotCoord) => s.terrainId === targetSlot!.terrainId && s.playerId === targetSlot!.playerId
       );
       if (!isValid) return;
     }
@@ -457,7 +457,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 {isGodMode ? (
                   <button
                     onClick={() => handlePass(opponentId)}
-                    disabled={gameState.currentPlayer !== opponentId || gameState.isDone[opponentId]}
+                    disabled={gameState.currentPlayer !== opponentId || gameState.players[opponentId].isDone}
                     className="w-full bg-amber-400 hover:bg-amber-500 disabled:bg-stone-400 border-2 border-stone-800 rounded px-2 py-1 font-hand text-sm"
                   >
                     Pass
@@ -465,7 +465,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 ) : (
                   <div className="bg-white px-2 py-1 rounded text-xs font-ui flex justify-between">
                     <span>Passed:</span>
-                    <span>{gameState.isDone[opponentId] ? 'Yes' : 'No'}</span>
+                    <span>{gameState.players[opponentId].isDone ? 'Yes' : 'No'}</span>
                   </div>
                 )}
                 <div className="bg-white px-2 py-1 rounded text-xs font-ui flex justify-between">
@@ -600,7 +600,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               <div className="mt-2 space-y-1">
                 <button
                   onClick={() => handlePass(localPlayerId)}
-                  disabled={!isLocalPlayerTurn || gameState.isDone[localPlayerId]}
+                  disabled={!isLocalPlayerTurn || gameState.players[localPlayerId].isDone}
                   className="w-full bg-amber-400 hover:bg-amber-500 disabled:bg-stone-400 border-2 border-stone-800 rounded px-2 py-1 font-hand text-sm"
                 >
                   Pass
@@ -706,17 +706,24 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   const opponentSlotId = index;
                   const playerSlotId = index + 5;
 
-                  const isOpponentSlotValid = isSlotValidTarget(terrainId, opponentId, opponentSlot.unit?.id);
-                  const isPlayerSlotValid = isSlotValidTarget(terrainId, localPlayerId, playerSlot.unit?.id);
+                  const isOpponentSlotValid =
+                    validTargets?.validSlots?.some((s: SlotCoord) => s.terrainId === terrainId && s.playerId === opponentId) ||
+                    pendingInputRequest?.validSlots?.some((s: SlotCoord) => s.terrainId === terrainId && s.playerId === opponentId) ||
+                    (pendingInputRequest.validTargetIds && opponentSlot.unit && pendingInputRequest.validTargetIds.includes(opponentSlot.unit.id));
+
+                  const isPlayerSlotValid =
+                    validTargets?.validSlots?.some((s: SlotCoord) => s.terrainId === terrainId && s.playerId === localPlayerId) ||
+                    pendingInputRequest?.validSlots?.some((s: SlotCoord) => s.terrainId === terrainId && s.playerId === localPlayerId) ||
+                    (pendingInputRequest.validTargetIds && playerSlot.unit && pendingInputRequest.validTargetIds.includes(playerSlot.unit.id));
 
                   // --- Targetable Logic (same as before) ---
                   const isOpponentSlotTargetable = isAwaitingInput && pendingInputRequest?.type === 'target' && (
-                    pendingInputRequest.validSlots?.some(s => s.terrainId === terrainId && s.playerId === opponentId) ||
+                    pendingInputRequest.validSlots?.some((s: SlotCoord) => s.terrainId === terrainId && s.playerId === opponentId) ||
                     (pendingInputRequest.validTargetIds && opponentSlot.unit && pendingInputRequest.validTargetIds.includes(opponentSlot.unit.id))
                   );
 
                   const isPlayerSlotTargetable = isAwaitingInput && pendingInputRequest?.type === 'target' && (
-                    pendingInputRequest.validSlots?.some(s => s.terrainId === terrainId && s.playerId === localPlayerId) ||
+                    pendingInputRequest.validSlots?.some((s: SlotCoord) => s.terrainId === terrainId && s.playerId === localPlayerId) ||
                     (pendingInputRequest.validTargetIds && playerSlot.unit && pendingInputRequest.validTargetIds.includes(playerSlot.unit.id))
                   );
 
@@ -750,7 +757,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                         }}
                       >
                         <DroppableSlot
-                          unit={opponentSlot.unit}
+                          unit={
+                            (opponentId === 0 ? terrain.slots[0].unit : terrain.slots[1].unit) as unknown as UnitCard
+                          }
                           slotModifier={opponentSlot.modifier}
                           playerId={opponentId}
                           terrainId={terrainId}
@@ -775,7 +784,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                         }}
                       >
                         <DroppableSlot
-                          unit={playerSlot.unit}
+                          unit={
+                            (localPlayerId === 0 ? terrain.slots[0].unit : terrain.slots[1].unit) as unknown as UnitCard
+                          }
                           slotModifier={playerSlot.modifier}
                           playerId={localPlayerId}
                           terrainId={terrainId}
@@ -816,7 +827,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             <Card card={activeCard} isInHand={false} />
           ) : null}
         </DragOverlay>
-      </DndContext>
+      </DndContext >
     </>
   );
 };

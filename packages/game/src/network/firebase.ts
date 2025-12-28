@@ -13,7 +13,7 @@ import {
   type Unsubscribe
 } from 'firebase/database';
 import type { FirebaseGameDoc, FirebaseActionDoc } from './types';
-import type { PlayerId, GameAction } from '../engine/types';
+import type { PlayerId, GameAction } from '@skirmish/engine';
 
 /**
  * Firebase configuration interface

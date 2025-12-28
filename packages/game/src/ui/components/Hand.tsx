@@ -4,7 +4,8 @@ import { DraggedCard } from './DraggedCard';
 import { ReturningCard } from './ReturningCard';
 import type { CardInstance, CardTemplate, CardSchema } from '@skirmish/card-maker';
 import { useGameStore, BoardSlot } from '../../store/gameStore';
-import { TerrainId, PlayerId } from '../../engine/types';
+import { useAnimationStore } from '../../store/animationStore';
+import { TerrainId, PlayerId } from '@skirmish/engine';
 
 interface HandProps {
     cards: CardInstance[];
@@ -61,6 +62,12 @@ export const Hand: React.FC<HandProps> = ({
     isFacedown = false,
     onCardDrop
 }) => {
+    // Subscribe to active animations to hide cards being played
+    const activeTasks = useAnimationStore(state => state.activeTasks);
+    const animatingCardIds = activeTasks
+        .filter(t => t.type === 'card_play' && t.payload.cardId)
+        .map(t => t.payload.cardId);
+
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const [dragState, setDragState] = useState<DragState>({
         isDragging: false,
@@ -439,6 +446,10 @@ export const Hand: React.FC<HandProps> = ({
             <div data-card-fan style={handContainerStyle}>
                 <div style={{ pointerEvents: 'auto', width: '100%', height: '100%', position: 'relative' }}>
                     {cards.map((card, index) => {
+                        // Skip rendering if card is being animated
+                        if (animatingCardIds.includes(card.id)) return null;
+
+                        // Calculate position
                         const isDraggingThis = canInteract && dragState.isDragging && dragState.card?.id === card.id;
                         const glowState = getCardGlowState(card.id, isDraggingThis);
 

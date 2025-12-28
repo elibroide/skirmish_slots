@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 import { useDeckStore, ALL_CARD_IDS } from '../store/deckStore';
 import { Card } from './Card';
-import { createCard } from '../../engine/cards';
-import { GameEngine } from '../../engine/GameEngine';
-import type { Card as CardType } from '../../engine/types';
+import { createCard } from '@skirmish/engine';
+import { GameEngine } from '@skirmish/engine';
+import type { Card as CardType } from '@skirmish/engine';
 
 export type DeckBuilderProps = {
   onBack: () => void;

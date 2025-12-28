@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { AnimationManager, AnimationTask } from '../engine/AnimationManager';
+import { AnimationTask, useAnimationStore } from '../store/animationStore';
 import { ANIMATION_COMPONENTS } from './animations/registry';
 import { HandSettings } from './components/Card';
 import { CardInstance, CardTemplate, CardSchema } from '@skirmish/card-maker';
@@ -10,25 +10,19 @@ interface AnimationLayerProps {
     schema: CardSchema;
 }
 
-export const AnimationLayer: React.FC<AnimationLayerProps> = ({
+const AnimationLayerComponent: React.FC<AnimationLayerProps> = ({
     settings,
     templates,
     schema
 }) => {
-    const [activeTasks, setActiveTasks] = useState<AnimationTask[]>([]);
-
-    useEffect(() => {
-        const manager = AnimationManager.getInstance();
-        const unsubscribe = manager.subscribe((tasks) => {
-            setActiveTasks(tasks);
-        });
-        return unsubscribe;
-    }, []);
+    const activeTasks = useAnimationStore(state => state.activeTasks);
+    // No need for explicit subscription, zustand handles it
 
     return (
         <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 9999 }}>
             {activeTasks.map((task: AnimationTask) => {
                 const Component = ANIMATION_COMPONENTS[task.type];
+                console.log(`[AnimationLayer] Rendering Task ${task.id} (${task.type}) -> Component found: ${!!Component}`);
 
                 if (!Component)
                 {
@@ -36,8 +30,6 @@ export const AnimationLayer: React.FC<AnimationLayerProps> = ({
                     return null;
                 }
 
-                // Generic Props Passing
-                // We assume all registered components accept a standardized set of props + specific payload
                 return (
                     <Component
                         key={task.id}
@@ -46,14 +38,14 @@ export const AnimationLayer: React.FC<AnimationLayerProps> = ({
                         settings={settings} // Global Context
                         templates={templates} // Global Context
                         schema={schema} // Global Context
-                        triggerNext={() => AnimationManager.getInstance().triggerNext(task.id)} // New Event Callback
+                        triggerNext={() => useAnimationStore.getState().triggerNext(task.id)} // New Event Callback
                         onComplete={() => {
                             // Logic Hook: Execute any logic passed in payload (e.g., occupySlot)
                             if (task.payload && typeof task.payload.onFinish === 'function')
                             {
                                 task.payload.onFinish();
                             }
-                            AnimationManager.getInstance().complete(task.id);
+                            useAnimationStore.getState().complete(task.id);
                         }}
                     />
                 );
@@ -61,3 +53,11 @@ export const AnimationLayer: React.FC<AnimationLayerProps> = ({
         </div>
     );
 };
+
+export const AnimationLayer = React.memo(AnimationLayerComponent, (prev, next) => {
+    // Custom comparison if needed, but shallow verify is usually fine for stable objects.
+    // Assuming settings/templates/schema change rarely.
+    return prev.settings === next.settings &&
+        prev.templates === next.templates &&
+        prev.schema === next.schema;
+});

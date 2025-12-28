@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { motion, useAnimation, Variants } from 'framer-motion';
+import React, { useEffect } from 'react';
+import { motion, useAnimate } from 'framer-motion';
 import { CardRenderer, CardInstance, CardTemplate, CardSchema } from '@skirmish/card-maker';
 import { HandSettings, BASE_CARD_WIDTH, BASE_CARD_HEIGHT } from './Card';
 import { AnimationConfig } from '../../store/gameStore';
 
 interface AnimatedCardPlayProps {
-    card: CardInstance;
+    card: CardInstance; // Direct dependency as requested
     startPosition: { x: number; y: number };
     targetPosition: { x: number; y: number };
     settings: HandSettings;
@@ -27,79 +27,73 @@ export const AnimatedCardPlay: React.FC<AnimatedCardPlayProps> = ({
     triggerNext,
     onComplete
 }) => {
-    const controls = useAnimation();
-    const template = templates.find(t => t.id === card.templateId);
+    console.log('[AnimatedCardPlay] Component Rendered', { cardId: card?.id });
+    const activeCard = card;
+    const template = activeCard ? templates.find(t => t.id === activeCard.templateId) : null;
+
+    const [scope, animate] = useAnimate();
 
     // Calculate dimensions
     const cardWidth = BASE_CARD_WIDTH * settings.cardScale;
     const cardHeight = BASE_CARD_HEIGHT * settings.cardScale;
 
+    const hasStartedRef = React.useRef(false);
+
     useEffect(() => {
+        if (hasStartedRef.current) return;
+        hasStartedRef.current = true;
+
         const runSequence = async () => {
-            // 0. Initial State (handled by motion.div initial)
+            if (!scope.current) return;
 
-            // Check Start Trigger handled by Manager, but safe to check here if logic was local? 
-            // Manager handles 'start', we handle phases.
+            // Ensure initial state is set
+            await animate(scope.current, {
+                x: startPosition.x,
+                y: startPosition.y,
+                scale: settings.dragScale,
+                opacity: 1,
+                zIndex: 10000
+            }, { duration: 0 });
 
-            // 1. Move Phase (New)
-            // Travel to the "Hanging Position" (target + hoverOffset)
-            const hangingX = targetPosition.x + (animationConfig.hoverOffsetX || 0);
-            const hangingY = targetPosition.y + (animationConfig.hoverOffsetY || 0);
+            console.log('[AnimatedCardPlay] Sequence Starting', { startPosition, targetPosition });
+
+            const centeredTargetX = targetPosition.x + cardWidth / 2;
+            const centeredTargetY = targetPosition.y + cardHeight / 2;
+
+            const hangingX = centeredTargetX + (animationConfig.hoverOffsetX || 0);
+            const hangingY = centeredTargetY + (animationConfig.hoverOffsetY || 0);
 
             if (animationConfig.moveDuration > 0)
             {
-                await controls.start({
-                    x: hangingX,
-                    y: hangingY,
-                    scale: animationConfig.hoverScale,
-                    transition: {
-                        duration: animationConfig.moveDuration,
-                        ease: (animationConfig.moveEase || "easeOut") as any
-                    }
-                });
-            } else
-            {
-                // Instant move (set) if duration is 0
-                controls.set({
+                await animate(scope.current, {
                     x: hangingX,
                     y: hangingY,
                     scale: animationConfig.hoverScale
+                }, {
+                    duration: animationConfig.moveDuration,
+                    ease: (animationConfig.moveEase || "easeOut") as any
                 });
+            } else
+            {
+                await animate(scope.current, {
+                    x: hangingX,
+                    y: hangingY,
+                    scale: animationConfig.hoverScale
+                }, { duration: 0 });
             }
             if (animationConfig.triggerNextOn === 'moveDone') triggerNext();
 
-            // 2. Hover Phase
-            // We are already at hanging position. We just wait here? 
-            // Or if we instant moved, we are here.
-            // If hoverDuration > 0, we can add a subtle idle or just wait.
-            // For now, it's just a wait/hold at the hanging position.
-
-            // 2. Wait Phase (Implicit in flow now)
-            if (animationConfig.waitDuration > 0)
-            {
-                await new Promise(resolve => setTimeout(resolve, animationConfig.waitDuration * 1000));
-            }
-
             if (animationConfig.triggerNextOn === 'hoverDone') triggerNext();
 
-
-            // Trigger check? Usually wait is part of hover logic conceptually, but config has it valid.
-            // Let's assume passed if hoverDone passed.
-
-            // 4. Slam Phase
-            await controls.start({
-                x: targetPosition.x,
-                y: targetPosition.y,
+            await animate(scope.current, {
+                x: centeredTargetX,
+                y: centeredTargetY,
                 scale: animationConfig.slamScaleLand,
-                opacity: 0, // Fade out on impact or just slam? Previously opacity 0 was landing? 
-                // Ah, looking at previous code: opacity: 0 was in the slam transition?? 
-                // Wait, if opacity is 0, the card vanishes? 
-                // Yes, because onComplete -> occupySlot -> Board renders it. 
-                // So the animation "hands off" to the board.
-                transition: {
-                    duration: animationConfig.slamDuration,
-                    ease: (animationConfig.slamEase || "backIn") as any
-                }
+                opacity: 0
+            }, {
+                duration: animationConfig.slamDuration,
+                ease: (animationConfig.slamEase || "backIn") as any,
+                delay: animationConfig.waitDuration // Use declarative delay instead of setTimeout
             });
 
             if (animationConfig.triggerNextOn === 'slamDone') triggerNext();
@@ -110,31 +104,29 @@ export const AnimatedCardPlay: React.FC<AnimatedCardPlayProps> = ({
         runSequence();
     }, []);
 
+
     return (
         <motion.div
+            ref={scope}
             initial={{
                 x: startPosition.x,
                 y: startPosition.y,
                 scale: settings.dragScale, // Start from drag scale
                 zIndex: 10000 // High z-index for animation
             }}
-            animate={controls}
+            // animate={controls} // Removed
             style={{
                 position: 'fixed',
                 left: 0,
                 top: 0,
-                marginLeft: `${-cardWidth / 2}px`,
-                marginTop: `${-cardHeight / 2}px`,
-                width: `${cardWidth}px`,
-                height: `${cardHeight}px`,
                 transformOrigin: 'center center',
                 pointerEvents: 'none'
             }}
         >
-            {template && (
+            {template && activeCard && (
                 <CardRenderer
                     template={template}
-                    data={card}
+                    data={activeCard}
                     schema={schema}
                     scale={settings.cardScale}
                     className="pointer-events-none origin-top-left"

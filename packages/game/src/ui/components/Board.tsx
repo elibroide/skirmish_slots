@@ -1,8 +1,6 @@
 import React from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { Slot } from './Slot';
-import { WinIndicators } from './WinIndicators';
-import { TurnIndicators } from './TurnIndicators';
 
 
 export const Board: React.FC = () => {
@@ -11,7 +9,6 @@ export const Board: React.FC = () => {
         playerSlotGapPercent, enemySlotGapPercent,
         playerRowY, enemyRowY,
         boardScale, boardX, boardY,
-        winRecordSettings
     } = useGameStore(s => s.boardSettings);
 
     const localPlayerId = 0;
@@ -79,48 +76,6 @@ export const Board: React.FC = () => {
                 transformOrigin: 'center center'
             }}
         >
-            {/* Score Totals (Left Side) */}
-            {/* Player Score */}
-            <div
-                className="absolute pointer-events-auto"
-                style={{
-                    left: `${winRecordSettings.playerXPercent}%`,
-                    top: `${winRecordSettings.playerYPercent}%`,
-                    transform: 'translate(-50%, -50%)'
-                }}
-            >
-                <WinIndicators playerId={localPlayerId} isPlayer={true} />
-            </div>
-
-            {/* Enemy Score */}
-            <div
-                className="absolute pointer-events-auto"
-                style={{
-                    left: `${winRecordSettings.opponentXPercent}%`,
-                    top: `${winRecordSettings.opponentYPercent}%`,
-                    transform: 'translate(-50%, -50%)'
-                }}
-            >
-                <WinIndicators playerId={opponentId} isPlayer={false} />
-            </div>
-
-            {/* Turn Indicators - Opponent */}
-            <TurnIndicators playerId={opponentId} isPlayer={false} />
-
-            {/* Player Win/Turn Indicators Wrapper */}
-            <div
-                className="absolute pointer-events-none"
-                style={{
-                    left: '50%',
-                    top: '100%',
-                    transform: 'translate(-50%, -50%)'
-                }}
-            >
-                <WinIndicators playerId={localPlayerId} isPlayer={true} />
-            </div>
-
-            {/* Turn Indicators - Player */}
-            <TurnIndicators playerId={localPlayerId} isPlayer={true} />
 
             {lanes.map((laneId) => {
                 const opponentSlotId = laneId;

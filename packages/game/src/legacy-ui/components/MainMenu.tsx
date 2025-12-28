@@ -20,7 +20,7 @@ export type MainMenuProps = {
  * - Open the deck builder
  */
 export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenDeckBuilder, onOpenDebug, onOpenUIDebug, onOpenCardFrameView }) => {
-  const [selectedOpponent, setSelectedOpponent] = useState<OpponentType>('claude');
+  const [selectedOpponent, setSelectedOpponent] = useState<OpponentType>('human');
   const [gameIdInput, setGameIdInput] = useState('');
   const [isCreatingGame, setIsCreatingGame] = useState(false);
 

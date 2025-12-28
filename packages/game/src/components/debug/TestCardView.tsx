@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { CardRenderer } from "../../../../card-maker/src/components/CardRenderer";
 // @ts-ignore
-import { GameEngine } from "../../engine/GameEngine";
+import { GameEngine } from "@skirmish/engine";
 // @ts-ignore
-import { createUnitCard } from "../../engine/cards/CardFactory";
-import { UNIT_CARD_DEFINITIONS } from "../../engine/cards/cardDefinitions";
+import { createUnitCard } from "@skirmish/engine";
+import { UNIT_CARD_DEFINITIONS } from "@skirmish/engine";
 import { useCardViewModel } from "../../hooks/useCardViewModel";
 
 // Helper to render a single card (to adhere to hooks rules)

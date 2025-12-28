@@ -10,6 +10,10 @@
         "dev:cards": "npm run dev -w @skirmish/card-maker",
         "build": "npm run build -w @skirmish/game",
         "build:cards": "npm run build -w @skirmish/card-maker",
+        "test": "npm run test -w @skirmish/engine",
         "install:all": "npm install"
+    },
+    "devDependencies": {
+        "rollup": "^4.54.0"
     }
 }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import type { Card as CardType, UnitCard } from '../../engine/types';
+import type { Card as CardType, UnitCard } from '@skirmish/engine';
 
 interface CardProps {
   card: CardType;

@@ -6,9 +6,9 @@
  */
 
 import { NetworkGameManager } from './NetworkGameManager';
-import { createCard } from '../engine/cards';
+import { createCard } from '@skirmish/engine';
 import type { FirebaseConfig } from './firebase';
-import type { GameEngine } from '../engine/GameEngine';
+import type { GameEngine } from '@skirmish/engine';
 
 /**
  * Step 1: Configure Firebase

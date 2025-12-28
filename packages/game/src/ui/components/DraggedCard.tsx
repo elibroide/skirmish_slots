@@ -144,7 +144,7 @@ export const DraggedCard: React.FC<DraggedCardProps> = ({
                 {/* Tooltip during drag */}
                 <CardTooltip
                     card={card}
-                    settings={useGameStore.getState().boardSettings.tooltipSettings}
+                    settings={useGameStore.getState().boardSettings.handTooltipSettings}
                 />
             </div>
 

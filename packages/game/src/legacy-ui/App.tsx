@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { GameBoard } from './components/GameBoard';
+import { GameScene } from '../ui/GameScene';
 import { MainMenu, type OpponentType, type GameMode } from './components/MainMenu';
 import { DeckBuilder } from './components/DeckBuilder';
 import { WaitingRoom } from './components/WaitingRoom';
-import { useGameStore } from './store/gameStore';
+import { useGameStore } from '../store/gameStore';
 import { TestCardView } from '../components/debug/TestCardView';
 import { DebugScene } from '../ui/DebugScene';
 import { CardFrameView } from './components/CardFrameView';
@@ -14,11 +14,18 @@ type Screen = 'menu' | 'deck-builder' | 'game' | 'waiting-room' | 'debug' | 'ui-
  * Main App Component
  * Handles screen navigation and game initialization
  */
+import { createGame } from '@skirmish/engine';
+import type { GameEngine } from '@skirmish/engine';
+
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('menu');
-  const [lastGameMode, setLastGameMode] = useState<GameMode>('vs-ai');
-  const [lastOpponentType, setLastOpponentType] = useState<OpponentType>('claude');
-  const { gameState, engine, localPlayerId, initGame, initNetworkGame, networkGameCode, gameMode } = useGameStore();
+  const [lastGameMode, setLastGameMode] = useState<GameMode>('god-mode');
+  const [lastOpponentType, setLastOpponentType] = useState<OpponentType>('human');
+
+  // App manages the Engine instance
+  const [engine, setEngine] = useState<GameEngine | null>(null);
+
+  const { gameState, localPlayerId, setInitialGameState, gameMode } = useGameStore();
 
   const handleStartGame = async (mode: GameMode, opponentType: OpponentType | string) => {
     setLastGameMode(mode);
@@ -28,7 +35,7 @@ export default function App() {
       // Network multiplayer
       const isHost = opponentType === 'create';
       // Host is player 0, joiner is player 1
-      await initNetworkGame(isHost ? 0 : 1, opponentType as string);
+      await Promise.reject("Network Game Temporarily Disabled for Refactor");
 
       if (isHost)
       {
@@ -44,7 +51,21 @@ export default function App() {
       // Local game
       const gameMode = mode === 'vs-ai' ? 'vs-ai' : mode === 'god-mode' ? 'god-mode' : 'human-vs-human';
       setLastOpponentType(opponentType as OpponentType);
-      initGame(0, gameMode);
+
+      const { engine: newEngine, localPlayerId: pid, gameMode: modeStr } = createGame(0, gameMode);
+      setEngine(newEngine);
+
+      // Init Store
+      setInitialGameState(
+        pid,
+        newEngine.state,
+        {
+          p0: newEngine.state.players[0].hand,
+          p1: newEngine.state.players[1].hand
+        },
+        modeStr
+      );
+
       setCurrentScreen('game');
     }
   };
@@ -124,7 +145,7 @@ export default function App() {
       setCurrentScreen('game');
     }
 
-    return <WaitingRoom gameCode={networkGameCode || ''} onCancel={handleCancelWaiting} />;
+    return <WaitingRoom gameCode={''} onCancel={handleCancelWaiting} />;
   }
 
   if (currentScreen === 'card-frame-view')
@@ -145,12 +166,10 @@ export default function App() {
   }
 
   return (
-    <GameBoard
-      gameState={gameState}
+    <GameScene
       engine={engine}
-      localPlayerId={localPlayerId}
-      onPlayAgain={handlePlayAgain}
-      onMainMenu={handleBackToMenu}
+      localPlayerId={localPlayerId ?? 0}
+      onBack={handleBackToMenu}
     />
   );
 }

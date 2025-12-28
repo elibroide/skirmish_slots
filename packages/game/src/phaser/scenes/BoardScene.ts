@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import { useGameStore } from '../../store/gameStore';
+import type { TerrainId } from '@skirmish/engine';
 import cardData from '../../ui/Data/order.json';
 
 interface SlotVisuals {
@@ -41,11 +42,11 @@ export class BoardScene extends Scene {
             }
         });
 
-        // Subscribe to Slots changes (Content)
+        // Subscribe to Slots changes (Content) - NO-OP
         this.slotsUnsubscribe = useGameStore.subscribe((state, prevState) => {
-            if (state.slots !== prevState.slots) {
-                this.updateBoardLayout();
-            }
+            // if (state.slots !== prevState.slots) {
+            //    this.updateBoardLayout();
+            // }
         });
 
         // Subscribe to Drag State changes
@@ -62,15 +63,15 @@ export class BoardScene extends Scene {
     // ... update() ...
 
     updateBoardLayout() {
-       // DISABLED: Migrated to React (GameBoard.tsx + Slot.tsx)
-       // This scene is now effectively empty but kept for structural integrity if needed later.
-       return;
+        // DISABLED: Migrated to React (GameBoard.tsx + Slot.tsx)
+        // This scene is now effectively empty but kept for structural integrity if needed later.
+        return;
 
-        const state = useGameStore.getState();
-        const settings = state.boardSettings;
-        const slotsState = state.slots;
-        
-        const { width, height } = this.scale;
+         const state = useGameStore.getState();
+         const settings = state.boardSettings;
+         // const slotsState = state.players[0].slots; // Example fix if we were using it
+         
+         const { width, height } = this.scale;
         const { slotHeightPercent, slotAspectRatio, playerSlotGapPercent, enemySlotGapPercent, playerRowY, enemyRowY } = settings;
         
         // ... Dimension calcs (lines 73-86) ...
@@ -105,7 +106,11 @@ export class BoardScene extends Scene {
             const rectY = baseY - baseH / 2;
 
             // --- 1. State ---
-            const slotData = slotsState[id];
+            // const slotData = slotsState[id]; -- Broken
+            // Helper to get slot from correct player
+            const pid = id < 5 ? (state.localPlayerId === 0 ? 1 : 0) : (state.localPlayerId ?? 0);
+            const tid = (id >= 5 ? id - 5 : id) as TerrainId;
+            const slotData = state.players[pid]?.slots[tid];
             
             // Get Current Slot Local State for Visuals
             const currentSlot = slotData;
@@ -204,22 +209,22 @@ export class BoardScene extends Scene {
                 // We do NOT update the store with the status, because the store GAVE us the status.
                 // BUT we need to construct the object correctly.
                 
+                const pid = owner === 'enemy' ? (state.localPlayerId === 0 ? 1 : 0) : (state.localPlayerId ?? 0);
+                const tid = (id >= 5 ? id - 5 : id) as TerrainId;
+
                 useGameStore.getState().registerSlot({
-                    id,
+                    playerId: pid,
+                    terrainId: tid,
                     owner,
                     x: baseX,
                     y: baseY,
                     width: baseW,
                     height: baseH,
                     content: slotData?.content || null,
-                     // We must persist the status back, otherwise it might get overwritten by 'idle' if we default it here?
-                     // registerSlot does: [slot.id]: { ...slot, status: 'idle' } in my previous edit?
-                     // WAIT. If registerSlot forces 'idle', we are breaking the status!
-                     // I should fix registerSlot to preserve existing status if available, or accept status in payload.
-                     
-                     status: slotData?.status || 'idle', // Pass current status back so we don't clobber it
+                     status: slotData?.status || 'idle',
                      power: slotData?.power || 0,
-                     powerState: slotData?.powerState || 'none'
+                     powerState: slotData?.powerState || 'none',
+                     modifier: slotData?.modifier || 0
                 });
             }
             // --- 5. Power Circle ---

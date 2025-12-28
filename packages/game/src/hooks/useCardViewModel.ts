@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { Card, UnitCard } from '../engine/cards/Card';
+import type { Card, UnitCard } from '@skirmish/engine';
 import { visualAssetManager } from '../utils/VisualAssetManager';
 
 export interface CardViewModel {

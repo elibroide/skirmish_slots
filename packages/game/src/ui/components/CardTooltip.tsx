@@ -58,7 +58,7 @@ export const CardTooltip: React.FC<CardTooltipProps> = ({ card, settings, style 
             boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
             ...style
         }}>
-            {activeTips.map((tip) => (
+            {activeTips.map((tip: any) => (
                 <div key={tip.id} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <div style={{
                         color: '#fbbf24', // Gold-ish for Name

@@ -6,7 +6,7 @@ import cardData from '../Data/order.json';
 import { CardRenderer, CardInstance, CardTemplate, CardSchema } from '@skirmish/card-maker';
 
 // Simple types if not available in ui-new yet, or import from engine
-import type { UnitCard, PlayerId } from '../../engine/types';
+import type { UnitCard, PlayerId } from '@skirmish/engine';
 
 interface SlotProps {
     unit?: UnitCard | null;

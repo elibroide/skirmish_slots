@@ -1,6 +1,6 @@
 import React from 'react';
 import { GameOverModal } from './GameOverModal';
-import type { GameState } from '../../engine/types';
+import type { GameState } from '@skirmish/engine';
 
 /**
  * Test component to visualize the Game Over Modal

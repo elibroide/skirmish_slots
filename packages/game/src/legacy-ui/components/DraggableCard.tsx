@@ -1,7 +1,7 @@
 import React from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { Card } from './Card';
-import type { Card as CardType } from '../../engine/types';
+import type { Card as CardType } from '@skirmish/engine';
 
 interface DraggableCardProps {
   card: CardType;

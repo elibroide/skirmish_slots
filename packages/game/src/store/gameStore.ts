@@ -1,6 +1,8 @@
 import { create } from 'zustand';
-import { TerrainId, PlayerId } from '../engine/types';
+import { produce } from 'immer';
+import { TerrainId, PlayerId } from '@skirmish/engine';
 import type { CardInstance } from '@skirmish/card-maker';
+import { GameEngine } from '@skirmish/engine';
 
 // Definition of a Board Slot
 export type SlotStatus = 'idle' | 'showTarget' | 'showDrop';
@@ -31,216 +33,37 @@ export interface BoardSlot {
   } | null;
 }
 
-export interface WinRecordSettings {
-    show: boolean;
-    // Base Positioning (Group)
-    playerOffsetX: number;
-    playerOffsetY: number;
-    opponentOffsetX: number;
-    opponentOffsetY: number;
+// Config Imports
+import { 
+    type BoardSettings, 
+    type TurnStatus, 
+    type WinRecordSettings,
+    type HandSettings,
+    type TurnIndicatorSettings,
+    type AnimationConfig,
+    defaultBoardSettings
+} from '../config/boardConfig';
 
-    // Screen Positioning (%)
-    playerXPercent: number;
-    playerYPercent: number;
-    opponentXPercent: number;
-    opponentYPercent: number;
-
-    // Element Positioning (Relative)
-    playerTextOffsetX: number;
-    playerTextOffsetY: number;
-    playerRhombusOffsetX: number;
-    playerRhombusOffsetY: number;
-    
-    opponentTextOffsetX: number;
-    opponentTextOffsetY: number;
-    opponentRhombusOffsetX: number;
-    opponentRhombusOffsetY: number;
-
-    scale: number;
-    spacingX: number;
-    emptyColor: string;
-    fillColor: string;
-    strokeColor: string;
-    strokeWidth: number;
-    playerTextColor: string;
-    opponentTextColor: string;
-    invertOpponent: boolean;
-    fontSize: number;
-    rhombusScale: number;
-}
+export type { BoardSettings, TurnStatus, WinRecordSettings, HandSettings, TurnIndicatorSettings, AnimationConfig };
 
 export interface PlayerStoreData {
     slots: Record<TerrainId, BoardSlot>;
     wins: number; // Track rounds won per player
     turnStatus: TurnStatus;
+    hand: CardInstance[];
 }
 
-export interface BoardSettings {
-    // Layout Percentages
-    slotHeightPercent: number; // 0.0 to 1.0 (relative to Screen Height)
-    boardScale: number;
-    boardX: number;
-    boardY: number;
+// 
+// HYDRATION IMPORT
+//
+import { hydrateCard, hydrateHand } from '../ui/utils/cardHydration';
+import { createStarter1Deck } from '@skirmish/engine';
+import { mapEngineStateToStore } from '../utils/stateMapper';
+import { GameEvent } from '@skirmish/engine';
 
-    // Slot Config
-    slotAspectRatio: number;   // width / height
-    
-    // Rows
-    playerRowY: number; // % of Viewport Height
-    enemyRowY: number;
+// GameState Interface merged below
 
-    // Gaps
-    playerSlotGapPercent: number; // % of Viewport Width
-    enemySlotGapPercent: number;
-
-    // Power Circle Visuals
-    powerCircleOffsetX: number;
-    powerCircleOffsetY: number;
-    powerCircleRadius: number;
-    powerCircleFontSize: number;
-    powerCircleStrokeWidth: number;
-    powerCircleFlipPositions: boolean;
-    
-    // Power Circle Colors
-    powerCirclePlayerColor: string; // Hex
-    powerCircleEnemyColor: string;  // Hex
-    powerCircleStrokeColor: string; // Hex
-    powerCircleWinningStrokeColor: string; // Hex
-    powerCircleWinningGlowColor: string; // Hex
-
-    // Power Circle Scales & Animations
-    powerCircleScaleContested: number;
-    powerCircleScaleWinning: number;
-    powerCircleWinGlowScaleMin: number;
-    powerCircleWinGlowScaleMax: number;
-    powerCircleWinGlowSpeed: number;
-    powerCircleTextStrokeWidth: number; // Pixels
-    powerCircleTextStrokeColor: string; // Hex
-
-    // Slot Visuals
-    slotTargetColor: string; // Hex
-    slotDropColor: string;   // Hex
-    slotGlowRadius: number;
-    slotGlowIntensity: number; // 0-1 alpha
-    slotPulseSpeed: number;    // seconds
-
-    // Card Margins (New)
-    cardMarginTop: number;
-    cardMarginBottom: number;
-    cardMarginLeft: number;
-    cardMarginRight: number;
-
-
-
-    // Slot Modifier Visuals
-    slotModifierOffsetX: number;
-    slotModifierOffsetY: number;
-    slotModifierFontSize: number;
-    slotModifierFontColor: string; // Hex (Default/Neutral)
-    slotModifierPositiveColor: string; // Hex
-    slotModifierNegativeColor: string; // Hex
-    slotModifierStrokeColor: string; // Hex
-    slotModifierStrokeWidth: number;
-
-    // Animation Settings
-    animationSettings: {
-        playerPlay: AnimationConfig;
-        opponentPlay: AnimationConfig;
-    };
-
-    // Pass Button Settings
-    passButtonSettings: {
-        // Position percentage (0-100)
-        x: number;
-        y: number;
-        
-        colors: {
-            pass: string;
-            passClicked: string;
-            done: string;
-            doneClicked: string;
-            cancel: string;
-            cancelClicked: string;
-            conclude: string;
-            concludeClicked: string;
-            text: string;
-        };
-        
-        glow: {
-            radius: number;
-            intensity: number;
-            color: string; // Typically matches mode color, but user said "glowing properties here as well (don't need them to be per mode. config are for all modes)"
-            // Wait, "I want it to be glowing when its Normal status"
-            // "don't need them to be per mode. config are for all modes" -> So one glow config
-            speed: number;
-        };
-        
-        scale: number;
-    };
-
-    // Hand Tooltip Settings (Keywords & Relative Position)
-    handTooltipSettings: {
-        show: boolean;
-        offsetX: number;
-        offsetY: number;
-        width: number;
-        backgroundColor: string;
-        borderColor: string;
-        borderWidth: number;
-    };
-
-    // Board Tooltip Config (Global Preview)
-    boardTooltipScale: number;
-    boardTooltipGap: number; // Single offset X (Left/Right alignment)
-    boardTooltipOffsetY: number; // Vertical offset
-
-    // Win Record Visuals
-    winRecordSettings: WinRecordSettings;
-    
-    // Turn Indicators
-    turnIndicatorSettings: TurnIndicatorSettings;
-}
-
-export type TurnStatus = 'none' | 'turn' | 'done' | 'last_say';
-
-export interface TurnIndicatorSettings {
-    show: boolean;
-
-    // Positioning
-    playerXPercent: number;
-    playerYPercent: number;
-    playerOffsetX: number;
-    playerOffsetY: number;
-
-    opponentXPercent: number;
-    opponentYPercent: number;
-    opponentOffsetX: number;
-    opponentOffsetY: number;
-
-    // Styling
-    fontSize: number;
-    playerTextColor: string;
-    opponentTextColor: string;
-    
-    // Status Logic
-    // We can add more here if needed, e.g. custom text overrides
-}
-
-export interface AnimationConfig {
-    hoverScale: number;
-    hoverOffsetX: number;  // Pixels relative to target X
-    hoverOffsetY: number;  // Pixels relative to target Y
-    waitDuration: number;  // Seconds
-    slamDuration: number;  // Seconds
-    slamScalePeak: number;
-    slamScaleLand: number;
-    
-    // New Sequencing & Timing
-    moveDuration: number; // Seconds (Time to travel to hover position)
-    moveEase: string;
-    triggerNextOn: 'start' | 'moveDone' | 'hoverDone' | 'slamDone';
-    slamEase: string;
-}
+// Config Types Removed (Moved to boardConfig.ts)
 
 export interface DragState {
   isDragging: boolean;
@@ -248,9 +71,10 @@ export interface DragState {
   hoveredSlot: { playerId: PlayerId, terrainId: TerrainId } | null;
 }
 
-interface GameState {
+interface GameStoreState {
   // Current Board State
   players: Record<PlayerId, PlayerStoreData>;
+  gameState: any; // Engine State
 
   boardSettings: BoardSettings;
   dragState: DragState;
@@ -264,20 +88,33 @@ interface GameState {
   opponentCards: any[]; // Using any[] temporarily if CardInstance not imported, or update import
   setOpponentCards: (cards: any[]) => void;
 
+  // Event Queue (New)
+  eventQueue: GameEvent[];
+  enqueueEvent: (event: GameEvent) => void;
+  consumeEvent: () => void; // Removes the first event
+  clearEventQueue: () => void;
+
   
   // Actions
   registerSlot: (slot: Omit<BoardSlot, 'id'>) => void;
   updateSlotPosition: (playerId: PlayerId, terrainId: TerrainId, x: number, y: number, width: number, height: number) => void;
   
   // Interactions
-  setHoveredSlot: (slot: { playerId: PlayerId, terrainId: TerrainId } | null) => void;
-  setHoveredCard: (card: CardInstance | null) => void; // Added
+  // Actions & State
+  setHoveredCard: (card: CardInstance | null) => void;
   setPlayerWins: (playerId: PlayerId, wins: number) => void;
-  setTurn: (turn: 'player' | 'opponent') => void; // Added
-  setSlotStatus: (targets: { playerId: PlayerId, terrainId: TerrainId }[], status: 'idle' | 'showDrop' | 'showTarget') => void;
+  setTurn: (turn: 'player' | 'opponent') => void;
+  
+  // Slot Visuals 
+  setSlotStatus: (targets: number[] | { playerId: PlayerId, terrainId: TerrainId }[], status: 'idle' | 'showDrop' | 'showTarget') => void;
   setSlotPower: (targets: { playerId: PlayerId, terrainId: TerrainId }[], power: number, state: 'none' | 'contested' | 'winning') => void;
-  setSlotModifier: (targets: { playerId: PlayerId, terrainId: TerrainId }[], modifier: number) => void; // Added
+  setSlotModifier: (targets: { playerId: PlayerId, terrainId: TerrainId }[], modifier: number) => void;
   resetSlotStatus: () => void; // Reset all to idle
+  
+  removeCardFromHand: (playerId: PlayerId, cardId: string) => void;
+  addCardToHand: (playerId: PlayerId, card: CardInstance) => void;
+  // Helper: Map Engine State to Store State
+  syncHandFromEngine: (playerId: PlayerId, engineHand: any[]) => void;
 
   occupySlot: (playerId: PlayerId, terrainId: TerrainId, cardId: string, instance?: CardInstance) => void;
   clearSlot: (playerId: PlayerId, terrainId: TerrainId) => void;
@@ -285,205 +122,113 @@ interface GameState {
 
   // Settings
   updateBoardSettings: (settings: Partial<BoardSettings>) => void;
-  setDragState: (state: Partial<DragState>) => void;
+  setDragState: (active: boolean, cardId?: string) => void;
+  
+  // UI Interaction
+  setHoveredSlot: (slotId: number | { playerId: PlayerId, terrainId: TerrainId } | null) => void;
+  // setSlotStatus: (slotIds: number[], status: SlotStatus) => void; // Merged above
+  hoveredSlot: number | null;
+
+  // Engine Integration
+  // engine?: GameEngine; -- Removed to avoid freezing. Use via engineInstance.ts logic/handlers.
+  setInitialGameState: (localPlayerId: PlayerId, gameState: any, hands: { p0: any[], p1: any[] }, mode: string) => void;
+  localPlayerId?: PlayerId;
+  gameMode?: string;
+
+  // Input & AI State
+  pendingInputRequest: any | null; 
+  pendingInputPlayerId: PlayerId | null;
+  isAIThinking: boolean;
+  aiThinkingPlayerId: PlayerId | null;
+  downloadGameLog: () => void;
 }
 
-export const useGameStore = create<GameState>((set, get) => ({
+export const useGameStore = create<GameStoreState>((set, get) => ({
     // Initial State
     players: {
-        0: { slots: {} as Record<TerrainId, BoardSlot>, wins: 0, turnStatus: 'none' },
-        1: { slots: {} as Record<TerrainId, BoardSlot>, wins: 0, turnStatus: 'none' }
+        0: { slots: {} as Record<TerrainId, BoardSlot>, wins: 0, turnStatus: 'none', hand: [] },
+        1: { slots: {} as Record<TerrainId, BoardSlot>, wins: 0, turnStatus: 'none', hand: [] }
     },
     currentTurn: 'player', // Default
-    boardSettings: {
-        boardScale: 0.9,
-        boardX: 0,
-        boardY: 0,
-        slotHeightPercent: 0.25,
-        slotAspectRatio: 0.8,
-        playerRowY: 0.65, // Lower half
-        enemyRowY: 0.30,  // Upper half
-        playerSlotGapPercent: 0.025,
-        enemySlotGapPercent: 0.025,
-        
-        // Power Circle Defaults
-        powerCircleOffsetX: 0,
-        powerCircleOffsetY: 0,
-        powerCircleRadius: 24,
-        powerCircleFontSize: 25,
-        powerCircleStrokeWidth: 4,
-        powerCircleFlipPositions: false,
-
-        // Power Circle Colors Defaults
-        powerCirclePlayerColor: '#3b82f6', // Blue-500
-        powerCircleEnemyColor: '#f97316',  // Orange-500
-        powerCircleStrokeColor: '#000000', // Black
-        powerCircleWinningStrokeColor: '#ffd700', // Gold
-        powerCircleWinningGlowColor: '#ffd700', // Gold
-
-        // Power Circle Scales & Animations Defaults
-        powerCircleScaleContested: 1.0,
-        powerCircleScaleWinning: 1.1,
-        powerCircleWinGlowScaleMin: 1.4,
-        powerCircleWinGlowScaleMax: 1.7,
-        powerCircleWinGlowSpeed: 2.0,
-        powerCircleTextStrokeWidth: 1.0, // Default stroke
-        powerCircleTextStrokeColor: '#000000', // Default black
-
-        // Slot Visuals Defaults
-        slotTargetColor: '#facc15', // Yellow-400
-        slotDropColor: '#60a5fa',   // Blue-400
-        slotGlowRadius: 10,
-        slotGlowIntensity: 0.5,
-        slotPulseSpeed: 1.1,
-
-        // Card Margins Defaults
-        cardMarginTop: 0.03,
-        cardMarginBottom: 0.03,
-        cardMarginLeft: 0.03,
-        cardMarginRight: 0.03,
-
-        // Board Tooltip Defaults
-        boardTooltipScale: 0.35,
-        boardTooltipLeftOffsetX: -20,
-        boardTooltipRightOffsetX: 20,
-        boardTooltipGap: 20,
-        boardTooltipOffsetY: 0,
-
-
-
-        // Slot Modifier Defaults
-        slotModifierOffsetX: 0,
-        slotModifierOffsetY: 130, 
-        slotModifierFontSize: 32,
-        slotModifierFontColor: '#ffffff',
-        slotModifierPositiveColor: '#4ade80', // Green-400
-        slotModifierNegativeColor: '#f87171', // Red-400
-        slotModifierStrokeColor: '#000000',
-        slotModifierStrokeWidth: 0,
-
-        animationSettings: {
-            playerPlay: {
-                hoverScale: 1.2,
-                hoverOffsetX: 0,
-                hoverOffsetY: -75,
-                waitDuration: 0.5,
-                slamDuration: 0.2,
-                slamScalePeak: 1.5,
-                slamScaleLand: 1,
-                moveDuration: 0.15,
-                moveEase: "easeOut",
-                triggerNextOn: "hoverDone",
-                slamEase: "easeIn"
-            },
-            opponentPlay: {
-                hoverScale: 1.2,
-                hoverOffsetX: 0,
-                hoverOffsetY: -75,
-                waitDuration: 0.5,
-                slamDuration: 0.2,
-                slamScalePeak: 1.5,
-                slamScaleLand: 1,
-                moveDuration: 0.25,
-                moveEase: "easeOut",
-                triggerNextOn: "slamDone",
-                slamEase: "easeIn"
-            }
-        },
-
-        passButtonSettings: {
-            x: 90, // Bottom-rightish
-            y: 90,
-            colors: {
-                pass: '#3b82f6',   // Blue
-                passClicked: '#2563eb', // Blue-600
-                done: '#10b981',   // Green
-                doneClicked: '#059669', // Green-600
-                cancel: '#ef4444', // Red
-                cancelClicked: '#b91c1c', // Red-700
-                conclude: '#a855f7', // Purple-500
-                concludeClicked: '#7e22ce', // Purple-700
-                text: '#ffffff'
-            },
-            glow: {
-                radius: 15,
-                intensity: 0.6,
-                color: '#ffffff',
-                speed: 1.5
-            },
-            scale: 1.0
-        },
-
-        // Hand Tooltip Defaults
-        handTooltipSettings: {
-            show: true,
-            offsetX: 100,
-            offsetY: 0,
-            width: 250,
-            backgroundColor: '#1c1917', // stone-900
-            borderColor: '#44403c',     // stone-700
-            borderWidth: 1
-        },
-
-
-
-        // Win Record Defaults
-        // Win Record Defaults
-        winRecordSettings: {
-            show: true,
-            playerOffsetX: 0,
-            playerOffsetY: 0,
-            opponentOffsetX: 0,
-            opponentOffsetY: 0,
-            playerXPercent: 5,
-            playerYPercent: 95,
-            opponentXPercent: 5,
-            opponentYPercent: 4,
-            playerTextOffsetX: 28,
-            playerTextOffsetY: 0,
-            playerRhombusOffsetX: 30,
-            playerRhombusOffsetY: -40,
-            opponentTextOffsetX: 62,
-            opponentTextOffsetY: 0,
-            opponentRhombusOffsetX: 30,
-            opponentRhombusOffsetY: 40,
-            scale: 1,
-            spacingX: 15,
-            emptyColor: "#44403c",
-            fillColor: "#fbbf24",
-            strokeColor: "#ffffff",
-            strokeWidth: 2,
-            playerTextColor: "#3d91ff",
-            opponentTextColor: "#f97316",
-            invertOpponent: false,
-            fontSize: 20,
-            rhombusScale: 1
-        },
-
-        // Turn Indicator Defaults
-        turnIndicatorSettings: {
-            show: true,
-            playerXPercent: 10,
-            playerYPercent: 65,
-            playerOffsetX: 0,
-            playerOffsetY: 0,
-            opponentXPercent: 10,
-            opponentYPercent: 30,
-            opponentOffsetX: 0,
-            opponentOffsetY: 0,
-            fontSize: 28,
-            playerTextColor: "#3d91ff",
-            opponentTextColor: "#f97316"
-        }
-    },
+    gameState: null,
+    boardSettings: defaultBoardSettings,
     dragState: {
         isDragging: false,
         cardId: null,
         hoveredSlot: null
     },
 
+    // Input & AI Initialization
+    pendingInputRequest: null,
+    pendingInputPlayerId: null,
+    isAIThinking: false,
+    aiThinkingPlayerId: null,
+    downloadGameLog: () => { console.log('Download Log placeholder'); },
+
     hoveredCard: null,
 
+    hoveredSlot: null,
+    
+    // Event Queue Implementation
+    eventQueue: [],
+    enqueueEvent: (event) => set((state) => {
+        // HYDRATION TRIGGER: Update hand on relevant events
+        const newEventLog = [...state.eventQueue, event];
+        
+        // We can optimistically update hand here if needed, or wait for consumtion?
+        // Actually, for immediate visual feedback (like draw), we should update the store's hand state now.
+        // But let's check if we have access to the engine state? 
+        // The engine emits the event, meaning its state might be updated.
+        // However, we only have reference to `state.engine`.
+        
+        // Let's implement a specific listener in initGame that calls a store *action* to sync hand.
+        // But for now, we'll do it lazily or via the standard event loop if the engine state is attached.
+        
+        // Actually, initGame sets up the listener. Let's look at initGame below.
+        
+        return { eventQueue: newEventLog };
+    }),
+    consumeEvent: () => set((state) => ({ eventQueue: state.eventQueue.slice(1) })),
+    clearEventQueue: () => set({ eventQueue: [] }),
+
+    // 
+    // INIT GAME IMPLEMENTATION - REMOVED
+    //
+    setInitialGameState: (localPlayerId, gameState, hands, mode) => {
+        const getTurnStatus = (pid: number): TurnStatus => {
+            if (gameState.players[pid].isDone) return 'done';
+            if (gameState.currentPlayer === pid) return 'turn';
+            return 'none';
+        };
+
+        set({
+            localPlayerId,
+            gameMode: mode,
+            // Use Mapper to create a clean, circular-free copy
+            gameState: mapEngineStateToStore(gameState), 
+            currentTurn: gameState.currentPlayer === 0 ? 'player' : 'opponent',
+            players: {
+                ...get().players, 
+                0: { 
+                    ...get().players[0], 
+                    hand: hydrateHand(hands.p0),
+                    turnStatus: getTurnStatus(0),
+                    wins: gameState.players[0].skirmishesWon
+                },
+                1: { 
+                    ...get().players[1], 
+                    hand: hydrateHand(hands.p1),
+                    turnStatus: getTurnStatus(1),
+                    wins: gameState.players[1].skirmishesWon
+                }
+            }
+        });
+    },
+
+    // Old InitGame Removed
+
+    // Network Stubs
+    // Network Stubs Removed
 
     // Opponent Hand Implementation
     opponentCards: [],
@@ -494,7 +239,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         const newPlayers = { ...state.players };
         
         // Ensure player structure exists (it should from initial state, but helpful for safety)
-        if (!newPlayers[playerId]) newPlayers[playerId] = { slots: {} as Record<TerrainId, BoardSlot>, wins: 0, turnStatus: 'none' };
+        if (!newPlayers[playerId]) newPlayers[playerId] = { slots: {} as Record<TerrainId, BoardSlot>, wins: 0, turnStatus: 'none', hand: [] };
 
         newPlayers[playerId].slots = {
             ...newPlayers[playerId].slots,
@@ -525,13 +270,12 @@ export const useGameStore = create<GameState>((set, get) => ({
         };
     }),
     
-    setHoveredSlot: (hoveredSlot) => set((state) => ({ 
-        dragState: { ...state.dragState, hoveredSlot } 
-    })),
+    // Old Duplicate Action Removed
 
+    // Restored Actions
     setHoveredCard: (card) => set({ hoveredCard: card }),
 
-    setPlayerWins: (playerId: PlayerId, wins: number) => set((state) => ({
+    setPlayerWins: (playerId, wins) => set((state) => ({
         players: {
             ...state.players,
             [playerId]: { ...state.players[playerId], wins }
@@ -539,23 +283,6 @@ export const useGameStore = create<GameState>((set, get) => ({
     })),
 
     setTurn: (turn) => set({ currentTurn: turn }),
-
-    setSlotStatus: (targets, status) => set((state) => {
-        const newPlayers = { ...state.players };
-        targets.forEach(({ playerId, terrainId }) => {
-            if (newPlayers[playerId] && newPlayers[playerId].slots[terrainId]) {
-                // Ensure we spread correctly to trigger updates
-                newPlayers[playerId] = { 
-                    ...newPlayers[playerId],
-                    slots: {
-                        ...newPlayers[playerId].slots,
-                        [terrainId]: { ...newPlayers[playerId].slots[terrainId], status }
-                    }
-                };
-            }
-        });
-        return { players: newPlayers };
-    }),
 
     setSlotPower: (targets, power, powerState) => set((state) => {
         const newPlayers = { ...state.players };
@@ -589,22 +316,11 @@ export const useGameStore = create<GameState>((set, get) => ({
         return { players: newPlayers };
     }),
 
-    resetSlotStatus: () => set((state) => {
-        const newPlayers = { ...state.players };
-        
-        // Reset ALL slots for both players
-        ([0, 1] as PlayerId[]).forEach(pid => {
-            const playerSlots = newPlayers[pid]?.slots;
-            if (playerSlots) {
-                // Need to iterate keys of the record
-                (Object.keys(playerSlots) as unknown as TerrainId[]).forEach(tid => {
-                    playerSlots[tid] = { ...playerSlots[tid], status: 'idle' };
-                });
-            }
-        });
-        
-        return { players: newPlayers };
-    }),
+    // Old resetSlotStatus Removed
+
+    addCardToHand: (playerId, card) => set(produce((state: GameStoreState) => {
+        state.players[playerId].hand.push(card);
+    })),
 
     occupySlot: (playerId: PlayerId, terrainId: TerrainId, cardId: string, instance?: CardInstance) => set((state) => {
         const p = state.players[playerId];
@@ -623,6 +339,26 @@ export const useGameStore = create<GameState>((set, get) => ({
                             status: 'idle'
                         }
                     }
+                }
+            }
+        };
+    }),
+
+    syncHandFromEngine: (playerId, engineHand) => set(produce((state: GameStoreState) => {
+        const hydrated = hydrateHand(engineHand);
+        console.log(`[GameStore] Syncing Hand for P${playerId}. Engine Cards: ${engineHand.length}, Hydrated: ${hydrated.length}`);
+        state.players[playerId].hand = hydrated;
+    })),
+
+    removeCardFromHand: (playerId, cardId) => set((state) => {
+        const p = state.players[playerId];
+        if (!p) return {};
+        return {
+            players: {
+                ...state.players,
+                [playerId]: {
+                    ...p,
+                    hand: p.hand.filter(c => c.id !== cardId)
                 }
             }
         };
@@ -660,7 +396,81 @@ export const useGameStore = create<GameState>((set, get) => ({
         boardSettings: { ...state.boardSettings, ...settings }
     })),
 
-    setDragState: (newState) => set((state) => ({
-        dragState: { ...state.dragState, ...newState }
+    setDragState: (active, cardId) => set((state) => ({
+        dragState: { ...state.dragState, isDragging: active, draggedCardId: cardId || null }
     })),
+
+    setHoveredSlot: (slotId: number | { playerId: PlayerId, terrainId: TerrainId } | null) => {
+        if (slotId === null) set({ hoveredSlot: null });
+        else if (typeof slotId === 'number') set({ hoveredSlot: slotId });
+        else {
+             // Convert object to number ID (0-9)
+             // Enemy (Opponent, usually ID 1) -> Indices 0-4
+             // Player (Local, usually ID 0) -> Indices 5-9
+             // NOTE: This assumes perspective of player 0 being "bottom".
+             const { playerId, terrainId } = slotId;
+             // If player is 0, status is 5+tId. If player is 1, status is tId.
+             // This logic depends on BoardScene mapping.
+             const numId = playerId === 0 ? 5 + terrainId : terrainId;
+             set({ hoveredSlot: numId });
+        }
+    },
+
+    setSlotStatus: (targets, status) => set((state) => {
+         const localId = state.localPlayerId ?? 0;
+         const opponentId = localId === 0 ? 1 : 0;
+         const newPlayers = { ...state.players };
+         
+         // Clone to avoid mutation
+         newPlayers[0] = { ...newPlayers[0], slots: { ...newPlayers[0].slots } };
+         newPlayers[1] = { ...newPlayers[1], slots: { ...newPlayers[1].slots } };
+
+         const updateSlot = (pid: PlayerId, tid: TerrainId) => {
+              if (newPlayers[pid] && newPlayers[pid].slots[tid]) {
+                  newPlayers[pid].slots[tid] = { ...newPlayers[pid].slots[tid], status: status };
+              }
+         };
+
+         if (Array.isArray(targets)) {
+             targets.forEach(target => {
+                 if (typeof target === 'number') {
+                     // Numeric ID logic
+                     let pid: PlayerId;
+                     let tid: TerrainId;
+                     // 0-4: Opponent (Player 1 if local is 0)
+                     // 5-9: Player (Player 0 if local is 0)
+                     if (target < 5) {
+                         pid = opponentId;
+                         tid = target as TerrainId;
+                     } else {
+                         pid = localId;
+                         tid = (target - 5) as TerrainId;
+                     }
+                     updateSlot(pid, tid);
+                 } else {
+                     // Object logic
+                     updateSlot(target.playerId, target.terrainId);
+                 }
+             });
+         }
+         
+         return { ...state, players: newPlayers };
+    }),
+
+    resetSlotStatus: () => set((state) => {
+        const resetSlots = (slots: Record<TerrainId, BoardSlot>) => {
+            const newSlots = { ...slots };
+            (Object.keys(newSlots) as unknown as TerrainId[]).forEach(tid => {
+                newSlots[tid] = { ...newSlots[tid], status: 'idle' };
+            });
+            return newSlots;
+        };
+        
+        return {
+            players: {
+                0: { ...state.players[0], slots: resetSlots(state.players[0].slots) },
+                1: { ...state.players[1], slots: resetSlots(state.players[1].slots) }
+            }
+        };
+    }),
 }));

@@ -1,6 +1,6 @@
 import type { DesyncEvent } from './types';
-import type { PlayerId, GameAction } from '../engine/types';
-import type { GameEngine } from "../engine";
+import type { PlayerId, GameAction } from '@skirmish/engine';
+import type { GameEngine } from "@skirmish/engine";
 import type { FirebaseService } from './firebase';
 import { CommandBuffer } from './CommandBuffer';
 

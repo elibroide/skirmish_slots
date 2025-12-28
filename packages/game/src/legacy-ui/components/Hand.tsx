@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Card as CardType } from '../../engine/types';
+import type { Card as CardType } from '@skirmish/engine';
 import { DraggableCard } from './DraggableCard';
 
 interface HandProps {

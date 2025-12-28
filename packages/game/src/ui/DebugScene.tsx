@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Hand } from './components/Hand';
 import { HandSettings, DEFAULT_SETTINGS } from './components/Card';
 import { useGameStore, TurnStatus } from '../store/gameStore';
-import { TerrainId, PlayerId } from '../engine/types';
+import { TerrainId, PlayerId } from '@skirmish/engine';
 import orderData from './Data/order.json';
 import type { CardInstance } from '@skirmish/card-maker';
 import { PhaserLayer } from '../phaser/PhaserLayer';
 import { Board } from './components/Board';
 import { AnimationLayer } from './AnimationLayer';
-import { AnimationManager } from '../engine/AnimationManager';
+import { useAnimationStore } from '../store/animationStore';
 import { PassButton } from './components/PassButton';
 import { CardTooltip } from './components/CardTooltip';
 import { BoardCardTooltip } from './components/BoardCardTooltip';
@@ -1459,8 +1459,8 @@ export const DebugScene: React.FC<DebugSceneProps> = ({ onBack }) => {
           // Ideally opponent hand settings should be in store too, but they are in 'settings' state found in DebugScene.
           // Since this is a console command, using defaults or approximating is okay for now.
 
-          AnimationManager.getInstance().play({
-            id: crypto.randomUUID(),
+          useAnimationStore.getState().play({
+            id: 'test-play-' + crypto.randomUUID(),
             type: 'card_play',
             config: animSettings,
             payload: {
@@ -1539,8 +1539,8 @@ export const DebugScene: React.FC<DebugSceneProps> = ({ onBack }) => {
 
     if (cardInstance)
     {
-      AnimationManager.getInstance().play({
-        id: crypto.randomUUID(),
+      useAnimationStore.getState().play({
+        id: 'test-play-' + crypto.randomUUID(),
         type: 'card_play',
         config: animSettings,
         payload: {

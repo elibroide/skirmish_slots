@@ -1,11 +1,11 @@
-import { GameEngine } from '../engine/GameEngine';
-import { HumanController } from '../engine/controllers/HumanController';
-import { NetworkController } from '../engine/controllers/NetworkController';
+import { GameEngine } from '@skirmish/engine';
+import { HumanController } from '@skirmish/engine';
+import { NetworkController } from './NetworkController';
 import { FirebaseService, type FirebaseConfig } from './firebase';
 import { NetworkSync } from './NetworkSync';
 import { CommandBuffer } from './CommandBuffer';
-import { createDeck } from '../engine/cards';
-import type { PlayerId } from '../engine/types';
+import { createDeck } from '@skirmish/engine';
+import type { PlayerId } from '@skirmish/engine';
 
 /**
  * NetworkGameManager - High-level API for creating and joining network games

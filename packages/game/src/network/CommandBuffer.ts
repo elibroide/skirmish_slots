@@ -1,4 +1,4 @@
-import type { GameAction } from '../engine/types';
+import type { GameAction } from '@skirmish/engine';
 
 /**
  * CommandBuffer - Stores incoming network actions indexed by sequence

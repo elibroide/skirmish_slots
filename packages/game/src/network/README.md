@@ -112,7 +112,7 @@ const firebaseConfig = {
 
 ```typescript
 import { NetworkGameManager } from './network/NetworkGameManager';
-import { CardRegistry } from './engine/cards';
+import { CardRegistry } from '@skirmish/engine';
 
 // Build decks
 const localDeck = [

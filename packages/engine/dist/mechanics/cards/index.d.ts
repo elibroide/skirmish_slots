@@ -1,0 +1,10 @@
+import type { PlayerId } from '../../core/types';
+import type { GameEngine } from '../../core/GameEngine';
+import type { Card } from './Card';
+import { createUnitCard } from './CardFactory';
+export { createUnitCard };
+import { UNIT_CARD_DEFINITIONS } from './cardDefinitions';
+export { UNIT_CARD_DEFINITIONS };
+export declare function createCard(cardId: string, owner: PlayerId, engine: GameEngine): Card;
+export declare function getAllCardIds(): string[];
+export declare function createDeck(cardIds: string[], owner: PlayerId, engine: GameEngine): Card[];

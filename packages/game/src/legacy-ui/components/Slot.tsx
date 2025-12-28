@@ -1,5 +1,5 @@
 import React from 'react';
-import type { UnitCard, PlayerId } from '../../engine/types';
+import type { UnitCard, PlayerId, TerrainId } from '@skirmish/engine';
 import { useGameStore } from '../../store/gameStore';
 import { PowerCircle } from './PowerCircle';
 import cardData from '../../ui/Data/order.json';
@@ -43,7 +43,9 @@ export const Slot: React.FC<SlotProps> = ({
 
   // Connect to Store for Visual State (Status, Power)
   // We use store lookup if slotId is provided.
-  const slotData = useGameStore((state) => (slotId !== undefined ? state.slots[slotId] : null));
+  // Connect to Store for Visual State (Status, Power)
+  // Connect to Store for Visual State (Status, Power)
+  const slotData = useGameStore((state) => state.players[playerId]?.slots[terrainId as TerrainId] || null);
 
   const status = slotData?.status || 'idle';
   const power = slotData?.power || 0;

@@ -4,7 +4,5 @@ import App from './legacy-ui/App';
 import './legacy-ui/styles/globals.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+  <App />
 );

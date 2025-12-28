@@ -1,5 +1,5 @@
 import React from 'react';
-import type { PlayerId, GameState } from '../../engine/types';
+import type { PlayerId, GameState } from '@skirmish/engine';
 
 export type GameOverModalProps = {
   gameState: GameState;

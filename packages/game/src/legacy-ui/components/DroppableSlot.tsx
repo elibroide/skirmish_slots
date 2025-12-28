@@ -1,7 +1,7 @@
 import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { Slot } from './Slot';
-import type { TerrainId, PlayerId, UnitCard } from '../../engine/types';
+import type { TerrainId, PlayerId, UnitCard } from '@skirmish/engine';
 
 interface DroppableSlotProps {
   terrainId: TerrainId;
