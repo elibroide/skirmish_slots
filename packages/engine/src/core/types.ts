@@ -10,7 +10,8 @@ export interface SlotCoord {
 
 export type InputRequest = 
   | { type: 'target'; targetType: string; context: string; validTargetIds?: string[]; validSlots?: SlotCoord[] }
-  | { type: 'choose_option'; options: string[]; context: string };
+  | { type: 'choose_option'; options: string[]; context: string }
+  | { type: 'select_target'; candidates: any[]; min: number; max: number; context?: string };
 
 // Card types (minimal)
 // Note: We avoid importing Card/UnitCard classes here to prevent cycles
@@ -113,11 +114,11 @@ export type GameAction =
 export type GameEvent = (
   | { type: 'CARD_PLAYED'; playerId: PlayerId; cardId: string; cardName: string; cardType: 'unit' | 'action'; targetSlot?: SlotCoord }
   | { type: 'UNIT_DEPLOYED'; unitId: string; unitName: string; terrainId: TerrainId; playerId: PlayerId }
-  | { type: 'UNIT_DIED'; unitId: string; unitName: string; terrainId: TerrainId; cause: string }
+  | { type: 'UNIT_DIED'; unitId: string; unitName: string; terrainId: TerrainId; playerId: PlayerId; cause: string }
   | { type: 'UNIT_POWER_CHANGED'; unitId: string; terrainId: TerrainId; oldPower: number; newPower: number; amount: number }
   | { type: 'UNIT_DAMAGED'; unitId: string; terrainId: TerrainId; amount: number; newPower: number }
   | { type: 'UNIT_HEALED'; unitId: string; terrainId: TerrainId; amount: number; newPower: number }
-  | { type: 'UNIT_CONSUMED'; unitId: string; unitName: string; terrainId: TerrainId }
+  | { type: 'UNIT_CONSUMED'; unitId: string; unitName: string; terrainId: TerrainId; consumerId?: string }
   | { type: 'UNIT_BOUNCED'; unitId: string; unitName: string; terrainId: TerrainId; toHand: boolean }
   | { type: 'UNIT_MOVED'; unitId: string; fromTerrainId: TerrainId; toTerrainId: TerrainId; playerId: PlayerId }
   | { type: 'SLOT_MODIFIER_CHANGED'; terrainId: TerrainId; playerId: PlayerId; newModifier: number }
@@ -145,7 +146,7 @@ export type GameEvent = (
   | { type: 'ROUND_ENDED'; roundNumber: number; winner: PlayerId | null; vp: [number, number] }
   | { type: 'SLOT_RESOLVED'; slotId: number; winner: PlayerId | null; unit0Power: number; unit1Power: number }
   | { type: 'TARGET_REQUIRED'; playerId: PlayerId } // Legacy target request
-  ) & { entity?: any };
+  ) & { entity?: any; unitState?: UnitState };
 
 export interface EffectResult {
   newState: GameState;

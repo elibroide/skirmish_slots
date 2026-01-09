@@ -4,7 +4,7 @@ import { GameEngine } from '@skirmish/engine';
 import { PlayerId, GameAction } from '@skirmish/engine';
 import { Board } from './components/Board';
 import { ConnectedHand } from './components/ConnectedHand';
-import { PhaserLayer } from '../phaser/PhaserLayer';
+// import { PhaserLayer } from '../phaser/PhaserLayer'; // Disabled
 import { AnimationLayer } from './AnimationLayer';
 import { PassButton } from './components/PassButton';
 import { GameHUD } from './components/GameHUD';
@@ -12,6 +12,7 @@ import { BoardCardTooltip } from './components/BoardCardTooltip';
 import { useEventProcessor } from './hooks/useEventProcessor';
 import orderData from './Data/order.json'; // Ensure path is correct relative to GameScene
 import { setGlobalEngine } from '@skirmish/engine';
+import { useAnimationStore } from '../store/animationStore';
 
 interface GameSceneProps {
     engine: GameEngine;
@@ -23,10 +24,10 @@ export const GameScene: React.FC<GameSceneProps> = ({ engine, localPlayerId, onB
     // 1. Initialize Event Processor
     useEventProcessor(localPlayerId);
 
-    // 2. Connect to Store Settings
-    const boardSettings = useGameStore(state => state.boardSettings);
-    const handSettings = boardSettings.handSettings;
+    // 2. Connect to Store Settings using granular selectors to avoid excessive re-renders
+    const handSettings = useGameStore(state => state.boardSettings.handSettings);
     const currentTurn = useGameStore(state => state.currentTurn);
+    // Use optional chaining carefully - or better, split into two selectors
     const turnStatus = useGameStore(state => state.players[localPlayerId]?.turnStatus || 'none');
 
     // Pass Button State
@@ -61,6 +62,12 @@ export const GameScene: React.FC<GameSceneProps> = ({ engine, localPlayerId, onB
         // Submit Action
         try
         {
+            // Register animation start position
+            if (startPosition)
+            {
+                useAnimationStore.getState().registerPendingDrop(cardId, startPosition);
+            }
+
             await engine.submitAction({
                 type: 'PLAY_CARD',
                 playerId: localPlayerId,
@@ -109,8 +116,8 @@ export const GameScene: React.FC<GameSceneProps> = ({ engine, localPlayerId, onB
 
     return (
         <div className="min-h-screen bg-stone-950 overflow-hidden relative flex flex-col items-center justify-end pb-12">
-            {/* 1. Phaser Background & Animation Canvas */}
-            <PhaserLayer />
+            {/* 1. Phaser Background & Animation Canvas - DISABLED */}
+            {/* <PhaserLayer /> */}
 
             {/* 2. Board Layer */}
             <div className="z-0">

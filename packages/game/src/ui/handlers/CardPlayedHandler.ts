@@ -42,6 +42,13 @@ export class CardPlayedHandler implements GameEventHandler {
                 targetSlot,
                 isLocal,
                 startPosition: (() => {
+                    // 1. Check if we have a pending drop (from User Drag)
+                    const pending = useAnimationStore.getState().getPendingDrop(cardId);
+                    if (pending) {
+                        return pending;
+                    }
+
+                    // 2. Fallback: Try DOM lookup
                     if (isLocal) {
                         const el = document.querySelector(`[data-card-id="${cardId}"]`);
                         if (el) {
@@ -52,10 +59,16 @@ export class CardPlayedHandler implements GameEventHandler {
                     } 
                     return { x: settings.boardX, y: -200 };
                 })(),
-                targetPosition: targetSlot ? { 
-                    x: useGameStore.getState().players[playerId].slots[targetSlot.terrainId]?.x || 0,
-                    y: useGameStore.getState().players[playerId].slots[targetSlot.terrainId]?.y || 0
-                } : { x: 0, y: 0 },
+                targetPosition: targetSlot ? (() => {
+                    const slot = useGameStore.getState().players[playerId].slots[targetSlot.terrainId];
+                    if (!slot) return { x: 0, y: 0 };
+                    
+                    // Return absolute center of the slot
+                    return {
+                        x: slot.x + (slot.width / 2),
+                        y: slot.y + (slot.height / 2)
+                    };
+                })() : { x: 0, y: 0 },
                 
                 card: cardInstance,
                 cardName, 

@@ -5,7 +5,8 @@ export declare enum RuleType {
     CAN_DEPLOY = "CAN_DEPLOY",
     CAN_TARGET = "CAN_TARGET",
     CAN_CONSUME = "CAN_CONSUME",
-    DETERMINE_TERRAIN_WINNER = "DETERMINE_TERRAIN_WINNER"
+    DETERMINE_TERRAIN_WINNER = "DETERMINE_TERRAIN_WINNER",
+    MODIFY_POWER = "MODIFY_POWER"
 }
 export interface SlotCoord {
     terrainId: TerrainId;
@@ -29,5 +30,8 @@ export interface TerrainResolutionContext {
     power0: number;
     power1: number;
 }
-export type RuleContext = DeploymentContext | TargetingContext | ConsumeContext | TerrainResolutionContext;
+export interface PowerModificationContext {
+    unit: UnitCard;
+}
+export type RuleContext = DeploymentContext | TargetingContext | ConsumeContext | TerrainResolutionContext | PowerModificationContext;
 export type RuleModifier<T = boolean> = (context: RuleContext, currentResult: T) => T;

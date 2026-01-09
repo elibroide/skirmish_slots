@@ -1,0 +1,13 @@
+{
+    "id": "vampiric_marauder",
+    "originalId": "2bd1f0b7-4d9c-4305-9a5a-2d49e9b99cf0",
+    "name": "Vampiric Marauder",
+    "description": "When a close unit loses power, I get that much power.Activate (once per turn): I deal 2 damage to a close ally.",
+    "plainText": "When a close unit loses power, I get that much power.Activate (once per turn): I deal 2 damage to a close ally.",
+    "text": "<p>When&nbsp;a&nbsp;close&nbsp;unit&nbsp;loses&nbsp;power,&nbsp;I&nbsp;get&nbsp;that&nbsp;much&nbsp;power.</p><p><strong>Activate&nbsp;(once&nbsp;per&nbsp;turn):</strong>&nbsp;I&nbsp;deal&nbsp;2&nbsp;damage&nbsp;to&nbsp;a&nbsp;close&nbsp;ally.</p>",
+    "basePower": 4,
+    "rarity": "Gold",
+    "color": "Red",
+    "unitType": "Unit // Criminal",
+    "traits": []
+}

@@ -13,11 +13,14 @@ export interface AnimationTask {
 interface AnimationState {
     queue: AnimationTask[];
     activeTasks: AnimationTask[];
+    pendingDrops: Record<string, { x: number, y: number }>;
 
     // Actions
     play: (task: AnimationTask) => Promise<void>;
     complete: (taskId: string) => void;
     triggerNext: (taskId: string) => void;
+    registerPendingDrop: (cardId: string, position: { x: number, y: number }) => void;
+    getPendingDrop: (cardId: string) => { x: number, y: number } | null;
     
     // Internal Logic
     processQueue: (forceNext?: boolean) => void;
@@ -27,6 +30,31 @@ interface AnimationState {
 export const useAnimationStore = create<AnimationState>((set, get) => ({
     queue: [],
     activeTasks: [],
+    
+    // Store drag positions temporarily to bridge gap between UI drop and Engine event
+    pendingDrops: {},
+
+    registerPendingDrop: (cardId: string, position: { x: number, y: number }) => {
+        set((state) => ({
+            pendingDrops: {
+                ...state.pendingDrops,
+                [cardId]: position
+            }
+        }));
+    },
+
+    getPendingDrop: (cardId: string) => {
+        const state = get();
+        const pos = state.pendingDrops[cardId];
+        if (pos) {
+            // Consume it (remove from state to keep it clean)
+            const newDrops = { ...state.pendingDrops };
+            delete newDrops[cardId];
+            set({ pendingDrops: newDrops });
+            return pos;
+        }
+        return null;
+    },
 
     play: (task: AnimationTask) => {
         // Ensure ID

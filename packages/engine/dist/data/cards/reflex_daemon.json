@@ -1,0 +1,13 @@
+{
+    "id": "reflex_daemon",
+    "originalId": "a1402fe2-d41c-4342-8ac6-38dda2b27cbd",
+    "name": "Reflex Daemon",
+    "description": "For each close ally slot, project their opposing enemy&#39;s power to it.",
+    "plainText": "For each close ally slot, project their opposing enemy&#39;s power to it.",
+    "text": "<p>For&nbsp;each&nbsp;close&nbsp;ally&nbsp;slot,&nbsp;project&nbsp;their&nbsp;opposing&nbsp;enemy&#39;s&nbsp;power&nbsp;to&nbsp;it.</p>",
+    "basePower": 5,
+    "rarity": "Gold",
+    "color": "Purple",
+    "unitType": "Unit // Hacker",
+    "traits": []
+}

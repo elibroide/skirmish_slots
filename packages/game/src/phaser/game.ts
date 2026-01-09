@@ -19,16 +19,18 @@ export const createGameConfig = (parent: string | HTMLElement, width: number, he
         // Ensure pixelArt is false
         pixelArt: false,
     },
-    // @ts-ignore - resolution is valid in runtime but missing in some type defs
-    resolution: window.devicePixelRatio,
+    // Cap resolution at 1.5 to prevent massive canvases on Retina displays
+    // @ts-ignore
+    resolution: Math.min(window.devicePixelRatio, 1.5),
+    
+    // Low Power Mode (30 FPS is plenty for a card game)
+    fps: {
+        target: 30,
+        forceSetTimeOut: true
+    },
     
     transparent: true, // Allow Seeing React Background if needed, or blending
     scene: [BoardScene],
-    physics: {
-        default: 'arcade',
-        arcade: {
-            debug: false
-        }
-    }
+    // Physics removed (not used)
   };
 };

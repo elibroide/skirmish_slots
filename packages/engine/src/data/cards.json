@@ -1,0 +1,783 @@
+{
+  "cards": [
+    {
+      "id": "2bd1f0b7-4d9c-4305-9a5a-2d49e9b99cf0",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Vampiric Marauder",
+        "color": "Red",
+        "rarity": "Gold",
+        "notes": "<p></p>",
+        "power": "4",
+        "text": "<p>When&nbsp;a&nbsp;close&nbsp;unit&nbsp;loses&nbsp;power,&nbsp;I&nbsp;get&nbsp;that&nbsp;much&nbsp;power.</p><p><strong>Activate&nbsp;(once&nbsp;per&nbsp;turn):</strong>&nbsp;I&nbsp;deal&nbsp;2&nbsp;damage&nbsp;to&nbsp;a&nbsp;close&nbsp;ally.</p>",
+        "type": "Unit // Criminal",
+        "keywords": [
+          ""
+        ]
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/Gemini_Generated_Image_ndjvundjvundjvun.png",
+        "x": 120,
+        "y": 125,
+        "scale": 0.3,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "658d090a-6d8d-46cf-b47c-706a74aaa32d",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Scrap Collector",
+        "color": "Yellow",
+        "rarity": "Silver",
+        "notes": "<p></p>",
+        "power": "2",
+        "text": "<p>When&nbsp;a&nbsp;close&nbsp;unit&nbsp;is&nbsp;dismantled,&nbsp;I&nbsp;get&nbsp;+2&nbsp;power.</p>",
+        "type": "Unit // Builder",
+        "keywords": [
+          ""
+        ]
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/Gemini_Generated_Image_92zodu92zodu92zo.png",
+        "x": 120,
+        "y": 55,
+        "scale": 0.3,
+        "isMask": true,
+        "maskX": 0,
+        "maskY": 87,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "e15742e4-3792-4689-aed5-9b4ba8b800df",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Void Administrator",
+        "color": "Purple",
+        "rarity": "Bronze",
+        "notes": "<p></p>",
+        "power": "2",
+        "type": "Unit // Hacker",
+        "text": "<p><strong>Deploy:&nbsp;</strong>Nullify&nbsp;a&nbsp;close&nbsp;unit.</p>",
+        "keywords": [
+          "Deploy",
+          "Nullify"
+        ]
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/Gemini_Generated_Image_4q4fhi4q4fhi4q4f.png",
+        "x": 120,
+        "y": 80,
+        "scale": 0.3,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "2ef93720-d845-4147-a902-a7f631d9b7d8",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Seed Spreader",
+        "color": "Green",
+        "rarity": "Bronze",
+        "text": "<p><strong>Dismantled:&nbsp;</strong>Modify&nbsp;close&nbsp;ally&nbsp;slots&nbsp;by&nbsp;+2.</p>",
+        "power": "1",
+        "notes": "<p></p>",
+        "type": "Unit // Plant"
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/Gemini_Generated_Image_a8afvba8afvba8af.png",
+        "x": 120,
+        "y": 80,
+        "scale": 0.3,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "5382bbeb-551d-43b8-b668-a9fee1a565a2",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Noble Defender",
+        "color": "Blue",
+        "rarity": "Silver",
+        "type": "Unit // Soldier",
+        "power": "6",
+        "text": "<p>Redirect&nbsp;damage&nbsp;dealt&nbsp;to&nbsp;close&nbsp;allies&nbsp;to&nbsp;me.</p>",
+        "notes": "<p></p>"
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/Gemini_Generated_Image_pf0yo7pf0yo7pf0y.png",
+        "x": 120,
+        "y": 120,
+        "scale": 0.3,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "7b2b1cb5-26ea-445e-81e8-60057bccd222",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Peace Enforcer",
+        "color": "Blue",
+        "rarity": "Bronze",
+        "text": "<p><strong>Deploy:&nbsp;</strong>I&nbsp;get&nbsp;+2&nbsp;shield.</p>",
+        "type": "Unit // Soldier",
+        "power": "4",
+        "notes": "<p></p>"
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/Gemini_Generated_Image_osl6d1osl6d1osl6.png",
+        "x": 120,
+        "y": 80,
+        "scale": 0.3,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "e5ec11bf-dd99-4329-96bf-ecd81ee97feb",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Oasis Chaser",
+        "color": "Blue",
+        "rarity": "Bronze",
+        "power": "3",
+        "type": "Unit // Animal",
+        "text": "<p><strong>Activate&nbsp;(once&nbsp;per&nbsp;turn):&nbsp;</strong>Move&nbsp;to&nbsp;a&nbsp;close&nbsp;ally&nbsp;slot.</p>",
+        "notes": "<p></p>"
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/Gemini_Generated_Image_u2xdg1u2xdg1u2xd.png",
+        "x": 120,
+        "y": 80,
+        "scale": 0.3,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "a4268904-ece3-4e15-825f-96b85934e251",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Mirrage Maker",
+        "color": "Purple",
+        "rarity": "Silver",
+        "power": "1",
+        "type": "Unit // Hacker",
+        "text": "<p><strong>Deploy:&nbsp;</strong>My&nbsp;power&nbsp;becomes&nbsp;equal&nbsp;to&nbsp;the&nbsp;opposing&nbsp;enemy.</p>",
+        "notes": "<p></p>"
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/Gemini_Generated_Image_ucqa3ucqa3ucqa3u.png",
+        "x": 120,
+        "y": 133,
+        "scale": 0.3,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "2f3347c8-f90f-49f6-ba42-ac4fe73a0866",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Loyalty Weaver",
+        "color": "Purple",
+        "rarity": "Gold",
+        "notes": "<p></p>",
+        "text": "<p><strong>Activate&nbsp;(once):&nbsp;</strong>Swap&nbsp;me&nbsp;and&nbsp;a&nbsp;close&nbsp;enemy&nbsp;with&nbsp;power&nbsp;6&nbsp;or&nbsp;greater.</p>",
+        "type": "Unit // Hacker",
+        "power": "3"
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/Gemini_Generated_Image_iwpilqiwpilqiwpi.png",
+        "x": 120,
+        "y": 125,
+        "scale": 0.3,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "cf6241ac-3af6-4c9a-bd06-e31d62181a9e",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Infinite Replicator",
+        "color": "Green",
+        "rarity": "Gold",
+        "power": "2",
+        "text": "<p><strong>Activate&nbsp;(once):</strong>&nbsp;Create&nbsp;a&nbsp;copy&nbsp;of&nbsp;me&nbsp;and&nbsp;deploy&nbsp;it&nbsp;to&nbsp;a&nbsp;close&nbsp;ally&nbsp;slot.</p>",
+        "type": "Unit // Replicator",
+        "rarityImage": "",
+        "powerImage": "",
+        "keywords": [],
+        "notes": "<p></p>"
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/Gemini_Generated_Image_ivkph4ivkph4ivkp.png",
+        "x": 129,
+        "y": 100,
+        "scale": 0.3,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "0113ac0d-bfdb-45d1-bff9-f8bdf1e3b153",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Shock Bandit",
+        "color": "Red",
+        "rarity": "Bronze",
+        "power": "2",
+        "text": "<p><strong>Deploy&nbsp;and&nbsp;turn&nbsp;starts:&nbsp;</strong>I&nbsp;deal&nbsp;1&nbsp;damage&nbsp;to&nbsp;each&nbsp;close&nbsp;enemy.</p>",
+        "type": "Unit // Criminal",
+        "rarityImage": "",
+        "powerImage": "",
+        "keywords": [],
+        "notes": "<p></p>"
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/Gemini_Generated_Image_q0cv4rq0cv4rq0cv.png",
+        "x": 120,
+        "y": 80,
+        "scale": 0.3,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "53479adf-b1c8-405a-af3c-be8ad0cd1ec4",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Friendly Fortifier",
+        "color": "Yellow",
+        "rarity": "Bronze",
+        "power": "3",
+        "text": "<p>Modular</p><p>Deploy:&nbsp;I&nbsp;get&nbsp;+3&nbsp;shield.</p>",
+        "type": "Unit // Builder",
+        "rarityImage": "",
+        "powerImage": "",
+        "keywords": [],
+        "notes": "<p></p>"
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/Gemini_Generated_Image_oe9kx9oe9kx9oe9k.png",
+        "x": 120,
+        "y": 120,
+        "scale": 0.3,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "39fdaecb-337c-424e-a469-6c4b765dcb72",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Lone Jackal",
+        "color": "Red",
+        "rarity": "Bronze",
+        "power": "3",
+        "text": "<p><strong>Deploy:&nbsp;&nbsp;</strong>I&nbsp;deal&nbsp;2&nbsp;damage&nbsp;to&nbsp;a&nbsp;close&nbsp;unit.</p>",
+        "type": "Unit // Criminal",
+        "rarityImage": "",
+        "powerImage": "",
+        "keywords": [],
+        "traits": [
+          {
+            "type": "reaction",
+            "config": {
+              "triggers": [
+                {
+                  "type": "Deploy",
+                  "target": {
+                    "type": "Relative",
+                    "proximity": "Self"
+                  }
+                }
+              ],
+              "effects": [
+                {
+                  "candidates": {
+                    "type": "Relative",
+                    "proximity": "Close",
+                    "relationship": "Enemy"
+                  },
+                  "selection": {
+                    "strategy": "Player"
+                  },
+                  "action": {
+                    "type": "DealDamage",
+                    "value": {
+                      "type": "static",
+                      "value": 2
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "notes": "<p></p>"
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/Gemini_Generated_Image_3x7plx3x7plx3x7p.png",
+        "x": 120,
+        "y": 120,
+        "scale": 0.3,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "dca1663f-f99b-4e7f-a59c-6bac850f0b7e",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Squad Leader",
+        "color": "Blue",
+        "rarity": "Gold",
+        "power": "7",
+        "text": "<p><strong>Deploy:&nbsp;</strong>Close&nbsp;Soldiers&nbsp;get&nbsp;+2&nbsp;shield.&nbsp;Then&nbsp;close&nbsp;allies&nbsp;fight&nbsp;their&nbsp;opposing&nbsp;enemies.</p>",
+        "type": "Unit // Soldier",
+        "rarityImage": "",
+        "powerImage": "",
+        "keywords": [],
+        "notes": "<p></p>"
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/Gemini_Generated_Image_l0ioyvl0ioyvl0io.png",
+        "x": 120,
+        "y": 120,
+        "scale": 0.3,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "b182cad2-8748-4b33-86f5-fd22c62883a1",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Acolyte of Spring",
+        "color": "Green",
+        "rarity": "Bronze",
+        "power": "1",
+        "text": "<p><strong>Deploy&nbsp;and&nbsp;turn&nbsp;start:&nbsp;</strong>Modify&nbsp;my&nbsp;slot&nbsp;by&nbsp;+1.</p>",
+        "type": "Unit // Nomad",
+        "rarityImage": "",
+        "powerImage": "",
+        "keywords": [],
+        "notes": "<p></p>"
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/Gemini_Generated_Image_osoe89osoe89osoe.png",
+        "x": 120,
+        "y": 25,
+        "scale": 0.3,
+        "isMask": true,
+        "maskX": 0,
+        "maskY": 77,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "5939ab91-c9a2-497b-af75-b64af997d0ef",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Matrix Attendent",
+        "color": "Purple",
+        "rarity": "Silver",
+        "power": "3",
+        "text": "<p>When&nbsp;you&nbsp;play&nbsp;a&nbsp;command,&nbsp;modify&nbsp;my&nbsp;slot&nbsp;by&nbsp;+2.</p>",
+        "type": "Unit // Administrator",
+        "rarityImage": "",
+        "powerImage": "",
+        "keywords": [],
+        "notes": "<p></p>"
+      },
+      "artConfig": {
+        "imageUrl": "",
+        "x": 0,
+        "y": 0,
+        "scale": 1,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "fa7aa20e-7453-419c-84b4-4c578947ae15",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Storage Servant",
+        "color": "Purple",
+        "rarity": "Bronze",
+        "power": "2",
+        "text": "<p><strong>Dismantled:&nbsp;</strong>Create&nbsp;a&nbsp;random&nbsp;command&nbsp;card.</p>",
+        "type": "Unit // Servent",
+        "rarityImage": "",
+        "powerImage": "",
+        "keywords": [],
+        "notes": "<p></p>"
+      },
+      "artConfig": {
+        "imageUrl": "",
+        "x": 0,
+        "y": 0,
+        "scale": 1,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "62ed3663-fbf0-45d5-aa68-9c33a57e7d42",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Impound Grappler",
+        "color": "Blue",
+        "rarity": "Silver",
+        "power": "5",
+        "text": "<p><strong>Deploy:&nbsp;</strong>Move&nbsp;a&nbsp;close&nbsp;enemy&nbsp;to&nbsp;my&nbsp;opposing&nbsp;slot.&nbsp;(<em>Do&nbsp;only&nbsp;if&nbsp;the&nbsp;slot&nbsp;is&nbsp;empty.)</em></p>",
+        "type": "Unit // Soldier",
+        "rarityImage": "",
+        "powerImage": "",
+        "keywords": [],
+        "notes": "<p></p>"
+      },
+      "artConfig": {
+        "imageUrl": "",
+        "x": 0,
+        "y": 0,
+        "scale": 1,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "a2739845-25e9-49c3-82e2-2f14ff615891",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Grid Disruptor",
+        "color": "Purple",
+        "rarity": "Silver",
+        "power": "4",
+        "text": "<p><strong>Deploy:&nbsp;</strong>Bounce&nbsp;a&nbsp;close&nbsp;unit&nbsp;if&nbsp;its&nbsp;not&nbsp;a&nbsp;hacker.</p>",
+        "type": "Unit // Hacker",
+        "rarityImage": "",
+        "powerImage": "",
+        "keywords": [],
+        "notes": "<p></p>"
+      },
+      "artConfig": {
+        "imageUrl": "",
+        "x": 0,
+        "y": 0,
+        "scale": 1,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "597f5b00-d014-455c-90bb-eb753a2e3b79",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Waste Spiller",
+        "color": "Red",
+        "rarity": "Gold",
+        "power": "3",
+        "text": "<p>When&nbsp;a&nbsp;close&nbsp;enemy&nbsp;on&nbsp;a&nbsp;negative&nbsp;slot&nbsp;is&nbsp;dismantled,&nbsp;modify&nbsp;that&nbsp;slot&nbsp;by&nbsp;-1.</p><p><strong>Deploy:&nbsp;</strong>Modify&nbsp;a&nbsp;close&nbsp;enemy&nbsp;slot&nbsp;by&nbsp;-2.</p>",
+        "type": "Unit // Criminal",
+        "rarityImage": "",
+        "powerImage": "",
+        "keywords": [],
+        "notes": "<p></p>"
+      },
+      "artConfig": {
+        "imageUrl": "",
+        "x": 0,
+        "y": 0,
+        "scale": 1,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "fd14ad50-5836-42db-af85-662f822d4639",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Evertree",
+        "color": "Green",
+        "rarity": "Silver",
+        "power": "5",
+        "text": "<p>Permanent</p>",
+        "type": "Unit // Druid",
+        "rarityImage": "",
+        "powerImage": "",
+        "keywords": [],
+        "notes": "<p></p>"
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/Gemini_Generated_Image_u447dmu447dmu447.png",
+        "x": 120,
+        "y": 120,
+        "scale": 0.3,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "fce35084-901c-4b83-bff9-d6ee100106b0",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Null-Operative",
+        "color": "Purple",
+        "rarity": "Silver",
+        "power": "2",
+        "text": "<p>I&nbsp;can&nbsp;be&nbsp;deployed&nbsp;to&nbsp;enemy&nbsp;slots.</p><p>Close&nbsp;enemies&nbsp;have&nbsp;+1&nbsp;power.</p>",
+        "type": "Unit // Hacker",
+        "rarityImage": "",
+        "powerImage": "",
+        "keywords": [],
+        "notes": "<p></p>"
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/Gemini_Generated_Image_9pjix49pjix49pji.png",
+        "x": 120,
+        "y": 120,
+        "scale": 0.3,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "051511bd-fc85-4593-96da-953aef0c2735",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Polarity Jester",
+        "color": "Purple",
+        "rarity": "Silver",
+        "power": "3",
+        "text": "<p>Units&nbsp;with&nbsp;lower&nbsp;power&nbsp;controls&nbsp;this&nbsp;and&nbsp;close&nbsp;lanes.</p>",
+        "type": "Unit // Hacker",
+        "rarityImage": "",
+        "powerImage": "",
+        "keywords": [],
+        "notes": "<p></p>"
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/Gemini_Generated_Image_oq6978oq6978oq69.png",
+        "x": 120,
+        "y": -78,
+        "scale": 0.3,
+        "isMask": true,
+        "maskX": 0,
+        "maskY": 79,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "484f4447-fee7-4ee4-80da-06ef615cacfc",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Courageous Cadet",
+        "color": "Blue",
+        "rarity": "Bronze",
+        "power": "1",
+        "text": "<p>When&nbsp;a&nbsp;close&nbsp;ally&nbsp;deploys,&nbsp;we&nbsp;both&nbsp;get&nbsp;+3&nbsp;power.</p>",
+        "type": "Unit // Soldier",
+        "rarityImage": "",
+        "powerImage": "",
+        "keywords": [],
+        "notes": "<p></p>"
+      },
+      "artConfig": {
+        "imageUrl": "",
+        "x": 0,
+        "y": 0,
+        "scale": 1,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "9c496399-20f6-4666-9dee-3bfd777f48e6",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Unstable Core",
+        "color": "Red",
+        "rarity": "Silver",
+        "power": "1",
+        "text": "<p>Modular</p><p><strong>Turn&nbsp;start:</strong>&nbsp;I&nbsp;deal&nbsp;3&nbsp;damage&nbsp;to&nbsp;myself&nbsp;and&nbsp;close&nbsp;units.</p>",
+        "type": "Unit // Virus",
+        "rarityImage": "",
+        "powerImage": "",
+        "keywords": [
+          "Modular",
+          "Deploy"
+        ],
+        "notes": "<p></p>"
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/Gemini_Generated_Image_ufnk27ufnk27ufnk.png",
+        "x": 120,
+        "y": 120,
+        "scale": 0.3,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "4994abd4-e18b-4b65-a6c9-21dac594d203",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "System Router",
+        "color": "Purple",
+        "rarity": "Bronze",
+        "power": "1",
+        "text": "<p>Project&nbsp;3&nbsp;power&nbsp;to&nbsp;the&nbsp;middle&nbsp;ally&nbsp;slot.</p>",
+        "type": "Unit // Hacker",
+        "rarityImage": "",
+        "powerImage": "",
+        "keywords": [],
+        "notes": "<p></p>"
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/Gemini_Generated_Image_8k7m5k8k7m5k8k7m.png",
+        "x": 120,
+        "y": 120,
+        "scale": 0.3,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "4c7f024f-8158-4f1e-ae68-2aacfe1cabf3",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Mirror Image",
+        "color": "Purple",
+        "rarity": "Silver",
+        "power": "2",
+        "text": "<p>Modular</p><p>Project&nbsp;my&nbsp;power&nbsp;to&nbsp;the&nbsp;ally&nbsp;slot&nbsp;to&nbsp;my&nbsp;right.</p>",
+        "type": "Unit // Hacker",
+        "rarityImage": "",
+        "powerImage": "",
+        "keywords": [],
+        "notes": "<p></p>"
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/Gemini_Generated_Image_els9umels9umels9.png",
+        "x": 120,
+        "y": 120,
+        "scale": 0.3,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    },
+    {
+      "id": "a1402fe2-d41c-4342-8ac6-38dda2b27cbd",
+      "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+      "data": {
+        "name": "Reflex Daemon",
+        "color": "Purple",
+        "rarity": "Gold",
+        "power": "5",
+        "text": "<p>For&nbsp;each&nbsp;close&nbsp;ally&nbsp;slot,&nbsp;project&nbsp;their&nbsp;opposing&nbsp;enemy&#39;s&nbsp;power&nbsp;to&nbsp;it.</p>",
+        "type": "Unit // Hacker",
+        "rarityImage": "",
+        "powerImage": "",
+        "keywords": [
+          "Project"
+        ],
+        "notes": "<p></p>"
+      },
+      "artConfig": {
+        "imageUrl": "/card-art/Gemini_Generated_Image_x49bkbx49bkbx49b.png",
+        "x": 120,
+        "y": 120,
+        "scale": 0.3,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 750,
+        "maskHeight": 1050
+      }
+    }
+  ]
+}

@@ -3,8 +3,8 @@ import type { GameEngine } from '../../core/GameEngine';
 import type { Card } from './Card';
 import { createUnitCard } from './CardFactory';
 export { createUnitCard };
-import { UNIT_CARD_DEFINITIONS } from './cardDefinitions';
-export { UNIT_CARD_DEFINITIONS };
+import { integratedCards } from '../../data/cards/index';
+export { integratedCards };
 
 // Actions (still class-based)
 import { Assassinate } from './actions/Assassinate';
@@ -21,8 +21,8 @@ type CardFactory = (owner: PlayerId, engine: GameEngine) => Card;
 
 const CardRegistry: Record<string, CardFactory> = {
   // Units - now using ECS factory
-  ...Object.keys(UNIT_CARD_DEFINITIONS).reduce((acc, cardId) => {
-    acc[cardId] = (owner, engine) => createUnitCard(cardId, owner, engine);
+  ...integratedCards.reduce((acc, cardDef) => {
+    acc[cardDef.id] = (owner, engine) => createUnitCard(cardDef.id, owner, engine);
     return acc;
   }, {} as Record<string, CardFactory>),
 

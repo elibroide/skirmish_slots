@@ -1,0 +1,13 @@
+{
+    "id": "mirror_image",
+    "originalId": "4c7f024f-8158-4f1e-ae68-2aacfe1cabf3",
+    "name": "Mirror Image",
+    "description": "ModularProject my power to the ally slot to my right.",
+    "plainText": "ModularProject my power to the ally slot to my right.",
+    "text": "<p>Modular</p><p>Project&nbsp;my&nbsp;power&nbsp;to&nbsp;the&nbsp;ally&nbsp;slot&nbsp;to&nbsp;my&nbsp;right.</p>",
+    "basePower": 2,
+    "rarity": "Silver",
+    "color": "Purple",
+    "unitType": "Unit // Hacker",
+    "traits": []
+}

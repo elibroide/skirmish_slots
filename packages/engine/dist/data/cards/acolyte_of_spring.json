@@ -1,0 +1,13 @@
+{
+    "id": "acolyte_of_spring",
+    "originalId": "b182cad2-8748-4b33-86f5-fd22c62883a1",
+    "name": "Acolyte of Spring",
+    "description": "Deploy and turn start: Modify my slot by +1.",
+    "plainText": "Deploy and turn start: Modify my slot by +1.",
+    "text": "<p><strong>Deploy&nbsp;and&nbsp;turn&nbsp;start:&nbsp;</strong>Modify&nbsp;my&nbsp;slot&nbsp;by&nbsp;+1.</p>",
+    "basePower": 1,
+    "rarity": "Bronze",
+    "color": "Green",
+    "unitType": "Unit // Nomad",
+    "traits": []
+}

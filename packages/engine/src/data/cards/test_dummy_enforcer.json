@@ -1,0 +1,24 @@
+{
+    "id": "test_dummy_enforcer",
+    "data": {
+        "name": "Test Dummy Enforcer",
+        "color": "Neutral",
+        "rarity": "Bronze",
+        "power": "4",
+        "text": "<p>A generic unit for testing purposes.</p>",
+        "traits": [],
+        "cardType": "Unit",
+        "unitType": "Enforcer"
+    },
+    "artConfig": {
+        "imageUrl": "/card-art/placeholder.png",
+        "x": 0,
+        "y": 0,
+        "scale": 1,
+        "isMask": false,
+        "maskX": 0,
+        "maskY": 0,
+        "maskWidth": 100,
+        "maskHeight": 100
+    }
+}

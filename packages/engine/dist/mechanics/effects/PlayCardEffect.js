@@ -29,6 +29,9 @@ export class PlayCardEffect extends Effect {
         // Mark player as having acted this turn and played a card
         // Mark player as having acted this turn and played a card
         // This is handled inside player.playCard()
+        // Queue TurnEndEffect (will be executed after any effects triggered by playing the card)
+        const { TurnEndEffect } = await import('./TurnEndEffect');
+        this.engine.addInterrupt(new TurnEndEffect());
         // Get player and play the card
         const player = this.engine.getPlayer(this.playerId);
         await player.playCard(this.cardId, this.targetSlot);

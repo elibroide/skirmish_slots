@@ -1,0 +1,23 @@
+{
+    "id": "seed_spreader",
+    "originalId": "2ef93720-d845-4147-a902-a7f631d9b7d8",
+    "name": "Seed Spreader",
+    "description": "Dismantled: Modify close ally slots by +2.",
+    "plainText": "Dismantled: Modify close ally slots by +2.",
+    "text": "<p><strong>Dismantled:&nbsp;</strong>Modify&nbsp;close&nbsp;ally&nbsp;slots&nbsp;by&nbsp;+2.</p>",
+    "basePower": 1,
+    "rarity": "Bronze",
+    "color": "Green",
+    "unitType": "Unit // Plant",
+    "traits": [
+        {
+            "type": "reaction",
+            "config": {
+                "trigger": "ON_DEATH",
+                "effect": "ADD_SLOT_MODIFIER",
+                "value": 2,
+                "target": "SLOT"
+            }
+        }
+    ]
+}

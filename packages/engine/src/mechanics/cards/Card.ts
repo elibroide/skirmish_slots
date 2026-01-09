@@ -2,7 +2,7 @@ import type { PlayerId, TerrainId, TargetInfo, GameState, UnitCard as IUnitCard,
 import type { GameEngine } from '../../core/GameEngine';
 import { PlayerGameEntity } from '../../entities/base/PlayerGameEntity';
 import { RuleType, type RuleModifier, type SlotCoord } from '../../systems/rules/RuleTypes';
-import type { Trait } from '../traits/Trait';
+import type { Trait } from '../core/traits/Trait';
 
 /**
  * Base class for all cards
@@ -227,6 +227,16 @@ export class UnitCard extends Card implements IUnitCard {
   get power(): number {
     let p = this.originalPower + this._buffs - this._damage;
 
+    // Apply global rules (Passives from other units)
+    // Cast to any to avoid circular dependency check strictness for now if subtypes mismatch
+    // But conceptually:
+    const context: any = { unit: this };
+    p = this.engine.ruleManager.evaluate(
+      'MODIFY_POWER' as any, // Using string literal if enum import is tricky, looking at file it imports RuleType though.
+      context,
+      p
+    );
+
     // Apply slot modifiers if on board
     if (this._terrainId !== null) {
       const slotModifier = this.engine.getSlotModifier(this._terrainId, this.owner);
@@ -293,7 +303,15 @@ export class UnitCard extends Card implements IUnitCard {
       unitId: victim.id,
       unitName: victim.name,
       terrainId: victim.terrainId!, 
+      consumerId: this.id
     });
+  }
+
+  /**
+   * Check if unit is dead (power <= 0)
+   */
+  isDead(): boolean {
+      return this.power <= 0;
   }
 
   /**
@@ -317,8 +335,10 @@ export class UnitCard extends Card implements IUnitCard {
       unitId: this.id,
       unitName: this.name,
       terrainId,
+      playerId: this.owner,
       cause,
-      entity: this
+      entity: this,
+      unitState: this.toState()
     });
 
     // 3. Trigger Death Rattle
@@ -600,7 +620,7 @@ export class UnitCard extends Card implements IUnitCard {
   async dealDamage(amount: number): Promise<void> {
     const oldPower = this.power;
 
-    // Apply trait interceptors (e.g., ShieldTrait for temporary shields)
+    // Apply trait interceptors (e.g. for damage reduction or deflection)
     let remainingDamage = amount;
     for (const trait of this.traits) {
       remainingDamage = trait.interceptDamage(remainingDamage);

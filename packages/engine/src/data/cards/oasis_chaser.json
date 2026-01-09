@@ -1,0 +1,61 @@
+{
+  "id": "oasis_chaser",
+  "data": {
+    "name": "Oasis Chaser",
+    "color": "Blue",
+    "rarity": "Bronze",
+    "power": "3",
+    "text": "<p><strong>Activate&nbsp;(once&nbsp;per&nbsp;turn):&nbsp;</strong>Move&nbsp;to&nbsp;a&nbsp;close&nbsp;ally&nbsp;slot.</p>",
+    "traits": [
+      {
+        "type": "reaction",
+        "config": {
+          "limit": {
+            "scope": "Turn",
+            "max": 1
+          },
+          "triggers": [
+            {
+              "type": "Activate",
+              "target": {
+                "type": "Relative",
+                "proximity": "Close",
+                "relationship": "Ally",
+                "entity": "Slot"
+              }
+            }
+          ],
+          "effects": [
+            {
+              "candidates": {
+                "type": "Self"
+              },
+              "selection": {
+                "strategy": "All"
+              },
+              "action": {
+                "type": "MoveUnit",
+                "toSlot": {
+                  "type": "RelativeToTrigger"
+                }
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "cardType": "Unit",
+    "unitType": "Animal"
+  },
+  "artConfig": {
+    "imageUrl": "/card-art/Gemini_Generated_Image_u2xdg1u2xdg1u2xd.png",
+    "x": 120,
+    "y": 80,
+    "scale": 0.3,
+    "isMask": false,
+    "maskX": 0,
+    "maskY": 0,
+    "maskWidth": 750,
+    "maskHeight": 1050
+  }
+}

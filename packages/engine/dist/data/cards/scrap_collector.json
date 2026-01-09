@@ -1,0 +1,13 @@
+{
+    "id": "scrap_collector",
+    "originalId": "658d090a-6d8d-46cf-b47c-706a74aaa32d",
+    "name": "Scrap Collector",
+    "description": "When a close unit is dismantled, I get +2 power.",
+    "plainText": "When a close unit is dismantled, I get +2 power.",
+    "text": "<p>When&nbsp;a&nbsp;close&nbsp;unit&nbsp;is&nbsp;dismantled,&nbsp;I&nbsp;get&nbsp;+2&nbsp;power.</p>",
+    "basePower": 2,
+    "rarity": "Silver",
+    "color": "Yellow",
+    "unitType": "Unit // Builder",
+    "traits": []
+}

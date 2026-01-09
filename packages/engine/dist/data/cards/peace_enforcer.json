@@ -1,0 +1,23 @@
+{
+    "id": "peace_enforcer",
+    "originalId": "7b2b1cb5-26ea-445e-81e8-60057bccd222",
+    "name": "Peace Enforcer",
+    "description": "Deploy: I get +2 shield.",
+    "plainText": "Deploy: I get +2 shield.",
+    "text": "<p><strong>Deploy:&nbsp;</strong>I&nbsp;get&nbsp;+2&nbsp;shield.</p>",
+    "basePower": 4,
+    "rarity": "Bronze",
+    "color": "Blue",
+    "unitType": "Unit // Soldier",
+    "traits": [
+        {
+            "type": "reaction",
+            "config": {
+                "trigger": "ON_DEPLOY",
+                "effect": "ADD_SHIELD",
+                "value": 2,
+                "target": "SELF"
+            }
+        }
+    ]
+}

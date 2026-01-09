@@ -1,0 +1,24 @@
+{
+  "id": "acolyte_of_spring",
+  "data": {
+    "name": "Acolyte of Spring",
+    "color": "Green",
+    "rarity": "Bronze",
+    "power": "1",
+    "text": "<p><strong>Deploy&nbsp;and&nbsp;turn&nbsp;start:&nbsp;</strong>Modify&nbsp;my&nbsp;slot&nbsp;by&nbsp;+1.</p>",
+    "traits": [],
+    "cardType": "Unit",
+    "unitType": "Nomad"
+  },
+  "artConfig": {
+    "imageUrl": "/card-art/Gemini_Generated_Image_osoe89osoe89osoe.png",
+    "x": 120,
+    "y": 25,
+    "scale": 0.3,
+    "isMask": true,
+    "maskX": 0,
+    "maskY": 77,
+    "maskWidth": 750,
+    "maskHeight": 1050
+  }
+}

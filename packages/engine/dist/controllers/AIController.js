@@ -4,7 +4,7 @@ import { RandomAI } from '../ai/RandomAI';
  * Supports both synchronous (RandomAI) and async (ClaudeAI) strategies.
  */
 export class AIController {
-    constructor(playerId, engine, ai) {
+    constructor(playerId, engine, ai, options) {
         Object.defineProperty(this, "playerId", {
             enumerable: true,
             configurable: true,
@@ -29,13 +29,24 @@ export class AIController {
             writable: true,
             value: void 0
         });
+        Object.defineProperty(this, "options", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         Object.defineProperty(this, "pendingTimeout", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: null
-        });
+        }); // NodeJS.Timeout or null
         this.ai = ai || new RandomAI(playerId);
+        this.options = {
+            actionDelay: 1000,
+            inputDelay: 500,
+            ...options
+        };
     }
     /**
      * Set a new AI strategy
@@ -52,7 +63,7 @@ export class AIController {
         // Respond to ACTION_REQUIRED for this player
         if (event.type === 'ACTION_REQUIRED' && event.playerId === this.playerId) {
             // Add delay so user can see AI actions
-            this.pendingTimeout = setTimeout(async () => {
+            this.schedule(async () => {
                 try {
                     // Notify UI that AI is thinking
                     if (typeof window !== 'undefined' && window.__GAME_STORE__) {
@@ -87,11 +98,12 @@ export class AIController {
                     }
                     this.pendingTimeout = null;
                 }
-            }, 1000); // 1 second delay for visibility
+            }, this.options.actionDelay || 0);
         }
         // Handle INPUT_REQUIRED for target selection
+        // Handle INPUT_REQUIRED for target selection
         if (event.type === 'INPUT_REQUIRED' && event.playerId === this.playerId) {
-            this.pendingTimeout = setTimeout(() => {
+            this.schedule(() => {
                 try {
                     const input = this.selectInput(event.inputRequest);
                     if (input !== null) {
@@ -108,7 +120,7 @@ export class AIController {
                     console.error('AI input selection failed:', error);
                 }
                 this.pendingTimeout = null;
-            }, 500); // Short delay for visibility
+            }, this.options.inputDelay || 0);
         }
     }
     /**
@@ -155,5 +167,20 @@ export class AIController {
             return `Terrain ${input.terrainId}, Player ${input.playerId}`;
         }
         return JSON.stringify(input);
+    }
+    schedule(callback, delayMs) {
+        if (delayMs > 0) {
+            this.pendingTimeout = setTimeout(callback, delayMs);
+        }
+        else {
+            // Use queueMicrotask for 0ms delay to allow stack unwinding without wall-clock wait
+            // This is ideal for tests
+            queueMicrotask(() => {
+                this.pendingTimeout = null; // Clear flag
+                callback();
+            });
+            // Mark as pending via a dummy object so we don't double schedule
+            this.pendingTimeout = {};
+        }
     }
 }

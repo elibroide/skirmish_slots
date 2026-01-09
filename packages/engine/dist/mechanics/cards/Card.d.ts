@@ -2,7 +2,7 @@ import type { PlayerId, TerrainId, TargetInfo, GameState, UnitCard as IUnitCard,
 import type { GameEngine } from '../../core/GameEngine';
 import { PlayerGameEntity } from '../../entities/base/PlayerGameEntity';
 import { RuleType, type RuleModifier, type SlotCoord } from '../../systems/rules/RuleTypes';
-import type { Trait } from '../traits/Trait';
+import type { Trait } from '../core/Trait';
 /**
  * Base class for all cards
  * Extends GameEntity for common functionality (requestInput, engine access)

@@ -1,0 +1,61 @@
+{
+  "id": "shock_bandit",
+  "data": {
+    "name": "Shock Bandit",
+    "color": "Red",
+    "rarity": "Bronze",
+    "power": "2",
+    "text": "<p><strong>Deploy&nbsp;and&nbsp;turn&nbsp;starts:&nbsp;</strong>I&nbsp;deal&nbsp;1&nbsp;damage&nbsp;to&nbsp;each&nbsp;close&nbsp;enemy.</p>",
+    "traits": [
+      {
+        "type": "reaction",
+        "config": {
+          "triggers": [
+            {
+              "type": "Deploy",
+              "target": {
+                "type": "Self"
+              }
+            },
+            {
+              "type": "TurnStart"
+            }
+          ],
+          "effects": [
+            {
+              "candidates": {
+                "type": "Relative",
+                "proximity": "Close",
+                "relationship": "Enemy",
+                "entity": "Unit"
+              },
+              "selection": {
+                "strategy": "All"
+              },
+              "action": {
+                "type": "DealDamage",
+                "value": {
+                  "type": "static",
+                  "value": 1
+                }
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "cardType": "Unit",
+    "unitType": "Criminal"
+  },
+  "artConfig": {
+    "imageUrl": "/card-art/Gemini_Generated_Image_q0cv4rq0cv4rq0cv.png",
+    "x": 120,
+    "y": 80,
+    "scale": 0.3,
+    "isMask": false,
+    "maskX": 0,
+    "maskY": 0,
+    "maskWidth": 750,
+    "maskHeight": 1050
+  }
+}

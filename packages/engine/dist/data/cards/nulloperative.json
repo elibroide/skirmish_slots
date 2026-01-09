@@ -1,0 +1,13 @@
+{
+    "id": "nulloperative",
+    "originalId": "fce35084-901c-4b83-bff9-d6ee100106b0",
+    "name": "Null-Operative",
+    "description": "I can be deployed to enemy slots.Close enemies have +1 power.",
+    "plainText": "I can be deployed to enemy slots.Close enemies have +1 power.",
+    "text": "<p>I&nbsp;can&nbsp;be&nbsp;deployed&nbsp;to&nbsp;enemy&nbsp;slots.</p><p>Close&nbsp;enemies&nbsp;have&nbsp;+1&nbsp;power.</p>",
+    "basePower": 2,
+    "rarity": "Silver",
+    "color": "Purple",
+    "unitType": "Unit // Hacker",
+    "traits": []
+}

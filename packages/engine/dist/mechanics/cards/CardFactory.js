@@ -1,6 +1,6 @@
 import { UnitCard } from './Card';
 import { UNIT_CARD_DEFINITIONS } from './cardDefinitions';
-import { createTrait } from '../traits/TraitFactory';
+import { createTrait } from '../core/TraitFactory';
 /**
  * Factory function to create unit cards from data definitions
  */

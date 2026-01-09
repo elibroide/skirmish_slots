@@ -22,7 +22,10 @@ export const useEventProcessor = (localPlayerId: PlayerId) => {
         eventHandlerRegistry.register('SKIRMISH_STARTED', new SkirmishStartedHandler());
     }, [localPlayerId]);
 
-    const [hasStarted, setHasStarted] = useState(false);
+    const [hasStarted, setHasStarted] = useState(() => {
+        const gs = useGameStore.getState().gameState;
+        return (gs?.currentSkirmish || 0) > 0;
+    });
     const [isProcessing, setIsProcessing] = useState(false);
 
     useEffect(() => {

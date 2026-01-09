@@ -1,0 +1,13 @@
+{
+    "id": "unstable_core",
+    "originalId": "9c496399-20f6-4666-9dee-3bfd777f48e6",
+    "name": "Unstable Core",
+    "description": "ModularTurn start: I deal 3 damage to myself and close units.",
+    "plainText": "ModularTurn start: I deal 3 damage to myself and close units.",
+    "text": "<p>Modular</p><p><strong>Turn&nbsp;start:</strong>&nbsp;I&nbsp;deal&nbsp;3&nbsp;damage&nbsp;to&nbsp;myself&nbsp;and&nbsp;close&nbsp;units.</p>",
+    "basePower": 1,
+    "rarity": "Silver",
+    "color": "Red",
+    "unitType": "Unit // Virus",
+    "traits": []
+}

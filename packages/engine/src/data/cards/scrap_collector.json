@@ -1,0 +1,58 @@
+{
+  "id": "scrap_collector",
+  "data": {
+    "name": "Scrap Collector",
+    "color": "Yellow",
+    "rarity": "Silver",
+    "power": "2",
+    "text": "<p>When&nbsp;a&nbsp;close&nbsp;unit&nbsp;is&nbsp;dismantled,&nbsp;I&nbsp;get&nbsp;+2&nbsp;power.</p>",
+    "traits": [
+      {
+        "type": "reaction",
+        "config": {
+          "triggers": [
+            {
+              "type": "Death",
+              "target": {
+                "type": "Relative",
+                "proximity": "Close",
+                "entity": "Unit",
+                "relationship": "None"
+              }
+            }
+          ],
+          "effects": [
+            {
+              "candidates": {
+                "type": "Self"
+              },
+              "selection": {
+                "strategy": "All"
+              },
+              "action": {
+                "type": "AddPower",
+                "value": {
+                  "type": "static",
+                  "value": 2
+                }
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "cardType": "Unit",
+    "unitType": "Builder"
+  },
+  "artConfig": {
+    "imageUrl": "/card-art/Gemini_Generated_Image_92zodu92zodu92zo.png",
+    "x": 120,
+    "y": 55,
+    "scale": 0.3,
+    "isMask": true,
+    "maskX": 0,
+    "maskY": 87,
+    "maskWidth": 750,
+    "maskHeight": 1050
+  }
+}

@@ -1,0 +1,13 @@
+{
+    "id": "polarity_jester",
+    "originalId": "051511bd-fc85-4593-96da-953aef0c2735",
+    "name": "Polarity Jester",
+    "description": "Units with lower power controls this and close lanes.",
+    "plainText": "Units with lower power controls this and close lanes.",
+    "text": "<p>Units&nbsp;with&nbsp;lower&nbsp;power&nbsp;controls&nbsp;this&nbsp;and&nbsp;close&nbsp;lanes.</p>",
+    "basePower": 3,
+    "rarity": "Silver",
+    "color": "Purple",
+    "unitType": "Unit // Hacker",
+    "traits": []
+}

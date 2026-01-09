@@ -1,0 +1,13 @@
+{
+    "id": "system_router",
+    "originalId": "4994abd4-e18b-4b65-a6c9-21dac594d203",
+    "name": "System Router",
+    "description": "Project 3 power to the middle ally slot.",
+    "plainText": "Project 3 power to the middle ally slot.",
+    "text": "<p>Project&nbsp;3&nbsp;power&nbsp;to&nbsp;the&nbsp;middle&nbsp;ally&nbsp;slot.</p>",
+    "basePower": 1,
+    "rarity": "Bronze",
+    "color": "Purple",
+    "unitType": "Unit // Hacker",
+    "traits": []
+}

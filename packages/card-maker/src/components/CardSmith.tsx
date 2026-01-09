@@ -3,6 +3,7 @@ import { useStore } from '../store/useStore';
 import { CardRenderer } from './CardRenderer';
 import { ImagePicker } from './ImagePicker';
 import { RichTextEditor } from './RichTextEditor';
+import { JsonField } from './fields/JsonField';
 import { toPng } from 'html-to-image';
 
 export const CardSmith: React.FC = () => {
@@ -487,6 +488,14 @@ export const CardSmith: React.FC = () => {
                                                     value={activeCard.data[field.key] || ''}
                                                     onChange={(val) => updateCard(activeCard.id, { data: { ...activeCard.data, [field.key]: val } })}
                                                     placeholder={`Enter ${field.label}...`}
+                                                />
+                                            </div>
+                                        ) : field.type === 'json' ? (
+                                            <div className="border rounded p-2 bg-gray-50">
+                                                <JsonField
+                                                    schema={field.jsonSchema}
+                                                    value={activeCard.data[field.key]}
+                                                    onChange={(val: any) => updateCard(activeCard.id, { data: { ...activeCard.data, [field.key]: val } })}
                                                 />
                                             </div>
                                         ) : field.type === 'tags' ? (

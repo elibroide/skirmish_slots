@@ -1,0 +1,72 @@
+{
+  "id": "loyalty_weaver",
+  "data": {
+    "name": "Loyalty Weaver",
+    "color": "Purple",
+    "rarity": "Gold",
+    "power": "3",
+    "text": "<p><strong>Activate&nbsp;(once):&nbsp;</strong>Swap&nbsp;me&nbsp;and&nbsp;a&nbsp;close&nbsp;enemy&nbsp;with&nbsp;power&nbsp;6&nbsp;or&nbsp;greater.</p>",
+    "traits": [
+      {
+        "type": "reaction",
+        "config": {
+          "limit": {
+            "scope": "Game",
+            "max": 1
+          },
+          "triggers": [
+            {
+              "type": "Activate",
+              "target": {
+                "type": "Relative",
+                "proximity": "Close",
+                "relationship": "Enemy",
+                "entity": "Unit",
+                "condition": [
+                  {
+                    "path": "power",
+                    "condition": "gte",
+                    "value": {
+                      "type": "static",
+                      "value": 6
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "effects": [
+            {
+              "candidates": {
+                "type": "Self"
+              },
+              "selection": {
+                "strategy": "All"
+              },
+              "action": {
+                "type": "MoveUnit",
+                "swap": true,
+                "toSlot": {
+                  "type": "RelativeToTrigger"
+                }
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "cardType": "Unit",
+    "unitType": "Hacker"
+  },
+  "artConfig": {
+    "imageUrl": "/card-art/Gemini_Generated_Image_iwpilqiwpilqiwpi.png",
+    "x": 120,
+    "y": 125,
+    "scale": 0.3,
+    "isMask": false,
+    "maskX": 0,
+    "maskY": 0,
+    "maskWidth": 750,
+    "maskHeight": 1050
+  }
+}

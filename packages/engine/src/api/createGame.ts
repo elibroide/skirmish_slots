@@ -11,7 +11,7 @@ export interface GameCreationResult {
     gameMode: string;
 }
 
-export const createGame = (localPlayerId: PlayerId, mode: 'vs-ai' | 'human-vs-human' | 'god-mode' = 'vs-ai'): GameCreationResult => {
+export const createGame = async (localPlayerId: PlayerId, mode: 'vs-ai' | 'human-vs-human' | 'god-mode' = 'vs-ai'): Promise<GameCreationResult> => {
     const isHumanVsHuman = mode === 'human-vs-human' || mode === 'god-mode';
     let controller0, controller1;
     let claudeAI0: ClaudeAI | null = null;
@@ -47,7 +47,7 @@ export const createGame = (localPlayerId: PlayerId, mode: 'vs-ai' | 'human-vs-hu
 
     // Rigging: Always start with Player 0 in Human-vs-Human / God Mode
     const startingPlayer = isHumanVsHuman ? 0 : undefined; 
-    engine.initializeGame(deck0 as any, deck1 as any, 'sage', 'warlord', startingPlayer);
+    await engine.initializeGame(deck0 as any, deck1 as any, 'sage', 'warlord', startingPlayer);
 
     return { engine, localPlayerId, gameMode: mode };
 };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useGameStore } from '../../store/gameStore';
+import { useShallow } from 'zustand/react/shallow';
 import { Hand } from './Hand';
 import orderData from '../Data/order.json';
 import type { PlayerId, TerrainId } from '@skirmish/engine';
@@ -20,9 +21,9 @@ export const ConnectedHand: React.FC<ConnectedHandProps> = ({
     isFacedown = false,
     onCardDrop
 }) => {
-    // Select Data from Store
-    const frameCards = useGameStore(state => state.players[playerId]?.hand || []);
-    const settings = useGameStore(state => state.boardSettings.handSettings);
+    // Select Data from Store with shallow comparison
+    const frameCards = useGameStore(useShallow(state => state.players[playerId]?.hand || []));
+    const settings = useGameStore(useShallow(state => state.boardSettings.handSettings));
 
     // Optimistic Hiding State
     // Used to hide cards immediately when dropped, before the Engine state update arrives.

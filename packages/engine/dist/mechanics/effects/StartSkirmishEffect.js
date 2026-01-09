@@ -30,8 +30,8 @@ export class StartSkirmishEffect extends Effect {
             type: 'SKIRMISH_STARTED',
             skirmishNumber: state.currentSkirmish,
             hands: {
-                0: state.players[0].hand,
-                1: state.players[1].hand
+                0: this.engine.getPlayer(0).toState().hand,
+                1: this.engine.getPlayer(1).toState().hand
             }
         });
         // Enqueue TurnStartEffect for the starting player

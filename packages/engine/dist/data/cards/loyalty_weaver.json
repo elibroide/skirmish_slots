@@ -1,0 +1,13 @@
+{
+    "id": "loyalty_weaver",
+    "originalId": "2f3347c8-f90f-49f6-ba42-ac4fe73a0866",
+    "name": "Loyalty Weaver",
+    "description": "Activate (once): Swap me and a close enemy with power 6 or greater.",
+    "plainText": "Activate (once): Swap me and a close enemy with power 6 or greater.",
+    "text": "<p><strong>Activate&nbsp;(once):&nbsp;</strong>Swap&nbsp;me&nbsp;and&nbsp;a&nbsp;close&nbsp;enemy&nbsp;with&nbsp;power&nbsp;6&nbsp;or&nbsp;greater.</p>",
+    "basePower": 3,
+    "rarity": "Gold",
+    "color": "Purple",
+    "unitType": "Unit // Hacker",
+    "traits": []
+}

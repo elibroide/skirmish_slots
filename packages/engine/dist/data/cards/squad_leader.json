@@ -1,0 +1,23 @@
+{
+    "id": "squad_leader",
+    "originalId": "dca1663f-f99b-4e7f-a59c-6bac850f0b7e",
+    "name": "Squad Leader",
+    "description": "Deploy: Close Soldiers get +2 shield. Then close allies fight their opposing enemies.",
+    "plainText": "Deploy: Close Soldiers get +2 shield. Then close allies fight their opposing enemies.",
+    "text": "<p><strong>Deploy:&nbsp;</strong>Close&nbsp;Soldiers&nbsp;get&nbsp;+2&nbsp;shield.&nbsp;Then&nbsp;close&nbsp;allies&nbsp;fight&nbsp;their&nbsp;opposing&nbsp;enemies.</p>",
+    "basePower": 7,
+    "rarity": "Gold",
+    "color": "Blue",
+    "unitType": "Unit // Soldier",
+    "traits": [
+        {
+            "type": "reaction",
+            "config": {
+                "trigger": "ON_DEPLOY",
+                "effect": "ADD_SHIELD",
+                "value": 2,
+                "target": "CLOSE_ALLY"
+            }
+        }
+    ]
+}

@@ -52,7 +52,7 @@ export default function App() {
       const gameMode = mode === 'vs-ai' ? 'vs-ai' : mode === 'god-mode' ? 'god-mode' : 'human-vs-human';
       setLastOpponentType(opponentType as OpponentType);
 
-      const { engine: newEngine, localPlayerId: pid, gameMode: modeStr } = createGame(0, gameMode);
+      const { engine: newEngine, localPlayerId: pid, gameMode: modeStr } = await createGame(0, gameMode);
       setEngine(newEngine);
 
       // Init Store

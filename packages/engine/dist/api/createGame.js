@@ -3,7 +3,7 @@ import { AIController } from '../controllers/AIController';
 import { ClaudeAI } from '../ai/ClaudeAI';
 import { GameEngine } from '../core/GameEngine';
 import { createStarter1Deck } from '../utils/deckBuilder';
-export const createGame = (localPlayerId, mode = 'vs-ai') => {
+export const createGame = async (localPlayerId, mode = 'vs-ai') => {
     const isHumanVsHuman = mode === 'human-vs-human' || mode === 'god-mode';
     let controller0, controller1;
     let claudeAI0 = null;
@@ -40,6 +40,6 @@ export const createGame = (localPlayerId, mode = 'vs-ai') => {
     const deck1 = createStarter1Deck(1, engine);
     // Rigging: Always start with Player 0 in Human-vs-Human / God Mode
     const startingPlayer = isHumanVsHuman ? 0 : undefined;
-    engine.initializeGame(deck0, deck1, 'sage', 'warlord', startingPlayer);
+    await engine.initializeGame(deck0, deck1, 'sage', 'warlord', startingPlayer);
     return { engine, localPlayerId, gameMode: mode };
 };

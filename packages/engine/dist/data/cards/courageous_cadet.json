@@ -1,0 +1,13 @@
+{
+    "id": "courageous_cadet",
+    "originalId": "484f4447-fee7-4ee4-80da-06ef615cacfc",
+    "name": "Courageous Cadet",
+    "description": "When a close ally deploys, we both get +3 power.",
+    "plainText": "When a close ally deploys, we both get +3 power.",
+    "text": "<p>When&nbsp;a&nbsp;close&nbsp;ally&nbsp;deploys,&nbsp;we&nbsp;both&nbsp;get&nbsp;+3&nbsp;power.</p>",
+    "basePower": 1,
+    "rarity": "Bronze",
+    "color": "Blue",
+    "unitType": "Unit // Soldier",
+    "traits": []
+}

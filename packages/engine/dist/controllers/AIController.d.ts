@@ -7,13 +7,22 @@ import type { ClaudeAI } from '../ai/ClaudeAI';
  * Controller for AI players.
  * Supports both synchronous (RandomAI) and async (ClaudeAI) strategies.
  */
+export interface AIControllerOptions {
+    actionDelay?: number;
+    inputDelay?: number;
+}
+/**
+ * Controller for AI players.
+ * Supports both synchronous (RandomAI) and async (ClaudeAI) strategies.
+ */
 export declare class AIController implements PlayerController {
     playerId: PlayerId;
     private engine;
     readonly type: "ai";
     private ai;
+    private options;
     private pendingTimeout;
-    constructor(playerId: PlayerId, engine: GameEngine, ai?: AIPlayer | ClaudeAI);
+    constructor(playerId: PlayerId, engine: GameEngine, ai?: AIPlayer | ClaudeAI, options?: AIControllerOptions);
     /**
      * Set a new AI strategy
      */
@@ -31,4 +40,5 @@ export declare class AIController implements PlayerController {
      * Format selected input for logging
      */
     private formatSelectedInput;
+    private schedule;
 }

@@ -1,0 +1,13 @@
+{
+    "id": "evertree",
+    "originalId": "fd14ad50-5836-42db-af85-662f822d4639",
+    "name": "Evertree",
+    "description": "Permanent",
+    "plainText": "Permanent",
+    "text": "<p>Permanent</p>",
+    "basePower": 5,
+    "rarity": "Silver",
+    "color": "Green",
+    "unitType": "Unit // Druid",
+    "traits": []
+}

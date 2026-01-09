@@ -1,0 +1,13 @@
+{
+    "id": "infinite_replicator",
+    "originalId": "cf6241ac-3af6-4c9a-bd06-e31d62181a9e",
+    "name": "Infinite Replicator",
+    "description": "Activate (once): Create a copy of me and deploy it to a close ally slot.",
+    "plainText": "Activate (once): Create a copy of me and deploy it to a close ally slot.",
+    "text": "<p><strong>Activate&nbsp;(once):</strong>&nbsp;Create&nbsp;a&nbsp;copy&nbsp;of&nbsp;me&nbsp;and&nbsp;deploy&nbsp;it&nbsp;to&nbsp;a&nbsp;close&nbsp;ally&nbsp;slot.</p>",
+    "basePower": 2,
+    "rarity": "Gold",
+    "color": "Green",
+    "unitType": "Unit // Replicator",
+    "traits": []
+}

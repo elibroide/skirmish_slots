@@ -1,0 +1,23 @@
+{
+    "id": "waste_spiller",
+    "originalId": "597f5b00-d014-455c-90bb-eb753a2e3b79",
+    "name": "Waste Spiller",
+    "description": "When a close enemy on a negative slot is dismantled, modify that slot by -1.Deploy: Modify a close enemy slot by -2.",
+    "plainText": "When a close enemy on a negative slot is dismantled, modify that slot by -1.Deploy: Modify a close enemy slot by -2.",
+    "text": "<p>When&nbsp;a&nbsp;close&nbsp;enemy&nbsp;on&nbsp;a&nbsp;negative&nbsp;slot&nbsp;is&nbsp;dismantled,&nbsp;modify&nbsp;that&nbsp;slot&nbsp;by&nbsp;-1.</p><p><strong>Deploy:&nbsp;</strong>Modify&nbsp;a&nbsp;close&nbsp;enemy&nbsp;slot&nbsp;by&nbsp;-2.</p>",
+    "basePower": 3,
+    "rarity": "Gold",
+    "color": "Red",
+    "unitType": "Unit // Criminal",
+    "traits": [
+        {
+            "type": "reaction",
+            "config": {
+                "trigger": "ON_DEPLOY",
+                "effect": "ADD_SLOT_MODIFIER",
+                "value": -2,
+                "target": "SELF"
+            }
+        }
+    ]
+}

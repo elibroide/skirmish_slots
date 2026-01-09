@@ -1,0 +1,13 @@
+{
+    "id": "matrix_attendent",
+    "originalId": "5939ab91-c9a2-497b-af75-b64af997d0ef",
+    "name": "Matrix Attendent",
+    "description": "When you play a command, modify my slot by +2.",
+    "plainText": "When you play a command, modify my slot by +2.",
+    "text": "<p>When&nbsp;you&nbsp;play&nbsp;a&nbsp;command,&nbsp;modify&nbsp;my&nbsp;slot&nbsp;by&nbsp;+2.</p>",
+    "basePower": 3,
+    "rarity": "Silver",
+    "color": "Purple",
+    "unitType": "Unit // Administrator",
+    "traits": []
+}

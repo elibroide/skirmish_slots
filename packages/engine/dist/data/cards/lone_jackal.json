@@ -1,0 +1,24 @@
+{
+    "id": "lone_jackal",
+    "originalId": "39fdaecb-337c-424e-a469-6c4b765dcb72",
+    "name": "Lone Jackal",
+    "description": "Deploy: I deal 2 damage to a close unit.",
+    "plainText": "Deploy: I deal 2 damage to a close unit.",
+    "text": "<p><strong>Deploy:&nbsp;&nbsp;</strong>I&nbsp;deal&nbsp;2&nbsp;damage&nbsp;to&nbsp;a&nbsp;close&nbsp;unit.</p>",
+    "basePower": 3,
+    "rarity": "Bronze",
+    "color": "Red",
+    "unitType": "Unit // Criminal",
+    "traits": [
+        {
+            "type": "reaction",
+            "config": {
+                "trigger": "ON_DEPLOY",
+                "effect": "DEAL_DAMAGE",
+                "value": 2,
+                "target": "CLOSE_UNIT",
+                "targetDecision": "PLAYER"
+            }
+        }
+    ]
+}

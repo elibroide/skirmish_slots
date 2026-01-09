@@ -211,12 +211,6 @@ export const Slot: React.FC<SlotProps> = ({
                 data-terrain-id={terrainId}
                 data-droppable="true"
                 className="w-full h-full relative cursor-pointer group transition-colors duration-200"
-                onMouseEnter={() => {
-                    useGameStore.getState().setHoveredSlot({ playerId, terrainId });
-                }}
-                onMouseLeave={() => {
-                    useGameStore.getState().setHoveredSlot(null);
-                }}
                 style={{
                     border: `${borderWidth} solid ${borderColor}`,
                     backgroundColor: bgColor,

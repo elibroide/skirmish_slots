@@ -1,4 +1,5 @@
 import { Trait } from './Trait';
+import { TriggerEffect } from '../effects/TriggerEffect';
 /**
  * ShieldTrait intercepts incoming damage
  * Used for future cards that can give shield to units
@@ -42,10 +43,11 @@ export class ShieldTrait extends Trait {
         }); // Type will be added to GameEvent later
         // Auto-remove if depleted and duration is UNTIL_DEPLETED
         if (this.shieldAmount <= 0 && this.duration === 'UNTIL_DEPLETED') {
-            // Schedule removal after current damage processing
-            setTimeout(() => {
+            // Schedule removal using the effect stack (avoiding setTimeout and interference with current iteration)
+            // Note: TriggerEffect must be imported at module level
+            this.engine.addInterrupt(new TriggerEffect(this.owner, 'Shield Depleted', async () => {
                 this.owner.removeTrait(this.id);
-            }, 0);
+            }));
         }
         return amount - blocked;
     }

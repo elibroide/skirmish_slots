@@ -145,6 +145,40 @@ export const Hand: React.FC<HandProps> = ({
             }
         }
 
+        // Check for Slot Hover during Drag
+        if (dragState.isDragging && dragState.card)
+        {
+            const distinctElements = document.elementsFromPoint(e.clientX, e.clientY);
+            let foundSlot = false;
+
+            for (const el of distinctElements)
+            {
+                const pidStr = el.getAttribute('data-player-id');
+                const tidStr = el.getAttribute('data-terrain-id');
+
+                if (pidStr && tidStr)
+                {
+                    const playerId = parseInt(pidStr) as PlayerId;
+                    const terrainId = parseInt(tidStr) as TerrainId;
+
+                    // Check if valid slot in store
+                    const slotData = useGameStore.getState().players[playerId]?.slots[terrainId];
+                    // Only valid if empty (and belongs to correct player? assume yes for now)
+                    if (slotData && !slotData.content)
+                    {
+                        useGameStore.getState().setHoveredSlot({ playerId, terrainId });
+                        foundSlot = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!foundSlot)
+            {
+                useGameStore.getState().setHoveredSlot(null);
+            }
+        }
+
         // Update drag position
         if (dragState.isDragging)
         {
@@ -410,11 +444,12 @@ export const Hand: React.FC<HandProps> = ({
 
     const draggedCardGlowState = React.useMemo(() => {
         const storeState = useGameStore.getState();
-        const hoveredSlot = storeState.dragState.hoveredSlot;
-        const isTargeting = hoveredSlot !== null &&
-            storeState.players[hoveredSlot.playerId]?.slots[hoveredSlot.terrainId]?.status === 'showTarget';
-        return isTargeting ? 'targeting' : 'dragging';
-    }, [dragState.isDragging]);
+        const hoveredSlot = storeState.hoveredSlot; // Use new simple hoveredSlot
+
+        // Return explicit valid/invalid states
+        if (hoveredSlot !== null) return 'valid-target';
+        return 'invalid-target';
+    }, [dragState.isDragging, useGameStore.getState().hoveredSlot]);
 
     // Dynamic Style for Container
     const handContainerStyle: React.CSSProperties = {
@@ -485,7 +520,7 @@ export const Hand: React.FC<HandProps> = ({
                     settings={settings}
                     templates={templates}
                     schema={schema}
-                    glowState={draggedCardGlowState}
+                    glowState={draggedCardGlowState as any}
                 />
             )}
 

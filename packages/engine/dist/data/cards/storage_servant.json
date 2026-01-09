@@ -1,0 +1,22 @@
+{
+    "id": "storage_servant",
+    "originalId": "fa7aa20e-7453-419c-84b4-4c578947ae15",
+    "name": "Storage Servant",
+    "description": "Dismantled: Create a random command card.",
+    "plainText": "Dismantled: Create a random command card.",
+    "text": "<p><strong>Dismantled:&nbsp;</strong>Create&nbsp;a&nbsp;random&nbsp;command&nbsp;card.</p>",
+    "basePower": 2,
+    "rarity": "Bronze",
+    "color": "Purple",
+    "unitType": "Unit // Servent",
+    "traits": [
+        {
+            "type": "reaction",
+            "config": {
+                "trigger": "ON_DEATH",
+                "effect": "CREATE_CARD",
+                "value": "random_card"
+            }
+        }
+    ]
+}

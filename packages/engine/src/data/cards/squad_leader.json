@@ -1,0 +1,105 @@
+{
+  "id": "squad_leader",
+  "data": {
+    "name": "Squad Leader",
+    "color": "Blue",
+    "rarity": "Gold",
+    "power": "7",
+    "text": "<p><strong>Deploy:&nbsp;</strong>Close&nbsp;Enforcers&nbsp;get&nbsp;+2&nbsp;shield.&nbsp;Then&nbsp;close&nbsp;allies&nbsp;fight&nbsp;their&nbsp;opposing&nbsp;enemies.</p>",
+    "traits": [
+      {
+        "type": "reaction",
+        "config": {
+          "triggers": [
+            {
+              "type": "Deploy",
+              "target": {
+                "type": "Self"
+              }
+            }
+          ],
+          "effects": [
+            {
+              "action": {
+                "type": "Sequence",
+                "effects": [
+                  {
+                    "candidates": {
+                      "type": "Relative",
+                      "proximity": "Close",
+                      "relationship": "Ally",
+                      "entity": "Unit",
+                      "condition": [
+                        {
+                          "path": "unitType",
+                          "condition": "contains",
+                          "value": {
+                            "type": "static",
+                            "value": "Enforcer"
+                          }
+                        }
+                      ]
+                    },
+                    "selection": {
+                      "strategy": "All"
+                    },
+                    "action": {
+                      "type": "AddShield",
+                      "value": {
+                        "type": "static",
+                        "value": 2
+                      }
+                    }
+                  },
+                  {
+                    "candidates": {
+                      "type": "Relative",
+                      "proximity": "Close",
+                      "relationship": "Ally",
+                      "entity": "Unit"
+                    },
+                    "selection": {
+                      "strategy": "All"
+                    },
+                    "action": {
+                      "type": "Sequence",
+                      "iteration": "ForEach",
+                      "effects": [
+                        {
+                          "candidates": {
+                            "type": "RelativeToIteration"
+                          },
+                          "action": {
+                            "type": "Fight",
+                            "opponent": {
+                              "type": "Relative",
+                              "proximity": "Opposing",
+                              "relationship": "Enemy"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "cardType": "Unit",
+    "unitType": "Soldier"
+  },
+  "artConfig": {
+    "imageUrl": "/card-art/Gemini_Generated_Image_l0ioyvl0ioyvl0io.png",
+    "x": 120,
+    "y": 120,
+    "scale": 0.3,
+    "isMask": false,
+    "maskX": 0,
+    "maskY": 0,
+    "maskWidth": 750,
+    "maskHeight": 1050
+  }
+}

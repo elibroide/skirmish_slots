@@ -4,7 +4,7 @@ import { CardRenderer } from "../../../../card-maker/src/components/CardRenderer
 import { GameEngine } from "@skirmish/engine";
 // @ts-ignore
 import { createUnitCard } from "@skirmish/engine";
-import { UNIT_CARD_DEFINITIONS } from "@skirmish/engine";
+import { integratedCards } from "@skirmish/engine";
 import { useCardViewModel } from "../../hooks/useCardViewModel";
 
 // Helper to render a single card (to adhere to hooks rules)
@@ -56,8 +56,8 @@ export const TestCardView: React.FC = () => {
     // Create array of objects with ID and Name for easier filtering
     const validCards: { id: string, name: string }[] = [];
 
-    Object.entries(UNIT_CARD_DEFINITIONS).forEach(([id, def]) => {
-        validCards.push({ id, name: def.name });
+    integratedCards.forEach((def: any) => {
+        validCards.push({ id: def.id, name: def.data.name });
     });
 
     return (

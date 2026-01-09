@@ -1,0 +1,62 @@
+export class ValueResolver {
+    // We need a way to resolve targets if source is 'target'.
+    // But TargetResolver uses ValueResolver (probably not, but maybe for values inside conditions?).
+    // Actually TargetResolver uses Condition, Condition uses ValueResolver.
+    // ValueResolver might need TargetResolver if type is 'target' and it has a sub-target selector.
+    // This implies recursion/dependency.
+    // For simplicity, `type: 'target'` usually implies "Target of the Event" or "Target found by a selector".
+    // The spec says:
+    // type: target, value: "power", target: { type: 'Relative' ... }
+    // So yes, ValueResolver needs to call TargetResolver.
+    // Implementation note: I'll inject a resolveTarget callback or interface to avoid hard circular link.
+    constructor(targetResolver // Returns found objects (Units/Slots)
+    ) {
+        Object.defineProperty(this, "targetResolver", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: targetResolver
+        });
+    }
+    resolve(selector, context, owner) {
+        switch (selector.type) {
+            case 'static':
+                return selector.value;
+            case 'me':
+                return this.getProperty(owner, selector.value);
+            case 'target':
+                if (!selector.target) {
+                    // implicit target? or error? Spec says required only if type is target.
+                    // If missing, maybe usage implies "Context Target"? 
+                    // Let's assume strict compliance: must have target selector.
+                    // OR context.victim / context.unit if available? 
+                    // Spec usage example 10: target: { type: 'Relative', ... }
+                    if (context.target)
+                        return this.getProperty(context.target, selector.value); // Fallback to context target?
+                    console.warn("ValueSelector type 'target' missing target selector");
+                    return 0;
+                }
+                const targets = this.targetResolver(selector.target, context);
+                if (targets.length === 0)
+                    return 0; // or null?
+                // Default to first target? Sum? Spec doesn't say.
+                // Usually "my power becomes equal to opposing enemy" implies one target.
+                return this.getProperty(targets[0], selector.value); // Use first found
+            default:
+                return selector.value;
+        }
+    }
+    getProperty(obj, path) {
+        if (!obj)
+            return 0;
+        // Handle nested paths like "slot.modifier" or "lastSlot.modifier"
+        const parts = path.split('.');
+        let current = obj;
+        for (const part of parts) {
+            if (current === null || current === undefined)
+                return undefined;
+            current = current[part];
+        }
+        return current;
+    }
+}

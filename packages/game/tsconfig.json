@@ -24,7 +24,12 @@
     "types": [
       "vite/client",
       "node"
-    ]
+    ],
+    "paths": {
+      "@skirmish/engine": [
+        "../engine/src/index.ts"
+      ]
+    }
   },
   "include": [
     "src"

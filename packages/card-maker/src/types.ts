@@ -1,11 +1,12 @@
 export interface SchemaField {
   key: string;
-  type: 'text' | 'number' | 'image' | 'richtext' | 'tags';
+  type: 'text' | 'number' | 'image' | 'richtext' | 'tags' | 'json';
   label: string;
   example?: string;
   options?: string[]; // Enum values (comma separated in UI)
   scope?: 'both' | 'template_only' | 'card_only'; // Default 'both' if undefined
   defaultValue?: any;
+  jsonSchema?: Record<string, any>; // For type='json', the schema definition
 }
 
 export interface CardSchema extends Array<SchemaField> {}

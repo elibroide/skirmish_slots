@@ -1,0 +1,59 @@
+{
+  "id": "lone_jackal",
+  "data": {
+    "name": "Lone Jackal",
+    "color": "Red",
+    "rarity": "Bronze",
+    "power": "3",
+    "text": "<p><strong>Deploy:&nbsp;&nbsp;</strong>I&nbsp;deal&nbsp;2&nbsp;damage&nbsp;to&nbsp;a&nbsp;close&nbsp;unit.</p>",
+    "traits": [
+      {
+        "type": "reaction",
+        "config": {
+          "triggers": [
+            {
+              "type": "Deploy",
+              "target": {
+                "type": "Relative",
+                "proximity": "Self"
+              }
+            }
+          ],
+          "effects": [
+            {
+              "candidates": {
+                "type": "Relative",
+                "proximity": "Close",
+                "relationship": "Enemy"
+              },
+              "selection": {
+                "strategy": "Player"
+              },
+              "action": {
+                "type": "DealDamage",
+                "value": {
+                  "type": "static",
+                  "value": 2
+                }
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "notes": "<p></p>",
+    "cardType": "Unit",
+    "unitType": "Criminal"
+  },
+  "artConfig": {
+    "imageUrl": "/card-art/Gemini_Generated_Image_3x7plx3x7plx3x7p.png",
+    "x": 120,
+    "y": 120,
+    "scale": 0.3,
+    "isMask": false,
+    "maskX": 0,
+    "maskY": 0,
+    "maskWidth": 750,
+    "maskHeight": 1050
+  }
+}

@@ -71,6 +71,7 @@ export class GameEngine {
   public ruleManager: RuleManager;
   public logger: GameLogger;
   public rng: SeededRNG;
+  public get events(): EventEmitter<GameEvent> { return this.eventEmitter; }
   private eventEmitter: EventEmitter<GameEvent>;
   private actionEmitter: EventEmitter<GameAction>;
   private stateChecker: StateChecker;
@@ -370,6 +371,22 @@ export class GameEngine {
   }
 
   // Removed actionToEffect as logic is now in processAction
+
+  /**
+   * Helper to find a unit instance by ID
+   */
+  public getUnit(unitId: string): UnitCard | undefined {
+      // Check active board
+      for (const terrain of this.terrains) {
+          if (!terrain) continue;
+          for (const slot of terrain.slots) {
+              if (slot.unit && slot.unit.id === unitId) {
+                  return slot.unit;
+              }
+          }
+      }
+      return undefined;
+  }
 
   /**
    * Check if an action is legal in the current game state

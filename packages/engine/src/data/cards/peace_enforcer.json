@@ -1,0 +1,55 @@
+{
+  "id": "peace_enforcer",
+  "data": {
+    "name": "Peace Enforcer",
+    "color": "Blue",
+    "rarity": "Bronze",
+    "power": "4",
+    "text": "<p><strong>Deploy:&nbsp;</strong>I&nbsp;get&nbsp;+2&nbsp;shield.</p>",
+    "traits": [
+      {
+        "type": "reaction",
+        "config": {
+          "triggers": [
+            {
+              "type": "Deploy",
+              "target": {
+                "type": "Self"
+              }
+            }
+          ],
+          "effects": [
+            {
+              "candidates": {
+                "type": "Self"
+              },
+              "selection": {
+                "strategy": "All"
+              },
+              "action": {
+                "type": "AddShield",
+                "value": {
+                  "type": "static",
+                  "value": 2
+                }
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "cardType": "Unit",
+    "unitType": "Soldier"
+  },
+  "artConfig": {
+    "imageUrl": "/card-art/Gemini_Generated_Image_osl6d1osl6d1osl6.png",
+    "x": 120,
+    "y": 80,
+    "scale": 0.3,
+    "isMask": false,
+    "maskX": 0,
+    "maskY": 0,
+    "maskWidth": 750,
+    "maskHeight": 1050
+  }
+}

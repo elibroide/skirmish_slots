@@ -1,0 +1,13 @@
+{
+    "id": "mirrage_maker",
+    "originalId": "a4268904-ece3-4e15-825f-96b85934e251",
+    "name": "Mirrage Maker",
+    "description": "Deploy: My power becomes equal to the opposing enemy.",
+    "plainText": "Deploy: My power becomes equal to the opposing enemy.",
+    "text": "<p><strong>Deploy:&nbsp;</strong>My&nbsp;power&nbsp;becomes&nbsp;equal&nbsp;to&nbsp;the&nbsp;opposing&nbsp;enemy.</p>",
+    "basePower": 1,
+    "rarity": "Silver",
+    "color": "Purple",
+    "unitType": "Unit // Hacker",
+    "traits": []
+}

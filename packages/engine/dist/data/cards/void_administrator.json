@@ -1,0 +1,23 @@
+{
+    "id": "void_administrator",
+    "originalId": "e15742e4-3792-4689-aed5-9b4ba8b800df",
+    "name": "Void Administrator",
+    "description": "Deploy: Nullify a close unit.",
+    "plainText": "Deploy: Nullify a close unit.",
+    "text": "<p><strong>Deploy:&nbsp;</strong>Nullify&nbsp;a&nbsp;close&nbsp;unit.</p>",
+    "basePower": 2,
+    "rarity": "Bronze",
+    "color": "Purple",
+    "unitType": "Unit // Hacker",
+    "traits": [
+        {
+            "type": "reaction",
+            "config": {
+                "trigger": "ON_DEPLOY",
+                "effect": "NULLIFY",
+                "value": 0,
+                "target": "CLOSE_UNIT"
+            }
+        }
+    ]
+}

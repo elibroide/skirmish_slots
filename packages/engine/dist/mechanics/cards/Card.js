@@ -264,6 +264,12 @@ export class UnitCard extends Card {
      */
     get power() {
         let p = this.originalPower + this._buffs - this._damage;
+        // Apply global rules (Passives from other units)
+        // Cast to any to avoid circular dependency check strictness for now if subtypes mismatch
+        // But conceptually:
+        const context = { unit: this };
+        p = this.engine.ruleManager.evaluate('MODIFY_POWER', // Using string literal if enum import is tricky, looking at file it imports RuleType though.
+        context, p);
         // Apply slot modifiers if on board
         if (this._terrainId !== null) {
             const slotModifier = this.engine.getSlotModifier(this._terrainId, this.owner);
@@ -319,6 +325,7 @@ export class UnitCard extends Card {
             unitId: victim.id,
             unitName: victim.name,
             terrainId: victim.terrainId,
+            consumerId: this.id
         });
     }
     /**

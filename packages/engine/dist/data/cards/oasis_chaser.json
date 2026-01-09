@@ -1,0 +1,13 @@
+{
+    "id": "oasis_chaser",
+    "originalId": "e5ec11bf-dd99-4329-96bf-ecd81ee97feb",
+    "name": "Oasis Chaser",
+    "description": "Activate (once per turn): Move to a close ally slot.",
+    "plainText": "Activate (once per turn): Move to a close ally slot.",
+    "text": "<p><strong>Activate&nbsp;(once&nbsp;per&nbsp;turn):&nbsp;</strong>Move&nbsp;to&nbsp;a&nbsp;close&nbsp;ally&nbsp;slot.</p>",
+    "basePower": 3,
+    "rarity": "Bronze",
+    "color": "Blue",
+    "unitType": "Unit // Animal",
+    "traits": []
+}

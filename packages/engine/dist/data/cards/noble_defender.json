@@ -1,0 +1,13 @@
+{
+    "id": "noble_defender",
+    "originalId": "5382bbeb-551d-43b8-b668-a9fee1a565a2",
+    "name": "Noble Defender",
+    "description": "Redirect damage dealt to close allies to me.",
+    "plainText": "Redirect damage dealt to close allies to me.",
+    "text": "<p>Redirect&nbsp;damage&nbsp;dealt&nbsp;to&nbsp;close&nbsp;allies&nbsp;to&nbsp;me.</p>",
+    "basePower": 6,
+    "rarity": "Silver",
+    "color": "Blue",
+    "unitType": "Unit // Soldier",
+    "traits": []
+}

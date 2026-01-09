@@ -1,0 +1,13 @@
+{
+    "id": "shock_bandit",
+    "originalId": "0113ac0d-bfdb-45d1-bff9-f8bdf1e3b153",
+    "name": "Shock Bandit",
+    "description": "Deploy and turn starts: I deal 1 damage to each close enemy.",
+    "plainText": "Deploy and turn starts: I deal 1 damage to each close enemy.",
+    "text": "<p><strong>Deploy&nbsp;and&nbsp;turn&nbsp;starts:&nbsp;</strong>I&nbsp;deal&nbsp;1&nbsp;damage&nbsp;to&nbsp;each&nbsp;close&nbsp;enemy.</p>",
+    "basePower": 2,
+    "rarity": "Bronze",
+    "color": "Red",
+    "unitType": "Unit // Criminal",
+    "traits": []
+}

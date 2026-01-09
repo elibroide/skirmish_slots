@@ -1,0 +1,23 @@
+{
+    "id": "friendly_fortifier",
+    "originalId": "53479adf-b1c8-405a-af3c-be8ad0cd1ec4",
+    "name": "Friendly Fortifier",
+    "description": "ModularDeploy: I get +3 shield.",
+    "plainText": "ModularDeploy: I get +3 shield.",
+    "text": "<p>Modular</p><p>Deploy:&nbsp;I&nbsp;get&nbsp;+3&nbsp;shield.</p>",
+    "basePower": 3,
+    "rarity": "Bronze",
+    "color": "Yellow",
+    "unitType": "Unit // Builder",
+    "traits": [
+        {
+            "type": "reaction",
+            "config": {
+                "trigger": "ON_DEPLOY",
+                "effect": "ADD_SHIELD",
+                "value": 3,
+                "target": "SELF"
+            }
+        }
+    ]
+}

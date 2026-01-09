@@ -5,4 +5,4 @@ export interface GameCreationResult {
     localPlayerId: PlayerId;
     gameMode: string;
 }
-export declare const createGame: (localPlayerId: PlayerId, mode?: "vs-ai" | "human-vs-human" | "god-mode") => GameCreationResult;
+export declare const createGame: (localPlayerId: PlayerId, mode?: "vs-ai" | "human-vs-human" | "god-mode") => Promise<GameCreationResult>;

@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
 import { createGameConfig } from './game';
 
-export const PhaserLayer: React.FC = () => {
+export const PhaserLayer: React.FC = React.memo(() => {
     const gameContainerRef = useRef<HTMLDivElement>(null);
     const gameRef = useRef<Phaser.Game | null>(null);
 
@@ -35,4 +35,4 @@ export const PhaserLayer: React.FC = () => {
             style={{ zIndex: 0 }}
         />
     );
-};
+});

@@ -1,0 +1,102 @@
+{
+  "id": "waste_spiller",
+  "data": {
+    "name": "Waste Spiller",
+    "color": "Red",
+    "rarity": "Gold",
+    "power": "3",
+    "text": "<p>When&nbsp;a&nbsp;close&nbsp;enemy&nbsp;on&nbsp;a&nbsp;negative&nbsp;slot&nbsp;is&nbsp;dismantled,&nbsp;modify&nbsp;that&nbsp;slot&nbsp;by&nbsp;-1.</p><p><strong>Deploy:&nbsp;</strong>Modify&nbsp;a&nbsp;close&nbsp;enemy&nbsp;slot&nbsp;by&nbsp;-2.</p>",
+    "traits": [
+      {
+        "type": "reaction",
+        "config": {
+          "triggers": [
+            {
+              "type": "Death",
+              "target": {
+                "type": "Relative",
+                "proximity": "Close",
+                "relationship": "Enemy",
+                "entity": "Unit",
+                "condition": [
+                  {
+                    "path": "lastSlot.modifier",
+                    "condition": "lt",
+                    "value": {
+                      "type": "static",
+                      "value": 0
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "effects": [
+            {
+              "candidates": {
+                "type": "RelativeToTrigger",
+                "entity": "Slot"
+              },
+              "selection": {
+                "strategy": "All"
+              },
+              "action": {
+                "type": "ModifySlot",
+                "value": {
+                  "type": "static",
+                  "value": -1
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "type": "reaction",
+        "config": {
+          "triggers": [
+            {
+              "type": "Deploy",
+              "target": {
+                "type": "Self"
+              }
+            }
+          ],
+          "effects": [
+            {
+              "candidates": {
+                "type": "Relative",
+                "proximity": "Close",
+                "relationship": "Enemy",
+                "entity": "Slot"
+              },
+              "selection": {
+                "strategy": "Player"
+              },
+              "action": {
+                "type": "ModifySlot",
+                "value": {
+                  "type": "static",
+                  "value": -2
+                }
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "cardType": "Unit",
+    "unitType": "Criminal"
+  },
+  "artConfig": {
+    "imageUrl": "",
+    "x": 0,
+    "y": 0,
+    "scale": 1,
+    "isMask": false,
+    "maskX": 0,
+    "maskY": 0,
+    "maskWidth": 750,
+    "maskHeight": 1050
+  }
+}

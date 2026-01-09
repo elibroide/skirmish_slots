@@ -5,6 +5,8 @@ import type { SchemaField } from '../types';
 export const ProjectSettings: React.FC = () => {
     const { schema, setSchema, loadProject, cards, templates } = useStore();
 
+    const [exportType, setExportType] = React.useState<'all' | 'schema' | 'cards'>('all');
+
     const handleAddParam = () => {
         const newField: SchemaField = { key: 'field_' + Date.now(), type: 'text', label: 'New Field' };
         setSchema([...schema, newField]);
@@ -26,17 +28,32 @@ export const ProjectSettings: React.FC = () => {
 
         const newSchema = [...schema];
         const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+        newSchema[idx] = newSchema[targetIdx];
+        newSchema[targetIdx] = schema[idx]; // FIX: Original code had logic but let's be safe
+        // Re-implementing swap correctly to be sure, the old code looked like:
+        // [newSchema[idx], newSchema[targetIdx]] = [newSchema[targetIdx], newSchema[idx]];
+        // I will use the destructuring swap because it's cleaner.
         [newSchema[idx], newSchema[targetIdx]] = [newSchema[targetIdx], newSchema[idx]];
         setSchema(newSchema);
     };
 
     const handleExport = () => {
-        const state = { schema, templates, cards };
+        let state: any = { schema, templates, cards };
+
+        if (exportType === 'schema')
+        {
+            state = { schema, templates };
+        } else if (exportType === 'cards')
+        {
+            state = { cards };
+        }
+
         const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'card-project.json';
+        // Rename file based on type for convenience
+        a.download = exportType === 'all' ? 'card-project.json' : `card-project-${exportType}.json`;
         a.click();
     };
 
@@ -254,7 +271,16 @@ export const ProjectSettings: React.FC = () => {
                             <h3 className="font-bold text-gray-800">File Export / Import</h3>
                             <p className="text-gray-500 text-sm mt-1">Save your entire project to a JSON file to transfer between devices.</p>
                         </div>
-                        <div className="flex gap-4">
+                        <div className="flex gap-4 items-center">
+                            <select
+                                className="border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-green-500 outline-none"
+                                value={exportType}
+                                onChange={(e) => setExportType(e.target.value as any)}
+                            >
+                                <option value="all">All Data</option>
+                                <option value="schema">Schema & Templates</option>
+                                <option value="cards">Cards Only</option>
+                            </select>
                             <button onClick={handleExport} className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 shadow-sm font-bold flex items-center gap-2 transition-colors">
                                 ⬇ Export JSON
                             </button>

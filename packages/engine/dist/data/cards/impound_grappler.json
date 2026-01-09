@@ -1,0 +1,23 @@
+{
+    "id": "impound_grappler",
+    "originalId": "62ed3663-fbf0-45d5-aa68-9c33a57e7d42",
+    "name": "Impound Grappler",
+    "description": "Deploy: Move a close enemy to my opposing slot. (Do only if the slot is empty.)",
+    "plainText": "Deploy: Move a close enemy to my opposing slot. (Do only if the slot is empty.)",
+    "text": "<p><strong>Deploy:&nbsp;</strong>Move&nbsp;a&nbsp;close&nbsp;enemy&nbsp;to&nbsp;my&nbsp;opposing&nbsp;slot.&nbsp;(<em>Do&nbsp;only&nbsp;if&nbsp;the&nbsp;slot&nbsp;is&nbsp;empty.)</em></p>",
+    "basePower": 5,
+    "rarity": "Silver",
+    "color": "Blue",
+    "unitType": "Unit // Soldier",
+    "traits": [
+        {
+            "type": "reaction",
+            "config": {
+                "trigger": "ON_DEPLOY",
+                "effect": "MOVE",
+                "value": 0,
+                "target": "CLOSE_UNIT"
+            }
+        }
+    ]
+}

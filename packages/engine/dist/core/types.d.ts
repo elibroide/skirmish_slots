@@ -134,6 +134,7 @@ export type GameEvent = ({
     unitId: string;
     unitName: string;
     terrainId: TerrainId;
+    consumerId?: string;
 } | {
     type: 'UNIT_BOUNCED';
     unitId: string;

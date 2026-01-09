@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { GameEngine } from '../core/GameEngine';
 import { ScriptedController } from './utils/ScriptedController';
 import { UnitCard } from '../mechanics/cards/Card';
-import { ShieldTrait } from '../mechanics/traits/ShieldTrait';
+
 import { UNIT_CARD_DEFINITIONS } from '../mechanics/cards/cardDefinitions';
 import { createUnitCard } from '../mechanics/cards/CardFactory';
 
@@ -21,9 +21,9 @@ describe('Level 2.5: Advanced Mechanics & Scenarios', () => {
         
         // Custom Shield Units
         const shieldUnit1 = new UnitCard('test_shield', 'Shield Unit', 'Has Shield', 2, 0, engine);
-        shieldUnit1.addTrait(new ShieldTrait({ amount: 2 }));
+        shieldUnit1.addShield(2);
         const shieldUnit2 = new UnitCard('test_shield', 'Shield Unit', 'Has Shield', 2, 0, engine);
-        shieldUnit2.addTrait(new ShieldTrait({ amount: 2 }));
+        shieldUnit2.addShield(2);
         
         const deck0 = [shieldUnit1, shieldUnit2];
         

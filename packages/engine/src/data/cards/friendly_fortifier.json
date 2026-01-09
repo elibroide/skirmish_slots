@@ -1,0 +1,55 @@
+{
+  "id": "friendly_fortifier",
+  "data": {
+    "name": "Friendly Fortifier",
+    "color": "Yellow",
+    "rarity": "Bronze",
+    "power": "3",
+    "text": "<p>Modular</p><p>Deploy:&nbsp;I&nbsp;get&nbsp;+3&nbsp;shield.</p>",
+    "traits": [
+      {
+        "type": "reaction",
+        "config": {
+          "triggers": [
+            {
+              "type": "Deploy",
+              "target": {
+                "type": "Self"
+              }
+            }
+          ],
+          "effects": [
+            {
+              "candidates": {
+                "type": "Self"
+              },
+              "selection": {
+                "strategy": "All"
+              },
+              "action": {
+                "type": "AddShield",
+                "value": {
+                  "type": "static",
+                  "value": 3
+                }
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "cardType": "Unit",
+    "unitType": "Builder"
+  },
+  "artConfig": {
+    "imageUrl": "/card-art/Gemini_Generated_Image_oe9kx9oe9kx9oe9k.png",
+    "x": 120,
+    "y": 120,
+    "scale": 0.3,
+    "isMask": false,
+    "maskX": 0,
+    "maskY": 0,
+    "maskWidth": 750,
+    "maskHeight": 1050
+  }
+}

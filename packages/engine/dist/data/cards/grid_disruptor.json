@@ -1,0 +1,23 @@
+{
+    "id": "grid_disruptor",
+    "originalId": "a2739845-25e9-49c3-82e2-2f14ff615891",
+    "name": "Grid Disruptor",
+    "description": "Deploy: Bounce a close unit if its not a hacker.",
+    "plainText": "Deploy: Bounce a close unit if its not a hacker.",
+    "text": "<p><strong>Deploy:&nbsp;</strong>Bounce&nbsp;a&nbsp;close&nbsp;unit&nbsp;if&nbsp;its&nbsp;not&nbsp;a&nbsp;hacker.</p>",
+    "basePower": 4,
+    "rarity": "Silver",
+    "color": "Purple",
+    "unitType": "Unit // Hacker",
+    "traits": [
+        {
+            "type": "reaction",
+            "config": {
+                "trigger": "ON_DEPLOY",
+                "effect": "BOUNCE",
+                "value": 0,
+                "target": "CLOSE_UNIT"
+            }
+        }
+    ]
+}

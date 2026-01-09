@@ -4,4 +4,5 @@ export var RuleType;
     RuleType["CAN_TARGET"] = "CAN_TARGET";
     RuleType["CAN_CONSUME"] = "CAN_CONSUME";
     RuleType["DETERMINE_TERRAIN_WINNER"] = "DETERMINE_TERRAIN_WINNER";
+    RuleType["MODIFY_POWER"] = "MODIFY_POWER";
 })(RuleType || (RuleType = {}));

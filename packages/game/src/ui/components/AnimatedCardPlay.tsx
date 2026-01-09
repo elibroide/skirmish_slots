@@ -57,46 +57,23 @@ export const AnimatedCardPlay: React.FC<AnimatedCardPlayProps> = ({
 
             console.log('[AnimatedCardPlay] Sequence Starting', { startPosition, targetPosition });
 
-            const centeredTargetX = targetPosition.x + cardWidth / 2;
-            const centeredTargetY = targetPosition.y + cardHeight / 2;
+            // targetPosition is now the absolute center of the slot
+            const centeredTargetX = targetPosition.x;
+            const centeredTargetY = targetPosition.y;
 
-            const hangingX = centeredTargetX + (animationConfig.hoverOffsetX || 0);
-            const hangingY = centeredTargetY + (animationConfig.hoverOffsetY || 0);
-
-            if (animationConfig.moveDuration > 0)
-            {
-                await animate(scope.current, {
-                    x: hangingX,
-                    y: hangingY,
-                    scale: animationConfig.hoverScale
-                }, {
-                    duration: animationConfig.moveDuration,
-                    ease: (animationConfig.moveEase || "easeOut") as any
-                });
-            } else
-            {
-                await animate(scope.current, {
-                    x: hangingX,
-                    y: hangingY,
-                    scale: animationConfig.hoverScale
-                }, { duration: 0 });
-            }
-            if (animationConfig.triggerNextOn === 'moveDone') triggerNext();
-
-            if (animationConfig.triggerNextOn === 'hoverDone') triggerNext();
-
+            // Simple Push Animation
+            // Move directly to target and scale down
             await animate(scope.current, {
                 x: centeredTargetX,
                 y: centeredTargetY,
-                scale: animationConfig.slamScaleLand,
+                scale: animationConfig.slamScaleLand || 0.25, // Fallback to safe scale
                 opacity: 0
             }, {
-                duration: animationConfig.slamDuration,
-                ease: (animationConfig.slamEase || "backIn") as any,
-                delay: animationConfig.waitDuration // Use declarative delay instead of setTimeout
+                duration: animationConfig.slamDuration || 0.4,
+                ease: "backOut" // Push feel
             });
 
-            if (animationConfig.triggerNextOn === 'slamDone') triggerNext();
+            if (animationConfig.triggerNextOn === 'slamDone' || animationConfig.triggerNextOn === 'moveDone') triggerNext();
 
             onComplete();
         };
@@ -119,6 +96,8 @@ export const AnimatedCardPlay: React.FC<AnimatedCardPlayProps> = ({
                 position: 'fixed',
                 left: 0,
                 top: 0,
+                marginLeft: `-${cardWidth / 2}px`,
+                marginTop: `-${cardHeight / 2}px`,
                 transformOrigin: 'center center',
                 pointerEvents: 'none'
             }}

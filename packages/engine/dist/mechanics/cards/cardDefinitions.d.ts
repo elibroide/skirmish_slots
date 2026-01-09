@@ -1,4 +1,4 @@
-import type { TraitDefinition } from '../traits/TraitFactory';
+import type { TraitDefinition } from '../core/TraitFactory';
 export interface UnitCardDefinition {
     name: string;
     description: string;

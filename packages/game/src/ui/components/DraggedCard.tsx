@@ -12,7 +12,7 @@ interface DraggedCardProps {
     settings: HandSettings;
     templates: CardTemplate[];
     schema: CardSchema;
-    glowState: 'dragging' | 'targeting'; // DraggedCard is always one of these
+    glowState: 'dragging' | 'targeting' | 'valid-target' | 'invalid-target'; // DraggedCard is always one of these
 }
 
 export const DraggedCard: React.FC<DraggedCardProps> = ({
@@ -48,7 +48,12 @@ export const DraggedCard: React.FC<DraggedCardProps> = ({
     const cardHeight = BASE_CARD_HEIGHT * settings.cardScale;
 
     // Determine Glow Color
-    const activeGlowColor = glowState === 'targeting' ? settings.glowColorTargeting : settings.glowColorDragging;
+    let activeGlowColor = settings.glowColorDragging;
+    if (glowState === 'targeting') activeGlowColor = settings.glowColorTargeting;
+    else if (glowState === 'valid-target') activeGlowColor = '#FFFF00'; // Yellow
+    else if (glowState === 'invalid-target') activeGlowColor = '#FF0000'; // Red
+
+    const activeScale = glowState === 'valid-target' ? settings.dragScale + 0.1 : settings.dragScale;
 
     // Standard Shadow
     const shadowFilter = 'drop-shadow(0 30px 50px rgba(0,0,0,0.6))';
@@ -81,7 +86,7 @@ export const DraggedCard: React.FC<DraggedCardProps> = ({
                 transform: `
                     translateY(${settings.glowOffsetY}px)
                     translateX(${settings.glowOffsetX}px)
-                    scale(${settings.dragScale}) 
+                    scale(${activeScale}) 
                     rotateX(${tiltX}deg) 
                     rotateY(${tiltY}deg)
                 `,
@@ -106,7 +111,7 @@ export const DraggedCard: React.FC<DraggedCardProps> = ({
                 transform: `
                     translateY(${settings.glowOffsetY}px)
                     translateX(${settings.glowOffsetX}px)
-                    scale(${settings.dragScale}) 
+                    scale(${activeScale}) 
                     rotateX(${tiltX}deg) 
                     rotateY(${tiltY}deg)
                 `,
@@ -125,7 +130,7 @@ export const DraggedCard: React.FC<DraggedCardProps> = ({
                 height: `${cardHeight}px`,
                 marginLeft: `${-cardWidth / 2}px`,
                 marginTop: `${-cardHeight / 2}px`,
-                transform: `scale(${settings.dragScale}) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`,
+                transform: `scale(${activeScale}) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`,
                 transformOrigin: 'center center',
                 transformStyle: 'preserve-3d',
                 transition: `transform ${settings.tiltReturnSpeed}s ease-out`,
