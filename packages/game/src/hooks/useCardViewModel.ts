@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { Card, UnitCard } from '@skirmish/engine';
+import type { UnitState, ActionState } from '@skirmish/engine/src/core/types';
 import { visualAssetManager } from '../utils/VisualAssetManager';
 
 export interface CardViewModel {
@@ -8,11 +8,43 @@ export interface CardViewModel {
   schema: any;
 }
 
-export function useCardViewModel(card: Card | UnitCard | null): CardViewModel | null {
+type CardState = UnitState | ActionState;
+
+export function useCardViewModel(card: CardState | null): CardViewModel | null {
   return useMemo(() => {
     if (!card) return null;
 
-    // 1. Get Visual Data (Art, Layout, Frame)
+    // 0. Check for Direct Config (Single Source of Truth)
+    if (card.config) {
+        const config = card.config;
+        
+        // Merge dynamic engine data
+        const mergedData = {
+            ...config.data,
+            name: card.name,
+            description: card.description,
+            ...(card.type === 'unit' ? {
+                power: (card as UnitState).power,
+                rarity: (card as UnitState).rarity,
+                color: (card as UnitState).color,
+                type: (card as UnitState).unitType,
+            } : {})
+        };
+
+        return {
+            template: visualAssetManager.getTemplate(config.templateId),
+            data: {
+                id: card.id, // Use runtime ID
+                templateId: config.templateId,
+                data: mergedData,
+                artConfig: config.artConfig,
+                frameVariantId: config.frameVariantId
+            },
+            schema: visualAssetManager.getSchema()
+        };
+    }
+
+    // 1. Fallback: Get Visual Data (Art, Layout, Frame) from Manager
     const visualData = visualAssetManager.getVisuals(card.name);
 
     if (!visualData) {
@@ -35,14 +67,14 @@ export function useCardViewModel(card: Card | UnitCard | null): CardViewModel | 
       
       // Dynamic Overrides from Engine
       name: card.name,
-      description: card.description, // Use engine description (reflects modifications?? Not yet but could)
+      description: card.description,
       
       // Unit Specific Overrides
-      ...((card.getType() === 'unit') ? {
-        power: (card as UnitCard).power, // Real-time power (buffs/damage)
-        rarity: (card as UnitCard).rarity,
-        color: (card as UnitCard).color,
-        type: (card as UnitCard).unitType, // "Human Knight" etc.
+      ...((card.type === 'unit') ? {
+        power: (card as UnitState).power,
+        rarity: (card as UnitState).rarity,
+        color: (card as UnitState).color,
+        type: (card as UnitState).unitType,
       } : {})
     };
 
@@ -57,5 +89,5 @@ export function useCardViewModel(card: Card | UnitCard | null): CardViewModel | 
       },
       schema
     };
-  }, [card, card?.name, (card as any)?.power, (card as any)?.description]); // Re-compute on critical updates
+  }, [card, card?.name, (card as any)?.power, (card as any)?.description]); 
 }

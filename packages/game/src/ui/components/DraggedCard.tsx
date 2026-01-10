@@ -69,73 +69,62 @@ export const DraggedCard: React.FC<DraggedCardProps> = ({
                 perspective: `${settings.perspective}px`,
             }}
         >
-            {/* Split Back-Glow */}
-            {/* 1. Pulsing Edge Glow */}
+            {/* Dragged Card Wrapper */}
             <div style={{
                 position: 'absolute',
-                // Width = Base + Expansions
-                width: `${cardWidth + settings.glowExpLeft + settings.glowExpRight}px`,
-                height: `${cardHeight + settings.glowExpTop + settings.glowExpBottom}px`,
-                // Center relative to the dragged position (which is center of card)
-                // Left offset = -HalfCard - LeftExp
-                marginLeft: `${-(cardWidth / 2) - settings.glowExpLeft}px`,
-                // Top offset = -HalfHeight - TopExp
-                marginTop: `${-(cardHeight / 2) - settings.glowExpTop}px`,
-
-                // Offsets
-                transform: `
-                    translateY(${settings.glowOffsetY}px)
-                    translateX(${settings.glowOffsetX}px)
-                    scale(${activeScale}) 
-                    rotateX(${tiltX}deg) 
-                    rotateY(${tiltY}deg)
-                `,
-                backgroundColor: activeGlowColor,
-                borderRadius: `${settings.glowCornerRadius}px`,
-                opacity: settings.glowOpacity,
-                filter: `blur(${settings.glowBlur}px)`,
-                transformOrigin: 'center center', // Scale from center
-                transition: `transform ${settings.tiltReturnSpeed}s ease-out`,
-                zIndex: -2
-            }}
-                className={settings.glowPulseSpeed > 0 ? "animate-pulse-glow" : ""}
-            />
-
-            {/* 2. Solid Backing Rect */}
-            <div style={{
-                position: 'absolute',
-                width: `${cardWidth + settings.glowExpLeft + settings.glowExpRight}px`,
-                height: `${cardHeight + settings.glowExpTop + settings.glowExpBottom}px`,
-                marginLeft: `${-(cardWidth / 2) - settings.glowExpLeft}px`,
-                marginTop: `${-(cardHeight / 2) - settings.glowExpTop}px`,
-                transform: `
-                    translateY(${settings.glowOffsetY}px)
-                    translateX(${settings.glowOffsetX}px)
-                    scale(${activeScale}) 
-                    rotateX(${tiltX}deg) 
-                    rotateY(${tiltY}deg)
-                `,
-                backgroundColor: activeGlowColor,
-                borderRadius: `${settings.glowCornerRadius}px`,
-                opacity: settings.fillOpacity,
-                filter: 'none',
-                transformOrigin: 'center center',
-                transition: `transform ${settings.tiltReturnSpeed}s ease-out`,
-                zIndex: -1
-            }}
-            />
-
-            <div style={{
                 width: `${cardWidth}px`,
                 height: `${cardHeight}px`,
                 marginLeft: `${-cardWidth / 2}px`,
                 marginTop: `${-cardHeight / 2}px`,
-                transform: `scale(${activeScale}) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`,
+                transform: `
+                    scale(${activeScale}) 
+                    rotateX(${tiltX}deg) 
+                    rotateY(${tiltY}deg)
+                `,
                 transformOrigin: 'center center',
                 transformStyle: 'preserve-3d',
                 transition: `transform ${settings.tiltReturnSpeed}s ease-out`,
-                filter: shadowFilter,
-            }}>
+                // filter: shadowFilter, // Moved to inner
+                borderRadius: `${settings.glowCornerRadius}px`,
+            }}
+            // Removed animate-pulse-shadow
+            >
+                {/* SEPARATE GLOW CONTAINER */}
+                <div style={{
+                    position: 'absolute',
+                    left: '50%',
+                    top: '50%',
+                    width: `${(settings.glowScaleX || 1) * 100}%`,
+                    height: `${(settings.glowScaleY || 1) * 100}%`,
+                    transform: `translate(calc(-50% + ${settings.glowOffsetX || 0}px), calc(-50% + ${settings.glowOffsetY || 0}px))`,
+
+                    filter: shadowFilter,
+
+                    // CSS Vars
+                    ['--glow-min-blur' as any]: `${settings.glowMinBlur}px`,
+                    ['--glow-max-blur' as any]: `${settings.glowMaxBlur}px`,
+                    ['--glow-min-spread' as any]: `${settings.glowMinSpread}px`,
+                    ['--glow-max-spread' as any]: `${settings.glowMaxSpread}px`,
+                    ['--glow-color' as any]: activeGlowColor || 'transparent',
+                    ['--glow-speed' as any]: `${1 / (settings.glowPulseSpeed || 1)}s`,
+
+                    borderRadius: `${settings.glowCornerRadius}px`,
+                    zIndex: -1
+                }}
+                    className={settings.glowPulseSpeed > 0 ? "animate-pulse-shadow" : ""}
+                >
+                    {/* Static Glow if speed 0 */}
+                    {settings.glowPulseSpeed === 0 && (
+                        <div style={{
+                            position: 'absolute',
+                            inset: 0,
+                            borderRadius: `${settings.glowCornerRadius}px`,
+                            boxShadow: `0 0 ${settings.glowMaxBlur}px ${settings.glowMaxSpread}px ${activeGlowColor}`,
+                            pointerEvents: 'none',
+                        }} />
+                    )}
+                </div>
+
                 {template ? (
                     <CardRenderer
                         template={template}
@@ -152,7 +141,6 @@ export const DraggedCard: React.FC<DraggedCardProps> = ({
                     settings={useGameStore.getState().boardSettings.handTooltipSettings}
                 />
             </div>
-
         </div>
     );
 };

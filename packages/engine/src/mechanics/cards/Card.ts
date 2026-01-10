@@ -4,6 +4,15 @@ import { PlayerGameEntity } from '../../entities/base/PlayerGameEntity';
 import { RuleType, type RuleModifier, type SlotCoord } from '../../systems/rules/RuleTypes';
 import type { Trait } from '../core/traits/Trait';
 
+export interface CardConfig {
+  id: string;
+  templateId: string;
+  type: string;
+  data: Record<string, any>;
+  artConfig?: any;
+  frameVariantId?: string;
+}
+
 /**
  * Base class for all cards
  * Extends GameEntity for common functionality (requestInput, engine access)
@@ -13,6 +22,7 @@ export abstract class Card extends PlayerGameEntity {
   cardId: string; // Card type ID (e.g., "scout")
   name: string;
   description: string; // Card ability description
+  config?: CardConfig; // Full card configuration from JSON source
   private eventUnsubscribers: (() => void)[] = [];
 
   constructor(cardId: string, name: string, description: string, owner: PlayerId, engine: GameEngine) {
@@ -30,6 +40,11 @@ export abstract class Card extends PlayerGameEntity {
    * Get the type of this card
    */
   abstract getType(): 'unit' | 'action';
+
+  /**
+   * Serialize state for UI
+   */
+  abstract toState(): import('../../core/types').CardState;
 
   /**
    * Does this card need a target to be played?
@@ -172,6 +187,7 @@ export class UnitCard extends Card implements IUnitCard {
       return {
           id: this.id,
           cardId: this.cardId,
+          type: 'unit',
           name: this.name,
           description: this.description,
           owner: this.owner,
@@ -187,7 +203,8 @@ export class UnitCard extends Card implements IUnitCard {
           cooldownRemaining: this.activateAbility?.cooldownRemaining,
           rarity: this.rarity,
           color: this.color,
-          unitType: this.unitType
+          unitType: this.unitType,
+          config: this.config
       };
   }
 
@@ -362,8 +379,9 @@ export class UnitCard extends Card implements IUnitCard {
     this._terrainId = null;
 
     // 2. Add to hand
-    const player = this.engine.state.players[this.owner];
-    player.hand.push(this);
+    // 2. Add to hand
+    const player = this.engine.getPlayer(this.owner);
+    player.addToHand(this);
 
     // 3. Reset State
     this._buffs = 0;
@@ -757,4 +775,16 @@ export abstract class ActionCard extends Card {
    * Target parameter is now SlotCoord (if target was selected)
    */
   abstract play(target?: SlotCoord): Promise<void>;
+
+  toState(): import('../../core/types').ActionState {
+    return {
+      id: this.id,
+      cardId: this.cardId,
+      type: 'action',
+      name: this.name,
+      description: this.description,
+      owner: this.owner,
+      config: this.config
+    };
+  }
 }

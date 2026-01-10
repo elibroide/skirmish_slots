@@ -423,7 +423,7 @@ export class GameEngine {
         }
 
         // Find card in hand
-        const player = this.state.players[action.playerId];
+        const player = this.players[action.playerId];
         const card = player.hand.find((c) => c.id === action.cardId);
         if (!card) {
           console.log(`action [${JSON.stringify(action)}] card not found [${action.cardId}]`);
@@ -551,7 +551,7 @@ export class GameEngine {
     // Can always pass (behavior changes based on hasActedThisTurn)
     actions.push({ type: 'PASS', playerId });
 
-    const player = this.state.players[playerId];
+    const player = this.players[playerId];
 
     // Only allow playing cards if player hasn't played one this turn
     // Exception: unlimited plays allowed when opponent is done

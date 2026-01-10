@@ -1,24 +1,26 @@
 {
-    "id": "test_dummy",
-    "data": {
-        "name": "Test Dummy",
-        "color": "Neutral",
-        "rarity": "Bronze",
-        "power": "5",
-        "text": "<p>A generic unit for testing purposes.</p>",
-        "traits": [],
-        "cardType": "Unit",
-        "unitType": "Construct"
-    },
-    "artConfig": {
-        "imageUrl": "/card-art/placeholder.png",
-        "x": 0,
-        "y": 0,
-        "scale": 1,
-        "isMask": false,
-        "maskX": 0,
-        "maskY": 0,
-        "maskWidth": 100,
-        "maskHeight": 100
-    }
+  "id": "test_dummy",
+  "data": {
+    "name": "Test Dummy",
+    "color": "Neutral",
+    "rarity": "Bronze",
+    "power": "5",
+    "text": "<p>A generic unit for testing purposes.</p>",
+    "traits": [],
+    "cardType": "Unit",
+    "unitType": "Construct"
+  },
+  "artConfig": {
+    "imageUrl": "/card-art/placeholder.png",
+    "x": 0,
+    "y": 0,
+    "scale": 1,
+    "isMask": false,
+    "maskX": 0,
+    "maskY": 0,
+    "maskWidth": 100,
+    "maskHeight": 100
+  },
+  "type": "Test",
+  "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094"
 }

@@ -1,4 +1,4 @@
-import { UnitCard } from './Card';
+import { UnitCard, CardConfig } from './Card';
 import type { PlayerId } from '../../core/types';
 import type { GameEngine } from '../../core/GameEngine';
 import { createTrait, type TraitDefinition } from '../core/TraitFactory';
@@ -13,6 +13,7 @@ export interface UnitCardDefinition {
   rarity: 'Bronze' | 'Silver' | 'Gold';
   color: 'Red' | 'Purple' | 'Green' | 'Blue' | 'Yellow'; // Expanded colors from JSON
   unitType: string;
+  config: CardConfig;
 }
 
 // Build definitions map
@@ -29,7 +30,8 @@ const DEFINITIONS: Record<string, UnitCardDefinition> = {};
         rarity: data.rarity as any || 'Bronze',
         color: data.color as any || 'Red',
         unitType: data.unitType || data.type || '', // Prefer data.unitType
-        traits: data.traits || [] 
+        traits: data.traits || [],
+        config: cardEntry // Store full config
     };
 });
 
@@ -69,6 +71,7 @@ export function createUnitCard(
   card.rarity = def.rarity as any;
   card.color = def.color as any;
   card.unitType = def.unitType;
+  card.config = def.config;
 
   return card;
 }

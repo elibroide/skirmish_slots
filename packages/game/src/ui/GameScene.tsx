@@ -13,19 +13,50 @@ import { useEventProcessor } from './hooks/useEventProcessor';
 import orderData from './Data/order.json'; // Ensure path is correct relative to GameScene
 import { setGlobalEngine } from '@skirmish/engine';
 import { useAnimationStore } from '../store/animationStore';
+import { TunerPanel } from './components/debug/TunerPanel';
 
 interface GameSceneProps {
     engine: GameEngine;
     localPlayerId: PlayerId;
     onBack?: () => void;
+    onReady?: () => void;
 }
 
-export const GameScene: React.FC<GameSceneProps> = ({ engine, localPlayerId, onBack }) => {
+export const GameScene: React.FC<GameSceneProps> = ({ engine, localPlayerId, onBack, onReady }) => {
+    // @ts-ignore
+    const setGlobalEngineFromStore = useGameStore(state => state.setGlobalEngine);
+
+    // 0. Set Global Engine and Subscribe to Events
+    useEffect(() => {
+        if (engine)
+        {
+            setGlobalEngine(engine);
+
+            const unsubscribe = engine.onEvent((event) => {
+                console.log(`[GameScene] Enqueuing Event: ${event.type}`);
+                useGameStore.getState().enqueueEvent(event);
+            });
+
+            if (onReady)
+            {
+                // Defer slightly to ensure listeners are registered
+                setTimeout(() => onReady(), 100);
+            }
+
+            return () => {
+                setGlobalEngine(null);
+                unsubscribe();
+            };
+        }
+    }, [engine, onReady]);
+
     // 1. Initialize Event Processor
     useEventProcessor(localPlayerId);
 
     // 2. Connect to Store Settings using granular selectors to avoid excessive re-renders
     const handSettings = useGameStore(state => state.boardSettings.handSettings);
+
+
     const currentTurn = useGameStore(state => state.currentTurn);
     // Use optional chaining carefully - or better, split into two selectors
     const turnStatus = useGameStore(state => state.players[localPlayerId]?.turnStatus || 'none');
@@ -84,25 +115,7 @@ export const GameScene: React.FC<GameSceneProps> = ({ engine, localPlayerId, onB
         }
     };
 
-    // Set global engine reference for non-reactive access (avoids freezing)
-    useEffect(() => {
-        setGlobalEngine(engine);
-    }, [engine]);
 
-    // Sub to Engine Events (to feed Store Queue)
-    useEffect(() => {
-        console.log('[GameScene] Subscribing to GameEngine events');
-        // Enqueuing is done by listener.
-        const enqueueEvent = useGameStore.getState().enqueueEvent;
-        const unsub = engine.onEvent((e) => {
-            console.log('[GameScene] Received Engine Event:', e.type);
-            enqueueEvent(e);
-        });
-        return () => {
-            console.log('[GameScene] Unsubscribing from GameEngine events');
-            unsub();
-        };
-    }, [engine]);
 
     // Initial Engine Start (if not started)
     useEffect(() => {
@@ -160,6 +173,22 @@ export const GameScene: React.FC<GameSceneProps> = ({ engine, localPlayerId, onB
 
             <BoardCardTooltip />
 
+
+            {/* Tuner Panel (Debug) */}
+            <TunerPanel
+                settings={handSettings}
+                onUpdate={(key, value) => {
+                    useGameStore.getState().updateBoardSettings({
+                        handSettings: {
+                            ...handSettings,
+                            [key]: value
+                        }
+                    });
+                }}
+                onReset={() => {
+                    useGameStore.getState().resetBoardSettings();
+                }}
+            />
 
             {/* Back Button (Debug/Dev) */}
             <button

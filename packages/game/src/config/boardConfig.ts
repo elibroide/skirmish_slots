@@ -81,17 +81,19 @@ export interface HandSettings {
     glowColorTargeting: string;
 
     // Back-Glow Geometry
-    glowExpLeft: number;
-    glowExpRight: number;
-    glowExpTop: number;
-    glowExpBottom: number;
+    glowMinBlur: number;
+    glowMaxBlur: number;
+    glowMinSpread: number;
+    glowMaxSpread: number;
+    
+    // Independent Glow Geometry
+    glowScaleX: number;
+    glowScaleY: number;
+    glowOffsetX: number;
+    glowOffsetY: number;
+    
     glowCornerRadius: number; // 0 = sharp
-    glowOffsetX: number; // Global shift
-    glowOffsetY: number; // Global shift
-    glowOpacity: number; // Edge/Pulse opacity
-    fillOpacity: number; // Solid rect opacity
     glowPulseSpeed: number; // 0 = no pulse
-    glowBlur: number; // Edge softness
 
     // Debug
     debugForcePlayable: boolean;
@@ -278,67 +280,61 @@ export const defaultBoardSettings: BoardSettings = {
     boardScale: 0.9,
     boardX: 0,
     boardY: 0,
+
     slotHeightPercent: 0.25,
     slotAspectRatio: 0.8,
-    playerRowY: 0.65, // Lower half
-    enemyRowY: 0.30,  // Upper half
+
+    playerRowY: 0.65,
+    enemyRowY: 0.3,
+
     playerSlotGapPercent: 0.025,
     enemySlotGapPercent: 0.025,
-    
-    // Power Circle Defaults
+
     powerCircleOffsetX: 0,
     powerCircleOffsetY: 0,
     powerCircleRadius: 24,
     powerCircleFontSize: 25,
     powerCircleStrokeWidth: 4,
     powerCircleFlipPositions: false,
-
-    // Power Circle Colors Defaults
-    powerCirclePlayerColor: '#3b82f6', // Blue-500
-    powerCircleEnemyColor: '#f97316',  // Orange-500
-    powerCircleStrokeColor: '#000000', // Black
-    powerCircleWinningStrokeColor: '#ffd700', // Gold
-    powerCircleWinningGlowColor: '#ffd700', // Gold
-
-    // Power Circle Scales & Animations Defaults
-    powerCircleScaleContested: 1.0,
+    powerCirclePlayerColor: '#3b82f6',
+    powerCircleEnemyColor: '#f97316',
+    powerCircleStrokeColor: '#000000',
+    powerCircleWinningStrokeColor: '#ffd700',
+    powerCircleWinningGlowColor: '#ffd700',
+    powerCircleScaleContested: 1,
     powerCircleScaleWinning: 1.1,
     powerCircleWinGlowScaleMin: 1.4,
     powerCircleWinGlowScaleMax: 1.7,
-    powerCircleWinGlowSpeed: 2.0,
-    powerCircleTextStrokeWidth: 1.0, // Default stroke
-    powerCircleTextStrokeColor: '#000000', // Default black
+    powerCircleWinGlowSpeed: 2,
+    powerCircleTextStrokeWidth: 1,
+    powerCircleTextStrokeColor: '#000000',
 
-    // Slot Visuals Defaults
-    slotTargetColor: '#facc15', // Yellow-400
-    slotDropColor: '#60a5fa',   // Blue-400
+    slotTargetColor: '#facc15',
+    slotDropColor: '#60a5fa',
     slotGlowRadius: 10,
     slotGlowIntensity: 0.5,
     slotPulseSpeed: 1.1,
-
-    // Card Margins Defaults
+    
     cardMarginTop: 0.03,
     cardMarginBottom: 0.03,
     cardMarginLeft: 0.03,
     cardMarginRight: 0.03,
-
-    // Board Tooltip Defaults
+    
     boardTooltipScale: 0.35,
-    boardTooltipLeftOffsetX: -20, // These two missing defined
+    boardTooltipLeftOffsetX: -20,
     boardTooltipRightOffsetX: 20,
     boardTooltipGap: 20,
     boardTooltipOffsetY: 0,
 
-    // Slot Modifier Defaults
     slotModifierOffsetX: 0,
-    slotModifierOffsetY: 130, 
+    slotModifierOffsetY: 130,
     slotModifierFontSize: 32,
     slotModifierFontColor: '#ffffff',
-    slotModifierPositiveColor: '#4ade80', // Green-400
-    slotModifierNegativeColor: '#f87171', // Red-400
+    slotModifierPositiveColor: '#4ade80',
+    slotModifierNegativeColor: '#f87171',
     slotModifierStrokeColor: '#000000',
     slotModifierStrokeWidth: 0,
-
+    
     animationSettings: {
         playerPlay: {
             hoverScale: 1.2,
@@ -347,11 +343,11 @@ export const defaultBoardSettings: BoardSettings = {
             waitDuration: 0.5,
             slamDuration: 0.2,
             slamScalePeak: 1.5,
-            slamScaleLand: 1,
+            slamScaleLand: 1.0,
             moveDuration: 0.15,
-            moveEase: "easeOut",
-            triggerNextOn: "hoverDone",
-            slamEase: "easeIn"
+            moveEase: 'easeOut',
+            triggerNextOn: 'hoverDone',
+            slamEase: 'easeIn'
         },
         opponentPlay: {
             hoverScale: 1.2,
@@ -360,26 +356,25 @@ export const defaultBoardSettings: BoardSettings = {
             waitDuration: 0.5,
             slamDuration: 0.2,
             slamScalePeak: 1.5,
-            slamScaleLand: 1,
+            slamScaleLand: 1.0,
             moveDuration: 0.25,
-            moveEase: "easeOut",
-            triggerNextOn: "slamDone",
-            slamEase: "easeIn"
+            moveEase: 'easeOut',
+            triggerNextOn: 'slamDone',
+            slamEase: 'easeIn'
         }
     },
-
     passButtonSettings: {
-        x: 90, // Bottom-rightish
+        x: 90,
         y: 90,
         colors: {
-            pass: '#3b82f6',   // Blue
-            passClicked: '#2563eb', // Blue-600
-            done: '#10b981',   // Green
-            doneClicked: '#059669', // Green-600
-            cancel: '#ef4444', // Red
-            cancelClicked: '#b91c1c', // Red-700
-            conclude: '#a855f7', // Purple-500
-            concludeClicked: '#7e22ce', // Purple-700
+            pass: '#3b82f6',
+            passClicked: '#2563eb',
+            done: '#10b981',
+            doneClicked: '#059669',
+            cancel: '#ef4444',
+            cancelClicked: '#b91c1c',
+            conclude: '#a855f7',
+            concludeClicked: '#7e22ce',
             text: '#ffffff'
         },
         glow: {
@@ -390,19 +385,15 @@ export const defaultBoardSettings: BoardSettings = {
         },
         scale: 1.0
     },
-
-    // Hand Tooltip Defaults
     handTooltipSettings: {
         show: true,
         offsetX: 100,
         offsetY: 0,
         width: 250,
-        backgroundColor: '#1c1917', // stone-900
-        borderColor: '#44403c',     // stone-700
+        backgroundColor: '#1c1917',
+        borderColor: '#44403c',
         borderWidth: 1
     },
-
-    // Win Record Defaults
     winRecordSettings: {
         show: true,
         playerOffsetX: 0,
@@ -421,20 +412,18 @@ export const defaultBoardSettings: BoardSettings = {
         opponentTextOffsetY: 0,
         opponentRhombusOffsetX: 30,
         opponentRhombusOffsetY: 40,
-        scale: 1,
+        scale: 1.0,
         spacingX: 15,
-        emptyColor: "#44403c",
-        fillColor: "#fbbf24",
-        strokeColor: "#ffffff",
+        emptyColor: '#44403c',
+        fillColor: '#fbbf24',
+        strokeColor: '#ffffff',
         strokeWidth: 2,
-        playerTextColor: "#3d91ff",
-        opponentTextColor: "#f97316",
+        playerTextColor: '#3d91ff',
+        opponentTextColor: '#f97316',
         invertOpponent: false,
         fontSize: 20,
-        rhombusScale: 1
+        rhombusScale: 1.0
     },
-
-    // Turn Indicator Defaults
     turnIndicatorSettings: {
         show: true,
         playerXPercent: 10,
@@ -446,86 +435,56 @@ export const defaultBoardSettings: BoardSettings = {
         opponentOffsetX: 0,
         opponentOffsetY: 0,
         fontSize: 28,
-        playerTextColor: "#3d91ff",
-        opponentTextColor: "#f97316"
+        playerTextColor: '#3d91ff',
+        opponentTextColor: '#f97316'
     },
-
-    // Hand Settings Defaults (Mirrored from Card.tsx DEFAULT_SETTINGS)
     handSettings: {
-        // Fan layout
         fanSpacing: 105,
         fanRotation: 3.5,
         fanArcHeight: 3,
-
-        // Manual Squeeze Controls
         maxCardsSqueeze: 8,
         squeezeSpacing: 10,
         squeezeRotation: 0.1,
         squeezeArcHeight: 0.3,
-
-        // Hover effects
-        hoverLift: 125,
-        hoverScale: 1.3,
+        hoverLift: 200,
+        hoverScale: 1.65,
         hoverTransitionDuration: 0.15,
-
-        // Drag settings
         dragThresholdY: 50,
-        dragScale: 1.0,
-
-        // Drag tilt physics
-        tiltMaxAngle: 20,
+        dragScale: 1.3,
+        tiltMaxAngle: 90,
         tiltSensitivity: 1.5,
         tiltSmoothing: 0.5,
         tiltReturnSpeed: 0.15,
-        velocityDecay: 0.85,
+        velocityDecay: 0.6,
         tiltVelocityThreshold: 2,
-
-        // Return animation
         returnDuration: 0.15,
         returnSpringiness: 1.56,
-
-        // Slam Animation
         slamDuration: 0.6,
         slamScalePeak: 1.5,
         slamScaleLand: 0.8,
         slamHeight: -100,
-
-        // Size & Scale
-        cardScale: 0.25,
-
+        cardScale: 0.3,
         hitAreaWidth: 140,
-        hitAreaHeight: 255,
+        hitAreaHeight: 290,
         showHitAreas: false,
-
-        // Visual
         perspective: 2000,
-
-        // Glow Defaults
-        glowColorPlayable: '#21b9c4',
+        glowColorPlayable: '#c7feff',
         glowColorDragging: '#eab308',
         glowColorTargeting: '#ace708',
-
-        // Back-Glow Defaults
-        glowExpLeft: 4,
-        glowExpRight: -9,
-        glowExpTop: 2.5,
-        glowExpBottom: 2.5,
-        glowCornerRadius: 5,
+        glowMinBlur: 5,
+        glowMaxBlur: 5,
+        glowMinSpread: 15,
+        glowMaxSpread: 15,
+        glowScaleX: 0.78,
+        glowScaleY: 0.86,
         glowOffsetX: 0,
-        glowOffsetY: 0,
-        glowOpacity: 0.5,
-        fillOpacity: 1,
-        glowPulseSpeed: 1,
-        glowBlur: 10,
-
-        debugForcePlayable: false, // Default to FALSE for real game
-
-        // Positioning
+        glowOffsetY: 2,
+        glowCornerRadius: 2,
+        glowPulseSpeed: 0.5,
+        debugForcePlayable: false,
         baseX: 50,
-        baseY: -150,
-
-        // Facedown Defaults
+        baseY: -200,
         facedownBaseX: 0,
-        facedownBaseY: -225, 
+        facedownBaseY: -300
     }
 };

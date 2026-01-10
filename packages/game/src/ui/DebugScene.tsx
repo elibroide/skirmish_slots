@@ -14,10 +14,31 @@ import { CardTooltip } from './components/CardTooltip';
 import { BoardCardTooltip } from './components/BoardCardTooltip';
 
 // Filter to only use "Normal" template cards
-const NORMAL_TEMPLATE = orderData.templates.find(t => t.name === 'Normal');
-const INITIAL_CARDS = (orderData.cards as unknown as CardInstance[]).filter(c =>
-  NORMAL_TEMPLATE ? c.templateId === NORMAL_TEMPLATE.id : true
-);
+import { visualAssetManager } from '../utils/VisualAssetManager';
+
+// Use VisualAssetManager to get all cards from the new system
+// Use VisualAssetManager to get specific engine cards for the debug view
+const DEBUG_CARD_NAMES = [
+  'Unstable Core',
+  'Peace Enforcer',
+  'Scrap Collector',
+  'Loyalty Weaver',
+  'Squad Leader',
+  'Shock Bandit',
+  'Acolyte of Spring',
+  'Seed Spreader',
+  'Matrix Attendent'
+];
+
+const INITIAL_CARDS = visualAssetManager.getAllVisuals()
+  .filter(v => DEBUG_CARD_NAMES.includes(v.data.name))
+  .map(v => ({
+    id: v.cardId,
+    templateId: v.templateId,
+    data: v.data,
+    artConfig: v.artConfig,
+    frameVariantId: v.frameVariantId
+  } as CardInstance));
 
 interface DebugSceneProps {
   onBack: () => void;

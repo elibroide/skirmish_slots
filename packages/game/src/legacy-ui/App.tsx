@@ -20,7 +20,9 @@ import type { GameEngine } from '@skirmish/engine';
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('menu');
   const [lastGameMode, setLastGameMode] = useState<GameMode>('god-mode');
-  const [lastOpponentType, setLastOpponentType] = useState<OpponentType>('human');
+  const [lastOpponentType, setLastOpponentType] = useState<OpponentType>('rookie');
+
+  const [startGameCallback, setStartGameCallback] = useState<(() => Promise<void>) | null>(null);
 
   // App manages the Engine instance
   const [engine, setEngine] = useState<GameEngine | null>(null);
@@ -52,19 +54,19 @@ export default function App() {
       const gameMode = mode === 'vs-ai' ? 'vs-ai' : mode === 'god-mode' ? 'god-mode' : 'human-vs-human';
       setLastOpponentType(opponentType as OpponentType);
 
-      const { engine: newEngine, localPlayerId: pid, gameMode: modeStr } = await createGame(0, gameMode);
+      const { engine: newEngine, localPlayerId: pid, gameMode: modeStr, start } = await createGame(0, gameMode, { autoStart: false });
       setEngine(newEngine);
 
-      // Init Store
-      setInitialGameState(
-        pid,
-        newEngine.state,
-        {
-          p0: newEngine.state.players[0].hand,
-          p1: newEngine.state.players[1].hand
-        },
-        modeStr
-      );
+      // Store start function to pass to GameScene
+      setStartGameCallback(() => start);
+
+      // DEFERRED INIT:
+      // We set metadata in store, but we DO NOT set the full game state yet
+      // because the engine is not initialized.
+      // SkirmishStartedHandler will handle the full state hydration.
+
+      // Set local player ID in store for other components
+      useGameStore.setState({ localPlayerId: pid, gameMode: modeStr });
 
       setCurrentScreen('game');
     }
@@ -153,7 +155,23 @@ export default function App() {
     return <CardFrameView onBack={handleBackToMenu} />;
   }
 
-  if (!gameState || !engine)
+  if (currentScreen === 'game')
+  {
+    // Render GameScene if engine is ready (ignore gameState check)
+    if (engine)
+    {
+      return (
+        <GameScene
+          engine={engine}
+          localPlayerId={0} // Force 0 as per createGame
+          onBack={handleBackToMenu}
+          onReady={startGameCallback ? startGameCallback : undefined}
+        />
+      );
+    }
+  }
+
+  if (!engine && currentScreen === 'game') // Only show loading if supposed to be in game
   {
     return (
       <div className="min-h-screen bg-stone-200 flex items-center justify-center">
@@ -165,11 +183,7 @@ export default function App() {
     );
   }
 
-  return (
-    <GameScene
-      engine={engine}
-      localPlayerId={localPlayerId ?? 0}
-      onBack={handleBackToMenu}
-    />
-  );
+  // Fallback for menu/other screens handled above in their blocks
+  return null;
 }
+

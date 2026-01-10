@@ -2,8 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { useShallow } from 'zustand/react/shallow';
 import { Hand } from './Hand';
-import orderData from '../Data/order.json';
 import type { PlayerId, TerrainId } from '@skirmish/engine';
+import { visualAssetManager } from '../../utils/VisualAssetManager';
 
 interface ConnectedHandProps {
     playerId: PlayerId;
@@ -16,6 +16,7 @@ interface ConnectedHandProps {
     ) => void;
 }
 
+
 export const ConnectedHand: React.FC<ConnectedHandProps> = ({
     playerId,
     isFacedown = false,
@@ -26,11 +27,9 @@ export const ConnectedHand: React.FC<ConnectedHandProps> = ({
     const settings = useGameStore(useShallow(state => state.boardSettings.handSettings));
 
     // Optimistic Hiding State
-    // Used to hide cards immediately when dropped, before the Engine state update arrives.
     const [hiddenCardIds, setHiddenCardIds] = useState<Set<string>>(new Set());
 
     // Sync Hidden Cards with Store Updates
-    // If a card is removed from the store (engine confirmed play), remove from hidden set (cleanup)
     useEffect(() => {
         setHiddenCardIds(prev => {
             const next = new Set(prev);
@@ -50,6 +49,14 @@ export const ConnectedHand: React.FC<ConnectedHandProps> = ({
     const visibleCards = useMemo(() =>
         frameCards.filter(c => !hiddenCardIds.has(c.id)),
         [frameCards, hiddenCardIds]);
+
+    // Map Engine State to UI CardInstance - NO LONGER NEEDED (Store has hydrated instances)
+    const mappedCards = visibleCards;
+
+    // visual assets
+    const templates = useMemo(() => visualAssetManager.getTemplates(), []);
+    const schema = useMemo(() => visualAssetManager.getSchema(), []);
+
 
     // Handler Wrapper
     const handleCardDrop = (
@@ -76,12 +83,12 @@ export const ConnectedHand: React.FC<ConnectedHandProps> = ({
 
     return (
         <Hand
-            cards={visibleCards}
+            cards={mappedCards as any[]}
             setCards={() => { }} // No-op: Store is source of truth
             onRemoveCard={() => { }} // No-op: Hand emits onCardDrop, we handle hiding there
             settings={settings}
-            templates={orderData.templates as any}
-            schema={orderData.schema as any}
+            templates={templates}
+            schema={schema}
             isFacedown={isFacedown}
             onCardDrop={handleCardDrop}
         />

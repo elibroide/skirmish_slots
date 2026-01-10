@@ -37,10 +37,10 @@ export class Player extends PlayerGameEntity {
       // Return a pure data snapshot
       return {
           id: this.id,
-          // CRITICAL: Return copies of arrays so the store freezing them doesn't freeze the Engine's private state
-          hand: [...this._hand], 
-          deck: [...this._deck],
-          graveyard: [...this._graveyard],
+          // CRITICAL: Return mapped state objects, not entity references
+          hand: this._hand.map(c => c.toState()),
+          deck: this._deck.map(c => c.toState()),
+          graveyard: this._graveyard.map(c => c.toState()),
           sp: this._sp,
           skirmishesWon: this._skirmishesWon,
           isDone: this._isDone,
@@ -135,18 +135,23 @@ export class Player extends PlayerGameEntity {
    * Draw cards from deck to hand.
    */
   async draw(amount: number = 1): Promise<void> {
+    const drawnCards = [];
+    
     for (let i = 0; i < amount; i++) {
-      if (this._deck.length === 0) break;
-      
-      const card = this._deck.pop()!;
-      this._hand.push(card);
+        if (this._deck.length === 0) break;
+        const card = this._deck.pop()!;
+        this._hand.push(card);
+        drawnCards.push(card.toState());
+    }
 
-      await this.engine.emitEvent({
-        type: 'CARD_DRAWN',
-        playerId: this.id,
-        count: 1, 
-        card: card, 
-      });
+    if (drawnCards.length > 0) {
+        // Emit batched event
+        await this.engine.emitEvent({
+            type: 'CARDS_DRAWN',
+            playerId: this.id,
+            count: drawnCards.length,
+            cards: drawnCards
+        });
     }
   }
 
@@ -160,7 +165,7 @@ export class Player extends PlayerGameEntity {
         type: 'CARD_DRAWN',
         playerId: this.id,
         count: 1,
-        card: card,
+        card: card.toState(),
         entity: this
     });
   }

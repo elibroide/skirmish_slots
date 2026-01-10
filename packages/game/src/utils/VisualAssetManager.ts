@@ -1,4 +1,6 @@
 import projectData from '../config/card-maker-project.json';
+import templateData from "../../../engine/src/data/templates.json";
+import engineCardsData from "../../../engine/src/data/cards.json";
 
 // Types from the JSON schema
 interface CardMakerProject {
@@ -41,21 +43,33 @@ class VisualAssetManager {
   }
 
   private indexCards() {
-    // Index by sanitized name for flexible matching
+    // Index from project data
     (projectData as CardMakerProject).cards.forEach(card => {
-      if (card.data.name) {
-        const key = this.sanitizeName(card.data.name);
-        this.cardIndex.set(key, {
-          cardId: card.id,
-          templateId: card.templateId,
-          data: card.data,
-          artConfig: card.artConfig,
-          frameVariantId: card.frameVariantId
-        });
-      }
+      this.indexCard(card);
     });
 
-    console.log(`[VisualAssetManager] Indexed ${this.cardIndex.size} cards from project.`);
+    // Index from engine data
+    engineCardsData.cards.forEach((card: any) => {
+      this.indexCard(card);
+    });
+
+    console.log(`[VisualAssetManager] Indexed ${this.cardIndex.size} cards from project and engine.`);
+  }
+
+  private indexCard(card: any) {
+      if (card.data.name) {
+        const key = this.sanitizeName(card.data.name);
+        // Prefer existing entries (project data overrides engine data if duplicates exist)
+        if (!this.cardIndex.has(key)) {
+            this.cardIndex.set(key, {
+            cardId: card.id,
+            templateId: card.templateId,
+            data: card.data,
+            artConfig: card.artConfig,
+            frameVariantId: card.frameVariantId
+            });
+        }
+      }
   }
 
   private sanitizeName(name: string): string {
@@ -66,13 +80,28 @@ class VisualAssetManager {
     const key = this.sanitizeName(cardName);
     return this.cardIndex.get(key) || null;
   }
+
+  public getAllVisuals(): VisualData[] {
+    return Array.from(this.cardIndex.values());
+  }
   
   public getTemplate(templateId: string): any {
-     return (projectData as CardMakerProject).templates.find(t => t.id === templateId);
+     const template = templateData.templates.find((t: any) => t.id === templateId) || (projectData as CardMakerProject).templates.find(t => t.id === templateId);
+     if (!template) {
+         console.warn(`[VisualAssetManager] Template not found for ID: ${templateId}`);
+         console.log('Available templates in engine:', templateData.templates.map((t: any) => t.id));
+     } else {
+        // console.log(`[VisualAssetManager] Found template for ${templateId}: ${template.name}`);
+     }
+     return template;
+  }
+
+  public getTemplates(): any[] {
+      return templateData.templates;
   }
 
   public getSchema(): any {
-    return (projectData as CardMakerProject).schema;
+    return templateData.schema;
   }
 }
 

@@ -16,6 +16,8 @@ export const PassButton: React.FC<PassButtonProps> = ({ mode, status, onClick, o
 
     const { x, y, colors, glow, scale } = settings;
 
+    // console.log(`[PassButton] Render Mode: ${mode}, Status: ${status}`);
+
     const getBaseColor = () => {
         if (status === 'clicked')
         {

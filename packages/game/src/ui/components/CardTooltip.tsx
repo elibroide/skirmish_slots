@@ -21,11 +21,21 @@ export const CardTooltip: React.FC<CardTooltipProps> = ({ card, settings, style 
 
     // Parse keywords from card data
     // Assuming card.keywords is a comma-separated string like "deploy, dominant"
-    const keywordString = (card as any).data.keywords || ''; // Cast to any if keywords not in type yet
-    if (!keywordString) return null;
+    const rawKeywords = (card as any).data.keywords;
 
-    const activeTips = keywordString
-        .split(',')
+    let parsedKeywords: string[] = [];
+
+    if (Array.isArray(rawKeywords))
+    {
+        parsedKeywords = rawKeywords;
+    } else if (typeof rawKeywords === 'string')
+    {
+        parsedKeywords = rawKeywords.split(',');
+    }
+
+    if (parsedKeywords.length === 0) return null;
+
+    const activeTips = parsedKeywords
         .map((k: string) => k.trim().toLowerCase())
         .map((id: string) => KEYWORDS[id])
         .filter((tip: any) => !!tip);

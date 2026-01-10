@@ -1,5 +1,7 @@
 {
   "id": "acolyte_of_spring",
+  "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094",
+  "type": "Game",
   "data": {
     "name": "Acolyte of Spring",
     "color": "Green",

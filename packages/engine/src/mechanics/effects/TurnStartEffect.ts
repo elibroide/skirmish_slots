@@ -19,7 +19,7 @@ export class TurnStartEffect extends Effect {
     }
 
     events.push({
-      type: 'TURN_CHANGED' as const,
+      type: 'TURN_STARTED' as const,
       playerId: currentPlayer,
     });
 

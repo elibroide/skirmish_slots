@@ -13,6 +13,8 @@ export type InputRequest =
   | { type: 'choose_option'; options: string[]; context: string }
   | { type: 'select_target'; candidates: any[]; min: number; max: number; context?: string };
 
+export type TurnStartedEvent = { type: 'TURN_STARTED'; playerId: PlayerId };
+
 // Card types (minimal)
 // Note: We avoid importing Card/UnitCard classes here to prevent cycles
 // Use string IDs for state references
@@ -34,9 +36,9 @@ export interface TerrainState {
 
 export interface PlayerState {
   id: PlayerId;
-  hand: any[]; // Card[]
-  deck: any[]; // Card[]`
-  graveyard: any[]; // Card[]
+  hand: (UnitState | ActionState)[];
+  deck: (UnitState | ActionState)[];
+  graveyard: (UnitState | ActionState)[];
   sp: number; // Skirmish Points
   skirmishesWon: number;
   isDone: boolean;
@@ -122,9 +124,10 @@ export type GameEvent = (
   | { type: 'UNIT_BOUNCED'; unitId: string; unitName: string; terrainId: TerrainId; toHand: boolean }
   | { type: 'UNIT_MOVED'; unitId: string; fromTerrainId: TerrainId; toTerrainId: TerrainId; playerId: PlayerId }
   | { type: 'SLOT_MODIFIER_CHANGED'; terrainId: TerrainId; playerId: PlayerId; newModifier: number }
-  | { type: 'CARD_DRAWN'; playerId: PlayerId; count: number; card: Card }
+  | { type: 'CARD_DRAWN'; playerId: PlayerId; count: number; card: any }
+  | { type: 'CARDS_DRAWN'; playerId: PlayerId; count: number; cards: CardState[] }
   | { type: 'CARD_DISCARDED'; playerId: PlayerId; cardId: string; cardName?: string }
-  | { type: 'TURN_CHANGED'; playerId: PlayerId }
+  | { type: 'TURN_STARTED'; playerId: PlayerId }
   | { type: 'ROUND_STARTED'; roundNumber: number }
   | { type: 'SKIRMISH_STARTED'; skirmishNumber: number; hands: { [playerId: number]: any[] } }
   | { type: 'TERRAIN_RESOLVED'; terrainId: TerrainId; winner: PlayerId | null; unit0Power: number; unit1Power: number }
@@ -168,14 +171,26 @@ export interface Card {
     needsTarget(): boolean;
 }
 
-export interface UnitState {
+export interface BaseCardState {
   id: string;
   cardId: string;
+  templateId?: string; // Added for UI hydration
   name: string;
   description: string;
   owner: PlayerId;
+  config?: any;
+  cost: number;        // Added for UI
+  baseCost: number;    // Added for UI
+  tags: string[];      // Added for UI
+  abilities: any[];    // Added for UI (Raw ability data)
+}
+
+export interface UnitState extends BaseCardState {
+  type: 'unit';
   power: number;
   originalPower: number;
+  baseHealth: number;      // Added for UI
+  currentHealth: number;   // Added for UI
   damage: number;
   buffs: number;
   shield: number;
@@ -188,6 +203,12 @@ export interface UnitState {
   color: 'Red' | 'Purple';
   unitType: string;
 }
+
+export interface ActionState extends BaseCardState {
+  type: 'action';
+}
+
+export type CardState = UnitState | ActionState;
 
 export interface UnitCard extends Card {
   readonly power: number;

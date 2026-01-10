@@ -3,17 +3,22 @@ import { HumanController } from '../controllers/HumanController';
 import { AIController } from '../controllers/AIController';
 import { ClaudeAI } from '../ai/ClaudeAI';
 import { GameEngine } from '../core/GameEngine';
-import { createStarter1Deck } from '../utils/deckBuilder';
+import { createStarter1Deck, createStarter2Deck } from '../utils/deckBuilder';
 
 export interface GameCreationResult {
     engine: GameEngine;
     localPlayerId: PlayerId;
     gameMode: string;
+    start: () => Promise<void>;
 }
 
-export const createGame = async (localPlayerId: PlayerId, mode: 'vs-ai' | 'human-vs-human' | 'god-mode' = 'vs-ai'): Promise<GameCreationResult> => {
+export const createGame = async (
+    localPlayerId: PlayerId, 
+    mode: 'vs-ai' | 'human-vs-human' | 'god-mode' = 'vs-ai',
+    options: { autoStart?: boolean } = { autoStart: true }
+): Promise<GameCreationResult> => {
     const isHumanVsHuman = mode === 'human-vs-human' || mode === 'god-mode';
-    let controller0, controller1;
+    let controller0: any, controller1: any;
     let claudeAI0: ClaudeAI | null = null;
     let claudeAI1: ClaudeAI | null = null;
 
@@ -43,11 +48,19 @@ export const createGame = async (localPlayerId: PlayerId, mode: 'vs-ai' | 'human
 
     // Create Decks
     const deck0 = createStarter1Deck(0, engine);
-    const deck1 = createStarter1Deck(1, engine);
+    const deck1 = createStarter2Deck(1, engine);
 
-    // Rigging: Always start with Player 0 in Human-vs-Human / God Mode
-    const startingPlayer = isHumanVsHuman ? 0 : undefined; 
-    await engine.initializeGame(deck0 as any, deck1 as any, 'sage', 'warlord', startingPlayer);
+    // Rigging: Always start with Player 0 for testing user flow
+    const startingPlayer = 0; 
+    
+    const start = async () => {
+        // Initialize with standard decks and heroes
+        await engine.initializeGame(deck0 as any, deck1 as any, 'rookie', 'rookie', startingPlayer);
+    };
 
-    return { engine, localPlayerId, gameMode: mode };
+    if (options.autoStart) {
+        await start();
+    }
+
+    return { engine, localPlayerId, gameMode: mode, start };
 };

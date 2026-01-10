@@ -12,8 +12,7 @@ export interface BoardSlot {
   playerId: PlayerId;
   terrainId: TerrainId;
   owner: 'player' | 'enemy';
-  // Position in Screen Space (relative to the Phaser canvas/Game container)
-  // We use this to detect drops in React
+  // Position in Screen Space
   x: number;
   y: number;
   width: number;
@@ -23,13 +22,12 @@ export interface BoardSlot {
   // Power Circle
   power: number;
   powerState: 'none' | 'contested' | 'winning';
-  modifier: number; // Added
+  modifier: number;
   
-  // Is something here?
+  // Slot Content
   content: {
     cardId: string;
     instance?: CardInstance;
-    // We can add more unit data here later (hp, attack, art)
   } | null;
 }
 
@@ -48,22 +46,13 @@ export type { BoardSettings, TurnStatus, WinRecordSettings, HandSettings, TurnIn
 
 export interface PlayerStoreData {
     slots: Record<TerrainId, BoardSlot>;
-    wins: number; // Track rounds won per player
+    wins: number;
     turnStatus: TurnStatus;
     hand: CardInstance[];
 }
 
-// 
-// HYDRATION IMPORT
-//
-import { hydrateCard, hydrateHand } from '../ui/utils/cardHydration';
-import { createStarter1Deck } from '@skirmish/engine';
 import { mapEngineStateToStore } from '../utils/stateMapper';
 import { GameEvent } from '@skirmish/engine';
-
-// GameState Interface merged below
-
-// Config Types Removed (Moved to boardConfig.ts)
 
 export interface DragState {
   isDragging: boolean;
@@ -80,40 +69,39 @@ interface GameStoreState {
   dragState: DragState;
   
   // Game Flow
-  currentTurn: 'player' | 'opponent'; // Added
+  isGameStarted: boolean;
+  currentTurn: 'player' | 'opponent' | 'none';
   
-  hoveredCard: CardInstance | null; // Added
+  hoveredCard: CardInstance | null;
   
   // Opponent Hand
-  opponentCards: any[]; // Using any[] temporarily if CardInstance not imported, or update import
+  opponentCards: any[];
   setOpponentCards: (cards: any[]) => void;
 
-  // Event Queue (New)
+  // Event Queue
   eventQueue: GameEvent[];
   enqueueEvent: (event: GameEvent) => void;
-  consumeEvent: () => void; // Removes the first event
+  consumeEvent: () => void;
   clearEventQueue: () => void;
-
   
   // Actions
   registerSlot: (slot: Omit<BoardSlot, 'id'>) => void;
   updateSlotPosition: (playerId: PlayerId, terrainId: TerrainId, x: number, y: number, width: number, height: number) => void;
   
   // Interactions
-  // Actions & State
   setHoveredCard: (card: CardInstance | null) => void;
   setPlayerWins: (playerId: PlayerId, wins: number) => void;
   setTurn: (turn: 'player' | 'opponent') => void;
+  setGameStarted: (started: boolean) => void;
   
   // Slot Visuals 
   setSlotStatus: (targets: number[] | { playerId: PlayerId, terrainId: TerrainId }[], status: 'idle' | 'showDrop' | 'showTarget') => void;
   setSlotPower: (targets: { playerId: PlayerId, terrainId: TerrainId }[], power: number, state: 'none' | 'contested' | 'winning') => void;
   setSlotModifier: (targets: { playerId: PlayerId, terrainId: TerrainId }[], modifier: number) => void;
-  resetSlotStatus: () => void; // Reset all to idle
+  resetSlotStatus: () => void;
   
   removeCardFromHand: (playerId: PlayerId, cardId: string) => void;
   addCardToHand: (playerId: PlayerId, card: CardInstance) => void;
-  // Helper: Map Engine State to Store State
   syncHandFromEngine: (playerId: PlayerId, engineHand: any[]) => void;
 
   occupySlot: (playerId: PlayerId, terrainId: TerrainId, cardId: string, instance?: CardInstance) => void;
@@ -122,15 +110,14 @@ interface GameStoreState {
 
   // Settings
   updateBoardSettings: (settings: Partial<BoardSettings>) => void;
+  resetBoardSettings: () => void;
   setDragState: (active: boolean, cardId?: string) => void;
   
   // UI Interaction
   setHoveredSlot: (slotId: number | { playerId: PlayerId, terrainId: TerrainId } | null) => void;
-  // setSlotStatus: (slotIds: number[], status: SlotStatus) => void; // Merged above
   hoveredSlot: number | null;
 
   // Engine Integration
-  // engine?: GameEngine; -- Removed to avoid freezing. Use via engineInstance.ts logic/handlers.
   setInitialGameState: (localPlayerId: PlayerId, gameState: any, hands: { p0: any[], p1: any[] }, mode: string) => void;
   localPlayerId?: PlayerId;
   gameMode?: string;
@@ -140,6 +127,10 @@ interface GameStoreState {
   pendingInputPlayerId: PlayerId | null;
   isAIThinking: boolean;
   aiThinkingPlayerId: PlayerId | null;
+  
+  playableCardIds: string[]; // Cards that can be played this turn
+  setPlayableCards: (ids: string[]) => void;
+  
   downloadGameLog: () => void;
 }
 
@@ -149,8 +140,9 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         0: { slots: {} as Record<TerrainId, BoardSlot>, wins: 0, turnStatus: 'none', hand: [] },
         1: { slots: {} as Record<TerrainId, BoardSlot>, wins: 0, turnStatus: 'none', hand: [] }
     },
-    currentTurn: 'player', // Default
+    currentTurn: 'none',
     gameState: null,
+    isGameStarted: false,
     boardSettings: defaultBoardSettings,
     dragState: {
         isDragging: false,
@@ -163,90 +155,63 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     pendingInputPlayerId: null,
     isAIThinking: false,
     aiThinkingPlayerId: null,
+    playableCardIds: [],
+    setPlayableCards: (ids) => set({ playableCardIds: ids }),
+    
     downloadGameLog: () => { console.log('Download Log placeholder'); },
 
     hoveredCard: null,
-
     hoveredSlot: null,
     
     // Event Queue Implementation
     eventQueue: [],
-    enqueueEvent: (event) => set((state) => {
-        // HYDRATION TRIGGER: Update hand on relevant events
-        const newEventLog = [...state.eventQueue, event];
-        
-        // We can optimistically update hand here if needed, or wait for consumtion?
-        // Actually, for immediate visual feedback (like draw), we should update the store's hand state now.
-        // But let's check if we have access to the engine state? 
-        // The engine emits the event, meaning its state might be updated.
-        // However, we only have reference to `state.engine`.
-        
-        // Let's implement a specific listener in initGame that calls a store *action* to sync hand.
-        // But for now, we'll do it lazily or via the standard event loop if the engine state is attached.
-        
-        // Actually, initGame sets up the listener. Let's look at initGame below.
-        
-        return { eventQueue: newEventLog };
-    }),
+    enqueueEvent: (event) => set((state) => ({ eventQueue: [...state.eventQueue, event] })),
     consumeEvent: () => set((state) => ({ eventQueue: state.eventQueue.slice(1) })),
     clearEventQueue: () => set({ eventQueue: [] }),
 
-    // 
-    // INIT GAME IMPLEMENTATION - REMOVED
-    //
     setInitialGameState: (localPlayerId, gameState, hands, mode) => {
-        const getTurnStatus = (pid: number): TurnStatus => {
-            if (gameState.players[pid].isDone) return 'done';
-            if (gameState.currentPlayer === pid) return 'turn';
-            return 'none';
-        };
-
         set({
             localPlayerId,
             gameMode: mode,
-            // Use Mapper to create a clean, circular-free copy
+            isGameStarted: false,
+            currentTurn: 'none',
             gameState: mapEngineStateToStore(gameState), 
-            currentTurn: gameState.currentPlayer === 0 ? 'player' : 'opponent',
             players: {
                 ...get().players, 
                 0: { 
                     ...get().players[0], 
-                    hand: hydrateHand(hands.p0),
-                    turnStatus: getTurnStatus(0),
+                    hand: hands.p0 || [],
+                    turnStatus: 'none',
                     wins: gameState.players[0].skirmishesWon
                 },
                 1: { 
                     ...get().players[1], 
-                    hand: hydrateHand(hands.p1),
-                    turnStatus: getTurnStatus(1),
+                    hand: hands.p1 || [],
+                    turnStatus: 'none',
                     wins: gameState.players[1].skirmishesWon
                 }
             }
         });
     },
 
-    // Old InitGame Removed
+    setGameStarted: (started: boolean) => set({ isGameStarted: started }),
 
-    // Network Stubs
-    // Network Stubs Removed
-
-    // Opponent Hand Implementation
     opponentCards: [],
     setOpponentCards: (cards) => set({ opponentCards: cards }),
+
     // Actions
     registerSlot: (slotData) => set((state) => {
         const { playerId, terrainId } = slotData;
         const newPlayers = { ...state.players };
         
-        // Ensure player structure exists (it should from initial state, but helpful for safety)
         if (!newPlayers[playerId]) newPlayers[playerId] = { slots: {} as Record<TerrainId, BoardSlot>, wins: 0, turnStatus: 'none', hand: [] };
 
         newPlayers[playerId].slots = {
             ...newPlayers[playerId].slots,
             [terrainId]: {
                 ...slotData,
-                modifier: 0, // Initialize
-                id: `${playerId}_${terrainId}` // Set the composite ID here
+                modifier: 0,
+                id: `${playerId}_${terrainId}`
             } as BoardSlot
         };
 
@@ -255,7 +220,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
     updateSlotPosition: (playerId, terrainId, x, y, width, height) => set((state) => {
         const player = state.players[playerId];
-        if (!player || !player.slots[terrainId]) return {}; // No change
+        if (!player || !player.slots[terrainId]) return {};
 
         const updatedSlots = {
             ...player.slots,
@@ -269,10 +234,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
             }
         };
     }),
-    
-    // Old Duplicate Action Removed
 
-    // Restored Actions
     setHoveredCard: (card) => set({ hoveredCard: card }),
 
     setPlayerWins: (playerId, wins) => set((state) => ({
@@ -316,15 +278,18 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         return { players: newPlayers };
     }),
 
-    // Old resetSlotStatus Removed
-
     addCardToHand: (playerId, card) => set(produce((state: GameStoreState) => {
+        // Prevent duplicates (idempotency check)
+        if (state.players[playerId].hand.some(c => c.id === card.id)) {
+            console.warn(`[GameStore] Ignored duplicate card add: ${card.id}`);
+            return;
+        }
         state.players[playerId].hand.push(card);
     })),
 
     occupySlot: (playerId: PlayerId, terrainId: TerrainId, cardId: string, instance?: CardInstance) => set((state) => {
         const p = state.players[playerId];
-        if (!p || !p.slots[terrainId]) return {};
+        if (!p || !p.slots[terrainId]) return {}; // No change
 
         return {
             players: {
@@ -335,7 +300,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
                         ...p.slots,
                         [terrainId]: {
                             ...p.slots[terrainId],
-                            content: { cardId, instance },
+                            content: { cardId, instance: instance ? { ...instance, id: instance.id } : undefined },
                             status: 'idle'
                         }
                     }
@@ -345,9 +310,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     }),
 
     syncHandFromEngine: (playerId, engineHand) => set(produce((state: GameStoreState) => {
-        const hydrated = hydrateHand(engineHand);
-        console.log(`[GameStore] Syncing Hand for P${playerId}. Engine Cards: ${engineHand.length}, Hydrated: ${hydrated.length}`);
-        state.players[playerId].hand = hydrated;
+        console.log(`[GameStore] Syncing Hand for P${playerId}. Engine Cards: ${engineHand.length}`);
+        state.players[playerId].hand = engineHand;
     })),
 
     removeCardFromHand: (playerId, cardId) => set((state) => {
@@ -392,25 +356,23 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         }
     })),
 
-    updateBoardSettings: (settings) => set((state) => ({
-        boardSettings: { ...state.boardSettings, ...settings }
+    updateBoardSettings: (settings) => set(produce((state: GameStoreState) => {
+        state.boardSettings = { ...state.boardSettings, ...settings };
+    })),
+    
+    resetBoardSettings: () => set(produce((state: GameStoreState) => {
+        state.boardSettings = defaultBoardSettings;
     })),
 
-    setDragState: (active, cardId) => set((state) => ({
-        dragState: { ...state.dragState, isDragging: active, draggedCardId: cardId || null }
+    setDragState: (active, cardId) => set(produce((state: GameStoreState) => {
+        state.dragState = { ...state.dragState, isDragging: active, cardId: cardId || null };
     })),
 
     setHoveredSlot: (slotId: number | { playerId: PlayerId, terrainId: TerrainId } | null) => {
         if (slotId === null) set({ hoveredSlot: null });
         else if (typeof slotId === 'number') set({ hoveredSlot: slotId });
         else {
-             // Convert object to number ID (0-9)
-             // Enemy (Opponent, usually ID 1) -> Indices 0-4
-             // Player (Local, usually ID 0) -> Indices 5-9
-             // NOTE: This assumes perspective of player 0 being "bottom".
              const { playerId, terrainId } = slotId;
-             // If player is 0, status is 5+tId. If player is 1, status is tId.
-             // This logic depends on BoardScene mapping.
              const numId = playerId === 0 ? 5 + terrainId : terrainId;
              set({ hoveredSlot: numId });
         }
@@ -434,11 +396,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
          if (Array.isArray(targets)) {
              targets.forEach(target => {
                  if (typeof target === 'number') {
-                     // Numeric ID logic
                      let pid: PlayerId;
                      let tid: TerrainId;
-                     // 0-4: Opponent (Player 1 if local is 0)
-                     // 5-9: Player (Player 0 if local is 0)
                      if (target < 5) {
                          pid = opponentId;
                          tid = target as TerrainId;
@@ -448,7 +407,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
                      }
                      updateSlot(pid, tid);
                  } else {
-                     // Object logic
                      updateSlot(target.playerId, target.terrainId);
                  }
              });

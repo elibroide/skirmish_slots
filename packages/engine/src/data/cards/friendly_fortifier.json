@@ -51,5 +51,7 @@
     "maskY": 0,
     "maskWidth": 750,
     "maskHeight": 1050
-  }
+  },
+  "type": "Game",
+  "templateId": "ee2c3402-52bf-4f13-a5cc-93f57648c094"
 }

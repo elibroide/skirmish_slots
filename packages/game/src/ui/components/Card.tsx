@@ -51,17 +51,17 @@ export interface HandSettings {
     glowColorTargeting: string;
 
     // Back-Glow Geometry
-    glowExpLeft: number;
-    glowExpRight: number;
-    glowExpTop: number;
-    glowExpBottom: number;
-    glowCornerRadius: number; // 0 = sharp
-    glowOffsetX: number; // Global shift
-    glowOffsetY: number; // Global shift
-    glowOpacity: number; // Edge/Pulse opacity
-    fillOpacity: number; // Solid rect opacity
+    glowMinBlur: number;
+    glowMaxBlur: number;
+    glowMinSpread: number;
+    glowMaxSpread: number;
+    glowScaleX?: number; // Optional for backward combat
+    glowScaleY?: number;
+    glowOffsetX?: number;
+    glowOffsetY?: number;
+
+    glowCornerRadius: number;
     glowPulseSpeed: number; // 0 = no pulse
-    glowBlur: number; // Edge softness
 
     // Debug
     debugForcePlayable: boolean;
@@ -115,7 +115,7 @@ export const DEFAULT_SETTINGS: HandSettings = {
     slamHeight: -100,
 
     // Size & Scale
-    cardScale: 0.25,
+    cardScale: 0.275,
 
     hitAreaWidth: 140,
     hitAreaHeight: 255,
@@ -130,17 +130,16 @@ export const DEFAULT_SETTINGS: HandSettings = {
     glowColorTargeting: '#ace708',
 
     // Back-Glow Defaults
-    glowExpLeft: 4,
-    glowExpRight: -9,
-    glowExpTop: 2.5,
-    glowExpBottom: 2.5,
-    glowCornerRadius: 5,
+    glowMinBlur: 2,
+    glowMaxBlur: 6,
+    glowMinSpread: 2,
+    glowMaxSpread: 4,
+    glowScaleX: 0.85,
+    glowScaleY: 0.85,
     glowOffsetX: 0,
     glowOffsetY: 0,
-    glowOpacity: 0.5,
-    fillOpacity: 1,
+    glowCornerRadius: 5,
     glowPulseSpeed: 1,
-    glowBlur: 10,
 
     debugForcePlayable: true,
 
@@ -291,6 +290,19 @@ export const Card: React.FC<CardProps> = ({
         ? 'drop-shadow(0 25px 40px rgba(0,0,0,0.5))'
         : 'drop-shadow(0 8px 16px rgba(0,0,0,0.3))';
 
+    // Calculate Glow Positioning & Pivot
+    // const glowMB = -(settings.glowExpBottom || 0) + (settings.glowOffsetY || 0);
+    // const glowPivotY = `calc(100% + ${glowMB}px)`; // Pivot at the shared floor level
+
+    // // X Pivot adjustment:
+    // // Glow Center (relative to card center) = (RightExp - LeftExp) / 2 + OffsetX
+    // // We want pivot at Card Center (0). So we shift pivot LEFT by that amount.
+    // // Local Center is 50%.
+    // const glowCenterShiftX = ((settings.glowExpRight || 0) - (settings.glowExpLeft || 0)) / 2 + (settings.glowOffsetX || 0);
+    // const glowPivotX = `calc(50% - ${glowCenterShiftX}px)`;
+
+    // const glowTransformOrigin = `${glowPivotX} ${glowPivotY}`;
+
     return (
         <div
             style={{
@@ -334,73 +346,17 @@ export const Card: React.FC<CardProps> = ({
                 </div>
             ) : (
                 // Existing Card Face Logic
-                <>
-                    {/* NEW Split Back-Glow with Expansion */}
-                    {activeGlowColor && (
-                        <>
-                            {/* 1. Pulsing Edge Glow (Deepest) */}
-                            <div
-                                style={{
-                                    position: 'absolute',
-                                    left: '50%',
-                                    bottom: '0',
-                                    // Calculate total width/height based on base card + expansions
-                                    width: `${cardWidth + settings.glowExpLeft + settings.glowExpRight}px`,
-                                    height: `${cardHeight + settings.glowExpTop + settings.glowExpBottom}px`,
-                                    // Center horizontally based on expansions relative to center
-                                    // X margin: we want the LEFT edge to be at -cardWidth/2 - expLeft
-                                    marginLeft: `${-(cardWidth / 2) - settings.glowExpLeft}px`,
-                                    marginBottom: `${-settings.glowExpBottom + settings.glowOffsetY}px`,
-                                    // Note: anchor is bottom, so we extend down by ExpBottom. 
-                                    // ExpTop is handled by height increase upwards.
-
-                                    backgroundColor: activeGlowColor,
-                                    borderRadius: `${settings.glowCornerRadius}px`,
-                                    opacity: settings.glowOpacity,
-                                    filter: `blur(${settings.glowBlur}px)`,
-                                    transform: `
-                                    translateX(${settings.glowOffsetX}px)
-                                    translateY(${translateY}px) 
-                                    translateZ(${translateZ - 0.2}px) 
-                                    rotate(${rotation}deg) 
-                                    scale(${visualScale})
-                                `,
-                                    transformOrigin: 'center bottom',
-                                    transition: `all ${settings.hoverTransitionDuration}s cubic-bezier(0.34, 1.56, 0.64, 1)`,
-                                    pointerEvents: 'none',
-                                }}
-                                className={settings.glowPulseSpeed > 0 ? "animate-pulse-glow" : ""}
-                            />
-
-                            {/* 2. Solid Backing Rect (Middle) */}
-                            <div
-                                style={{
-                                    position: 'absolute',
-                                    left: '50%',
-                                    bottom: '0',
-                                    width: `${cardWidth + settings.glowExpLeft + settings.glowExpRight}px`,
-                                    height: `${cardHeight + settings.glowExpTop + settings.glowExpBottom}px`,
-                                    marginLeft: `${-(cardWidth / 2) - settings.glowExpLeft}px`,
-                                    marginBottom: `${-settings.glowExpBottom + settings.glowOffsetY}px`,
-
-                                    backgroundColor: activeGlowColor,
-                                    borderRadius: `${settings.glowCornerRadius}px`,
-                                    opacity: settings.fillOpacity,
-                                    filter: 'none',
-                                    transform: `
-                                    translateX(${settings.glowOffsetX}px)
-                                    translateY(${translateY}px) 
-                                    translateZ(${translateZ - 0.1}px) 
-                                    rotate(${rotation}deg) 
-                                    scale(${visualScale})
-                                `,
-                                    transformOrigin: 'center bottom',
-                                    transition: `all ${settings.hoverTransitionDuration}s cubic-bezier(0.34, 1.56, 0.64, 1)`,
-                                    pointerEvents: 'none',
-                                }}
-                            />
-                        </>
-                    )}
+                <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    borderRadius: `${settings.glowCornerRadius}px`,
+                    // We render the visual card directly, but we want the GLOW on a wrapper or the card itself?
+                    // The CardRenderer below is "content".
+                    // Let's wrap the content in a div that handles the Shadow Glow.
+                }}>
                     {/* Visual card - positioned behind hit areas */}
                     <div
                         style={{
@@ -418,16 +374,49 @@ export const Card: React.FC<CardProps> = ({
             `,
                             transformOrigin: 'center bottom',
                             transition: `all ${settings.hoverTransitionDuration}s cubic-bezier(0.34, 1.56, 0.64, 1)`,
-                            filter: shadowFilter,
+                            // Filter removed from here, moved to inner glow div
+                            // filter: shadowFilter, 
                             pointerEvents: 'none',
                             zIndex: isHovered ? 100 : zIndex,
-                            // Center the oversized CardRenderer content
-                            // display: 'flex', // REMOVED to prevent squashing
-                            // alignItems: 'flex-end',
-                            // justifyContent: 'center',
-                            overflow: 'visible', // Allow renderer to just be there (it's scaled down anyway)
+                            overflow: 'visible',
                         }}
+                    // Removed animate-pulse-shadow class from here
                     >
+                        {/* SEPARATE GLOW CONTAINER */}
+                        <div
+                            style={{
+                                position: 'absolute',
+                                left: '50%',
+                                top: '50%',
+                                width: `${(settings.glowScaleX || 1) * 100}%`,
+                                height: `${(settings.glowScaleY || 1) * 100}%`,
+                                transform: `translate(calc(-50% + ${settings.glowOffsetX || 0}px), calc(-50% + ${settings.glowOffsetY || 0}px))`,
+
+                                // CSS Variables for Glow Animation
+                                ['--glow-min-blur' as any]: `${settings.glowMinBlur}px`,
+                                ['--glow-max-blur' as any]: `${settings.glowMaxBlur}px`,
+                                ['--glow-min-spread' as any]: `${settings.glowMinSpread}px`,
+                                ['--glow-max-spread' as any]: `${settings.glowMaxSpread}px`,
+                                ['--glow-color' as any]: activeGlowColor || 'transparent',
+                                ['--glow-speed' as any]: `${1 / (settings.glowPulseSpeed || 1)}s`,
+
+                                borderRadius: `${settings.glowCornerRadius}px`,
+                                filter: shadowFilter, // Drop shadow now applies to this inner box
+                                zIndex: -1
+                            }}
+                            className={activeGlowColor && settings.glowPulseSpeed > 0 ? "animate-pulse-shadow" : ""}
+                        >
+                            {/* Static Glow if Pulse Speed is 0 but we have color */}
+                            {activeGlowColor && settings.glowPulseSpeed === 0 && (
+                                <div style={{
+                                    position: 'absolute',
+                                    inset: 0,
+                                    borderRadius: `${settings.glowCornerRadius}px`,
+                                    boxShadow: `0 0 ${settings.glowMaxBlur}px ${settings.glowMaxSpread}px ${activeGlowColor}`,
+                                }} />
+                            )}
+                        </div>
+
                         {template ? (
                             <CardRenderer
                                 template={template}
@@ -448,9 +437,8 @@ export const Card: React.FC<CardProps> = ({
                             />
                         )}
                     </div>
-                </>
+                </div>
             )}
-
 
             {settings.showHitAreas && (
                 <div style={{

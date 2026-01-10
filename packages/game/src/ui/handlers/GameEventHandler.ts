@@ -1,5 +1,5 @@
 import { GameEvent } from '@skirmish/engine';
 
 export interface GameEventHandler {
-    handle(event: GameEvent): Promise<void>;
+    handle(event: GameEvent, pendingEvents: GameEvent[]): Promise<void>;
 }

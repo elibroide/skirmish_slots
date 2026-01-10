@@ -1,11 +1,11 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { Card, HandSettings, BASE_CARD_HEIGHT } from './Card';
 import { DraggedCard } from './DraggedCard';
 import { ReturningCard } from './ReturningCard';
 import type { CardInstance, CardTemplate, CardSchema } from '@skirmish/card-maker';
 import { useGameStore, BoardSlot } from '../../store/gameStore';
 import { useAnimationStore } from '../../store/animationStore';
-import { TerrainId, PlayerId } from '@skirmish/engine';
+import { TerrainId, PlayerId, getGlobalEngine } from '@skirmish/engine';
 
 interface HandProps {
     cards: CardInstance[];
@@ -55,6 +55,7 @@ interface PendingDrag {
 export const Hand: React.FC<HandProps> = ({
     cards,
     settings,
+    settings: initialSettings, // Aliased to allow override if needed, but we use 'settings' prop
     templates,
     schema,
     onRemoveCard,
@@ -88,6 +89,37 @@ export const Hand: React.FC<HandProps> = ({
     // Facedown (Opponent) Logic: No interactions
     const canInteract = !isFacedown;
     const setHoveredCard = useGameStore(state => state.setHoveredCard);
+
+    // Playability Check (Engine Integration)
+    const localPlayerId = useGameStore(state => state.localPlayerId);
+    const gameState = useGameStore(state => state.gameState); // Subscribe to updates
+    const [playableCardIds, setPlayableCardIds] = useState<Set<string>>(new Set());
+
+    useEffect(() => {
+        if (isFacedown || localPlayerId === undefined)
+        {
+            setPlayableCardIds(new Set());
+            return;
+        }
+
+        const engine = getGlobalEngine();
+        if (!engine) return;
+
+        // Check legal actions
+        // We use a timeout to avoid blocking the render loop heavily every frame, 
+        // though typically run on state change is fine.
+        const legalActions = engine.getLegalActions(localPlayerId);
+
+        const ids = new Set<string>();
+        legalActions.forEach(action => {
+            if (action.type === 'PLAY_CARD')
+            {
+                ids.add(action.cardId);
+            }
+        });
+        setPlayableCardIds(ids);
+
+    }, [gameState, localPlayerId, isFacedown]);
 
     const handleHover = useCallback((index: number) => {
         if (!dragState.isDragging && canInteract)
@@ -439,8 +471,12 @@ export const Hand: React.FC<HandProps> = ({
         {
             return 'playable';
         }
+        if (playableCardIds.has(cardId))
+        {
+            return 'playable';
+        }
         return 'none';
-    }, [settings.debugForcePlayable]);
+    }, [settings.debugForcePlayable, playableCardIds]);
 
     const draggedCardGlowState = React.useMemo(() => {
         const storeState = useGameStore.getState();
