@@ -282,6 +282,7 @@ export class GameEngine {
       await this.emitEvent({
         type: 'ACTION_REQUIRED',
         playerId: currentPlayer,
+        actions: legalActions
       });
     }
   }

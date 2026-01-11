@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { produce } from 'immer';
-import { TerrainId, PlayerId } from '@skirmish/engine';
+import { TerrainId, PlayerId, SlotCoord } from '@skirmish/engine';
 import type { CardInstance } from '@skirmish/card-maker';
 import { GameEngine } from '@skirmish/engine';
 
@@ -44,6 +44,8 @@ import {
 
 export type { BoardSettings, TurnStatus, WinRecordSettings, HandSettings, TurnIndicatorSettings, AnimationConfig };
 
+export type PassButtonMode = 'pass' | 'done' | 'cancel' | 'conclude' | 'none';
+
 export interface PlayerStoreData {
     slots: Record<TerrainId, BoardSlot>;
     wins: number;
@@ -71,6 +73,7 @@ interface GameStoreState {
   // Game Flow
   isGameStarted: boolean;
   currentTurn: 'player' | 'opponent' | 'none';
+  passMode: PassButtonMode;
   
   hoveredCard: CardInstance | null;
   
@@ -92,6 +95,7 @@ interface GameStoreState {
   setHoveredCard: (card: CardInstance | null) => void;
   setPlayerWins: (playerId: PlayerId, wins: number) => void;
   setTurn: (turn: 'player' | 'opponent') => void;
+  setPassMode: (mode: PassButtonMode) => void;
   setGameStarted: (started: boolean) => void;
   
   // Slot Visuals 
@@ -129,7 +133,12 @@ interface GameStoreState {
   aiThinkingPlayerId: PlayerId | null;
   
   playableCardIds: string[]; // Cards that can be played this turn
+  validCardTargets: Record<string, SlotCoord[]>; // Map of cardId -> Valid Targets
+  activatableUnitIds: string[]; // Units that can be activated
+  
   setPlayableCards: (ids: string[]) => void;
+  setValidCardTargets: (targets: Record<string, SlotCoord[]>) => void;
+  setActivatableUnitIds: (ids: string[]) => void;
   
   downloadGameLog: () => void;
 }
@@ -141,6 +150,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         1: { slots: {} as Record<TerrainId, BoardSlot>, wins: 0, turnStatus: 'none', hand: [] }
     },
     currentTurn: 'none',
+    passMode: 'none',
     gameState: null,
     isGameStarted: false,
     boardSettings: defaultBoardSettings,
@@ -156,7 +166,12 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     isAIThinking: false,
     aiThinkingPlayerId: null,
     playableCardIds: [],
+    validCardTargets: {},
+    activatableUnitIds: [],
+    
     setPlayableCards: (ids) => set({ playableCardIds: ids }),
+    setValidCardTargets: (targets) => set({ validCardTargets: targets }),
+    setActivatableUnitIds: (ids) => set({ activatableUnitIds: ids }),
     
     downloadGameLog: () => { console.log('Download Log placeholder'); },
 
@@ -245,6 +260,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     })),
 
     setTurn: (turn) => set({ currentTurn: turn }),
+
+    setPassMode: (mode) => set({ passMode: mode }),
 
     setSlotPower: (targets, power, powerState) => set((state) => {
         const newPlayers = { ...state.players };

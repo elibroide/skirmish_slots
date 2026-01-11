@@ -4,8 +4,9 @@ import { DraggedCard } from './DraggedCard';
 import { ReturningCard } from './ReturningCard';
 import type { CardInstance, CardTemplate, CardSchema } from '@skirmish/card-maker';
 import { useGameStore, BoardSlot } from '../../store/gameStore';
+import { useShallow } from 'zustand/react/shallow';
 import { useAnimationStore } from '../../store/animationStore';
-import { TerrainId, PlayerId, getGlobalEngine } from '@skirmish/engine';
+import { TerrainId, PlayerId } from '@skirmish/engine';
 
 interface HandProps {
     cards: CardInstance[];
@@ -91,35 +92,13 @@ export const Hand: React.FC<HandProps> = ({
     const setHoveredCard = useGameStore(state => state.setHoveredCard);
 
     // Playability Check (Engine Integration)
-    const localPlayerId = useGameStore(state => state.localPlayerId);
-    const gameState = useGameStore(state => state.gameState); // Subscribe to updates
-    const [playableCardIds, setPlayableCardIds] = useState<Set<string>>(new Set());
+    // We strictly use the store state which is updated by ActionRequiredHandler
+    const playableCardIds = useGameStore(useShallow(state => new Set(state.playableCardIds as string[])));
 
-    useEffect(() => {
-        if (isFacedown || localPlayerId === undefined)
-        {
-            setPlayableCardIds(new Set());
-            return;
-        }
-
-        const engine = getGlobalEngine();
-        if (!engine) return;
-
-        // Check legal actions
-        // We use a timeout to avoid blocking the render loop heavily every frame, 
-        // though typically run on state change is fine.
-        const legalActions = engine.getLegalActions(localPlayerId);
-
-        const ids = new Set<string>();
-        legalActions.forEach(action => {
-            if (action.type === 'PLAY_CARD')
-            {
-                ids.add(action.cardId);
-            }
-        });
-        setPlayableCardIds(ids);
-
-    }, [gameState, localPlayerId, isFacedown]);
+    // Debug logging to verify flow
+    // useEffect(() => {
+    //      console.log(`[Hand] Playable Cards updated: ${Array.from(playableCardIds).join(', ')}`);
+    // }, [playableCardIds]);
 
     const handleHover = useCallback((index: number) => {
         if (!dragState.isDragging && canInteract)

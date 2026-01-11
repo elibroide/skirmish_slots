@@ -134,7 +134,7 @@ export type GameEvent = (
   | { type: 'CONQUER_TRIGGERED'; unitId: string; terrainId: TerrainId; slotId?: number } // slotId legacy support
   | { type: 'SKIRMISH_ENDED'; skirmishNumber: number; winner: PlayerId | null; sp: [number, number] }
   | { type: 'MATCH_ENDED'; winner: PlayerId }
-  | { type: 'ACTION_REQUIRED'; playerId: PlayerId }
+  | { type: 'ACTION_REQUIRED'; playerId: PlayerId; actions?: GameAction[] }
   | { type: 'INPUT_REQUIRED'; playerId: PlayerId; inputRequest: InputRequest }
   | { type: 'PRIORITY_CHANGED'; newPriority: PlayerId }
   | { type: 'ABILITY_ACTIVATED'; unitId: string; abilityName: string }

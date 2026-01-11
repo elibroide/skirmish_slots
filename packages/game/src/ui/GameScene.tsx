@@ -66,13 +66,12 @@ export const GameScene: React.FC<GameSceneProps> = ({ engine, localPlayerId, onB
     // - Show if it's MY turn (currentTurn match) AND I haven't passed (turnStatus !== 'done')
     // - Hide otherwise
 
-    const isMyTurn = (currentTurn === 'player' && localPlayerId === 0) || (currentTurn === 'opponent' && localPlayerId === 1);
-    const canPass = isMyTurn && turnStatus !== 'done';
+    const passMode = useGameStore(state => state.passMode);
 
     const [passStatus, setPassStatus] = useState<'normal' | 'disabled' | 'clicked'>('normal');
 
     const handlePass = async () => {
-        if (!canPass) return;
+        if (passMode === 'none') return;
         setPassStatus('clicked');
         try
         {
@@ -164,7 +163,7 @@ export const GameScene: React.FC<GameSceneProps> = ({ engine, localPlayerId, onB
 
             {/* 5. UI Overlay */}
             <PassButton
-                mode={canPass ? 'pass' : 'none'}
+                mode={passMode}
                 status={passStatus}
                 onClick={handlePass}
                 onMouseDown={() => setPassStatus('clicked')}
